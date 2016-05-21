@@ -176,45 +176,40 @@ public class Vis implements WindowFocusListener
   void InitBufferEditor()
   {
     // Buffer editor, 0
-    String buf_edit_name = "BUFFER_EDITOR";
-    FileBuf fb = new FileBuf( this, buf_edit_name, false );
+    FileBuf fb = new FileBuf( this, EDIT_BUF_NAME, false );
 
-    Add_FileBuf_2_Lists_Create_Views( fb, buf_edit_name );
+    Add_FileBuf_2_Lists_Create_Views( fb, EDIT_BUF_NAME );
   }
   void InitHelpBuffer()
   {
     // Buffer editor, 0
-    String help_buf_name = "VIS_HELP";
-    FileBuf fb = new FileBuf( this, help_buf_name, false );
+    FileBuf fb = new FileBuf( this, HELP_BUF_NAME, false );
     fb.ReadString( Help.str );
 
-    Add_FileBuf_2_Lists_Create_Views( fb, help_buf_name );
+    Add_FileBuf_2_Lists_Create_Views( fb, HELP_BUF_NAME );
   }
   void InitSearchEditor()
   {
     // Search editor buffer, 2
-    String buf_edit_name = "SEARCH_EDITOR";
-    FileBuf fb = new FileBuf( this, buf_edit_name, false );
+    FileBuf fb = new FileBuf( this, SRCH_BUF_NAME, false );
 
-    Add_FileBuf_2_Lists_Create_Views( fb, buf_edit_name );
+    Add_FileBuf_2_Lists_Create_Views( fb, SRCH_BUF_NAME );
   }
   void InitMsgBuffer()
   {
     // Message buffer, 3
-    String msg_buf_name = "MESSAGE_BUFFER";
-    FileBuf fb = new FileBuf( this, msg_buf_name, false );
+    FileBuf fb = new FileBuf( this, MSG__BUF_NAME, false );
     fb.PushLine(); // Add an empty line
 
-    Add_FileBuf_2_Lists_Create_Views( fb, msg_buf_name );
+    Add_FileBuf_2_Lists_Create_Views( fb, MSG__BUF_NAME );
   }
   void InitCmdBuffer()
   {
     // Command buffer, CMD_FILE(4)
-    String cmd_buf_name = "SHELL_BUFFER";
-    FileBuf fb = new FileBuf( this, cmd_buf_name, false );
+    FileBuf fb = new FileBuf( this, CMD__BUF_NAME, false );
     fb.PushLine(); // Add an empty line
 
-    Add_FileBuf_2_Lists_Create_Views( fb, cmd_buf_name );
+    Add_FileBuf_2_Lists_Create_Views( fb, CMD__BUF_NAME );
   }
   boolean InitUserFiles()
   {
@@ -3445,6 +3440,11 @@ public class Vis implements WindowFocusListener
   static final int MSG_FILE  = 3;    // Message       view
   static final int CMD_FILE  = 4;    // Command Shell view
   static final int MAX_WINS  = 8;    // Maximum number of sub-windows
+  static final String EDIT_BUF_NAME = "BUFFER_EDITOR";
+  static final String HELP_BUF_NAME = "VIS_HELP";
+  static final String SRCH_BUF_NAME = "SEARCH_EDITOR";
+  static final String MSG__BUF_NAME = "MESSAGE_BUFFER";
+  static final String CMD__BUF_NAME = "SHELL_BUFFER";
   String[]           m_args;
   Deque<Thread>      m_states     = new ArrayDeque<Thread>();
   Thread             m_run_init   = new Thread() { public void run() { run_init  (); } };

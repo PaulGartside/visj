@@ -48,21 +48,24 @@ source: classes \
         classes/CrsPos.class \
         classes/Diff.class \
         classes/Diff_Type.class \
+        classes/Encoding.class \
         classes/FileBuf.class \
         classes/File_Type.class \
         classes/Help.class \
         classes/HiKeyVal.class \
-        classes/Highlight_Type.class \
         classes/Highlight_Base.class \
         classes/Highlight_Bash.class \
+        classes/Highlight_BufferEditor.class \
         classes/Highlight_CMAKE.class \
         classes/Highlight_Code.class \
         classes/Highlight_CPP.class \
+        classes/Highlight_Dir.class \
         classes/Highlight_IDL.class \
         classes/Highlight_Java.class \
         classes/Highlight_SQL.class \
         classes/Highlight_STL.class \
         classes/Highlight_Text.class \
+        classes/Highlight_Type.class \
         classes/Highlight_XML.class \
         classes/IntList.class \
         classes/Line.class \

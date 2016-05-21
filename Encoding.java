@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // VI-Simplified (vis) Java Implementation                                    //
-// Copyright (c) 07 Sep 2015 Paul J. Gartside                                 //
+// Copyright (c) 19 May 2016 Paul J. Gartside                                 //
 ////////////////////////////////////////////////////////////////////////////////
 // Permission is hereby granted, free of charge, to any person obtaining a    //
 // copy of this software and associated documentation files (the "Software"), //
@@ -21,24 +21,14 @@
 // DEALINGS IN THE SOFTWARE.                                                  //
 ////////////////////////////////////////////////////////////////////////////////
 
-enum File_Type
+enum Encoding
 {
-  UNKNOWN,
-  BASH,
-  BUFFER_EDITOR,
-  CMAKE,
-  CPP,
-  DIR,
-  HTML,
-  IDL,
-  JAVA,
-  JS,
-  ODB,
-  SQL,
-  STL,
-  SWIFT,
-  TCL,
-  TEXT,
-  XML
+  NONE,
+  US_ASCII,
+  ISO_8859_1,
+  UTF_8,
+  UTF_16BE,
+  UTF_16LE,
+  UTF_16
 }
 

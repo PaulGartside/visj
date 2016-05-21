@@ -111,26 +111,29 @@ class FileBuf
   {
     if( m_isDir )
     {
-      // Directories default to TEXT
-      m_file_type = File_Type.TEXT;
-      m_Hi = new Highlight_Text( this );
+      m_file_type = File_Type.DIR;
+      m_Hi = new Highlight_Dir( this );
+    }
+    else if( !m_found_BE && m_fname.equals( m_pname + m_vis.EDIT_BUF_NAME ) )
+    {
+      m_found_BE = true;
+      m_file_type = File_Type.BUFFER_EDITOR;
+      m_Hi = new Highlight_BufferEditor( this );
+    }
+    else if( Find_File_Type_Bash()
+          || Find_File_Type_CMAKE()
+          || Find_File_Type_CPP ()
+          || Find_File_Type_IDL ()
+          || Find_File_Type_Java()
+          || Find_File_Type_SQL ()
+          || Find_File_Type_STL ()
+          || Find_File_Type_XML () )
+    {
+      // File type found
     }
     else {
-      if( Find_File_Type_Bash()
-       || Find_File_Type_CMAKE()
-       || Find_File_Type_CPP ()
-       || Find_File_Type_IDL ()
-       || Find_File_Type_Java()
-       || Find_File_Type_SQL ()
-       || Find_File_Type_STL ()
-       || Find_File_Type_XML () )
-      {
-        // File type found
-      }
-      else {
-        // File type NOT found based on suffix.
-        // File type will be found in Find_File_Type_FirstLine()
-      }
+      // File type NOT found based on suffix.
+      // File type will be found in Find_File_Type_FirstLine()
     }
   }
   boolean Find_File_Type_Bash()
@@ -238,7 +241,10 @@ class FileBuf
   {
     if( m_fname.endsWith(".xml"    )
      || m_fname.endsWith(".xml.new")
-     || m_fname.endsWith(".xml.old") )
+     || m_fname.endsWith(".xml.old")
+     || m_fname.endsWith(".xml.in"    )
+     || m_fname.endsWith(".xml.in.new")
+     || m_fname.endsWith(".xml.in.old") )
     {
       m_file_type = File_Type.XML;
       m_Hi = new Highlight_XML( this );
@@ -1357,7 +1363,8 @@ class FileBuf
   final String          m_fname; // Full path and filename head = m_pname + m_hname
   final String          m_pname; // Full path     = m_fname - m_hname, (for directories this is the same a m_fname)
   final String          m_hname; // Filename head = m_fname - m_pname, (for directories this is empty)
-  final Boolean         m_isDir;
+  final boolean         m_isDir;
+  static boolean        m_found_BE;
   private final Path    m_path;
   ArrayList<Line>       m_lines        = new ArrayList<>();
   ArrayList<Line>       m_styles       = new ArrayList<>();
@@ -1366,6 +1373,7 @@ class FileBuf
   ChangeHist            m_history      = new ChangeHist( this );
   boolean               m_LF_at_EOF    = true;
   File_Type             m_file_type    = File_Type.UNKNOWN;
+  Encoding              m_encoding     = Encoding.NONE;
   Highlight_Base        m_Hi;
   long                  m_mod_time;
   boolean               m_need_2_clear_stars = false;

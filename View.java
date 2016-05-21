@@ -2139,8 +2139,10 @@ class View
 
       final int OLL = m_fb.LineLen( L ); // Original line length
 
-      final int P_st = (L==  st_line) ? Math.min(st_char, OLL-1) : 0;
-      final int P_fn = (L==n_fn_line) ? Math.min(fn_char, OLL-1) : OLL-1;
+      int P_st = (L==  st_line) ? Math.min(st_char, OLL-1) : 0;
+      int P_fn = (L==n_fn_line) ? Math.min(fn_char, OLL-1) : OLL-1;
+      P_st = Math.max( P_st, 0 ); // Make sure P_st and P_fn are
+      P_fn = Math.max( P_fn, 0 ); // greater than or equal to zero
 
       if(   st_line == L && 0    < P_st  ) started_in_middle = true;
       if( n_fn_line == L && P_fn < OLL-1 ) ended___in_middle = true;
