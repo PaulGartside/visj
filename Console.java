@@ -708,54 +708,6 @@ class Console extends JComponent
     m_vis.CV().PrintCursor();  // Does m_console.Update();
   }
 
-//private Color Style_2_BG( final Style S )
-//{
-//  Color c =  Color.black; // Default
-//  switch( S )
-//  {
-//  case NORMAL      : c = Color.black  ; break;
-//  case STATUS      : c = Color.blue   ; break;
-//  case BORDER      : c = Color.blue   ; break;
-//  case BORDER_HI   : c = Color.green  ; break;
-//  case BANNER      : c = Color.red    ; break;
-//  case STAR        : c = Color.red    ; break;
-//  case COMMENT     : c = Color.black  ; break;
-//  case DEFINE      : c = Color.black  ; break;
-//  case CONST       : c = Color.black  ; break;
-//  case CONTROL     : c = Color.black  ; break;
-//  case VARTYPE     : c = Color.black  ; break;
-//  case VISUAL      : c = Color.red    ; break;
-//  case NONASCII    : c = Color.blue   ; break;
-//  case RV_NORMAL   : c = Color.white  ; break;
-//  case RV_STATUS   : c = Color.blue   ; break;
-//  case RV_BORDER   : c = Color.white  ; break;
-//  case RV_BORDER_HI: c = Color.white  ; break;
-//  case RV_BANNER   : c = Color.white  ; break;
-//  case RV_STAR     : c = Color.white  ; break;
-//  case RV_COMMENT  : c = Color.blue   ; break;
-//  case RV_DEFINE   : c = Color.magenta; break;
-//  case RV_CONST    : c = Color.cyan   ; break;
-//  case RV_CONTROL  : c = Color.yellow ; break;
-//  case RV_VARTYPE  : c = Color.green  ; break;
-//  case RV_VISUAL   : c = Color.white  ; break;
-//  case RV_NONASCII : c = Color.red    ; break;
-////case EMPTY       : c = Color.black  ; break;
-//  case EMPTY       : c = Color.darkGray; break;
-//  case DIFF_DEL    : c = Color.red    ; break;
-//  case DIFF_NORMAL : c = Color.blue   ; break;
-//  case DIFF_STAR   : c = Color.red    ; break;
-//  case DIFF_COMMENT: c = Color.blue   ; break;
-//  case DIFF_DEFINE : c = Color.blue   ; break;
-//  case DIFF_CONST  : c = Color.blue   ; break;
-//  case DIFF_CONTROL: c = Color.blue   ; break;
-//  case DIFF_VARTYPE: c = Color.blue   ; break;
-//  case DIFF_VISUAL : c = Color.red    ; break;
-////case CURSOR      : c = Color.white  ; break;
-//  case CURSOR      : c = Color.pink   ; break;
-//  case CURSOR_EMPTY: c = Color.black  ; break;
-//  }
-//  return c;
-//}
   private Color Style_2_BG( final Style S )
   {
     Color C =  Color.black; // Default
@@ -787,7 +739,6 @@ class Console extends JComponent
     case RV_VARTYPE  : C = RV_VARTYPE_BG  ; break;
     case RV_VISUAL   : C = RV_VISUAL_BG   ; break;
     case RV_NONASCII : C = RV_NONASCII_BG ; break;
-  //case EMPTY       : C = EMPTY_BG       ; break;
     case EMPTY       : C = EMPTY_BG       ; break;
     case EOF         : C = EOF_BG         ; break;
     case DIFF_DEL    : C = DIFF_DEL_BG    ; break;
@@ -799,59 +750,11 @@ class Console extends JComponent
     case DIFF_CONTROL: C = DIFF_CONTROL_BG; break;
     case DIFF_VARTYPE: C = DIFF_VARTYPE_BG; break;
     case DIFF_VISUAL : C = DIFF_VISUAL_BG ; break;
-  //case CURSOR      : C = CURSOR_BG      ; break;
     case CURSOR      : C = CURSOR_BG      ; break;
     case CURSOR_EMPTY: C = CURSOR_EMPTY_BG; break;
     }
     return C;
   }
-//private Color Style_2_FG( final Style S )
-//{
-//  Color c =  Color.white; // Default
-//  switch( S )
-//  {
-//  case NORMAL      : c = Color.white  ; break;
-//  case STATUS      : c = Color.white  ; break;
-//  case BORDER      : c = Color.white  ; break;
-//  case BORDER_HI   : c = Color.white  ; break;
-//  case BANNER      : c = Color.white  ; break;
-//  case STAR        : c = Color.white  ; break;
-////case COMMENT     : c = Color.blue   ; break;
-//  case COMMENT     : c = m_comment_fg ; break;
-//  case DEFINE      : c = Color.magenta; break;
-//  case CONST       : c = Color.cyan   ; break;
-//  case CONTROL     : c = Color.yellow ; break;
-//  case VARTYPE     : c = Color.green  ; break;
-//  case VISUAL      : c = Color.white  ; break;
-//  case NONASCII    : c = Color.red    ; break;
-//  case RV_NORMAL   : c = Color.black  ; break;
-//  case RV_STATUS   : c = Color.blue   ; break;
-//  case RV_BORDER   : c = Color.blue   ; break;
-//  case RV_BORDER_HI: c = Color.green  ; break;
-//  case RV_BANNER   : c = Color.red    ; break;
-//  case RV_STAR     : c = Color.red    ; break;
-//  case RV_COMMENT  : c = Color.white  ; break;
-//  case RV_DEFINE   : c = Color.white  ; break;
-//  case RV_CONST    : c = Color.black  ; break;
-//  case RV_CONTROL  : c = Color.black  ; break;
-//  case RV_VARTYPE  : c = Color.white  ; break;
-//  case RV_VISUAL   : c = Color.red    ; break;
-//  case RV_NONASCII : c = Color.blue   ; break;
-//  case EMPTY       : c = Color.red    ; break;
-//  case DIFF_DEL    : c = Color.white  ; break;
-//  case DIFF_NORMAL : c = Color.white  ; break;
-//  case DIFF_STAR   : c = Color.blue   ; break;
-//  case DIFF_COMMENT: c = Color.white  ; break;
-//  case DIFF_DEFINE : c = Color.magenta; break;
-//  case DIFF_CONST  : c = Color.cyan   ; break;
-//  case DIFF_CONTROL: c = Color.yellow ; break;
-//  case DIFF_VARTYPE: c = Color.green  ; break;
-//  case DIFF_VISUAL : c = Color.blue   ; break;
-////case CURSOR      : c = Color.red    ; break;
-//  case CURSOR      : c = Color.black  ; break;
-//  }
-//  return c;
-//}
   private Color Style_2_FG( final Style S )
   {
     Color C =  Color.white; // Default
@@ -863,7 +766,6 @@ class Console extends JComponent
     case BORDER_HI   : C = BORDER_HI_FG   ; break;
     case BANNER      : C = BANNER_FG      ; break;
     case STAR        : C = STAR_FG        ; break;
-  //case COMMENT     : C = COMMENT_FG     ; break;
     case COMMENT     : C = COMMENT_FG     ; break;
     case DEFINE      : C = DEFINE_FG      ; break;
     case CONST       : C = CONST_FG       ; break;
@@ -895,7 +797,6 @@ class Console extends JComponent
     case DIFF_CONTROL: C = DIFF_CONTROL_FG; break;
     case DIFF_VARTYPE: C = DIFF_VARTYPE_FG; break;
     case DIFF_VISUAL : C = DIFF_VISUAL_FG ; break;
-  //case CURSOR      : C = CURSOR_FG      ; break;
     case CURSOR      : C = CURSOR_FG      ; break;
     }
     return C;

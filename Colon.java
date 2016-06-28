@@ -427,33 +427,6 @@ class Colon
     }
     return false;
   }
-//void Path_2_TailHead( StringBuilder     sb_in
-//                    , Ptr_StringBuilder path_tail
-//                    , Ptr_StringBuilder path_head )
-//{
-//        String in_fname     = sb_in.toString();
-//  final int    in_fname_len = in_fname.length();
-//
-//  // 1. seperate in_fname into path_tail and path_head
-//  path_tail.val = new StringBuilder( in_fname_len );
-//  path_head.val = new StringBuilder( in_fname_len );
-//
-//  final int last_slash_idx = in_fname.lastIndexOf( Utils.DIR_DELIM );
-//  if( 0 <= last_slash_idx )
-//  {
-//    for( int i = 0                 ; i<last_slash_idx; i++ ) path_tail.val.append( in_fname.charAt( i ) );
-//    for( int i = last_slash_idx + 1; i<in_fname_len  ; i++ ) path_head.val.append( in_fname.charAt( i ) );
-//  }
-//  else {
-//    // No tail, all head:
-//    path_head.val.append( in_fname );
-//  }
-//  if( path_tail.val.toString().equals("~") )
-//  {
-//    path_tail.val.setLength( 0 );
-//    path_tail.val.append("$HOME");
-//  }
-//}
   void Path_2_TailHead( StringBuilder     sb_in
                       , Ptr_StringBuilder path_tail
                       , Ptr_StringBuilder path_head )

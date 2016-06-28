@@ -73,10 +73,10 @@ class Highlight_BufferEditor extends Highlight_Base
     {
             Line lp = m_fb.GetLine( m_l );
       final int  LL = lp.length();
-      final char c_end = m_fb.Get( m_l, LL-1 );
  
       if( 0<LL )
       {
+        final char c_end = m_fb.Get( m_l, LL-1 );
         String ls = lp.toString();
 
         if( ls.equals( m_fb.m_vis.EDIT_BUF_NAME )

@@ -645,17 +645,20 @@ class FileBuf
   {
     return m_history.Has_Changes();
   }
-  void ChangedLine( final int line_num )
+  void ChangedLineLen( final int line_num )
   {
     if( line_num<=0 )
     {
       m_lineOffsets.clear();
+
+      m_hi_touched_line = 0;
     }
     else {
       while( line_num < m_lineOffsets.size() )
       {
         m_lineOffsets.remove( m_lineOffsets.size()-1 );
       }
+      m_hi_touched_line = Math.min( m_hi_touched_line, line_num );
     }
   }
 
@@ -1012,7 +1015,7 @@ class FileBuf
 
     if( SavingHist() ) m_history.Save_SwapLines( l_num_1, l_num_2 );
 
-    ChangedLine( Math.min( l_num_1, l_num_2 ) );
+    ChangedLineLen( Math.min( l_num_1, l_num_2 ) );
   }
 
   void Update()
@@ -1049,11 +1052,11 @@ class FileBuf
                               lr.deleteCharAt( c_num );
     if( c_num < sr.length() ) sr.deleteCharAt( c_num ); // m_styles not in sync with m_lines for some reason
 
-    ChangedLine( l_num );
+    ChangedLineLen( l_num );
 
     if( SavingHist() ) m_history.Save_RemoveChar( l_num, c_num, C );
 
-    m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
+  //m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
 
     return C;
   }
@@ -1081,6 +1084,7 @@ class FileBuf
       {
         m_history.Save_Set( l_num, c_num, old_C, continue_last_update );
       }
+      // Did not call ChangedLineLen(), so need to set m_hi_touched_line here:
       m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
     }
   }
@@ -1092,11 +1096,11 @@ class FileBuf
     Line lr = m_lines.remove( l_num );
     Line sr = m_styles.remove( l_num );
 
-    ChangedLine( l_num );
+    ChangedLineLen( l_num );
 
     if( SavingHist() ) m_history.Save_RemoveLine( l_num, lr );
 
-    m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
+  //m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
 
     RemovedLine_Adjust_Views_topLines( l_num );
 
@@ -1114,11 +1118,11 @@ class FileBuf
     m_lines.add( l_num, lr );
     m_styles.add( l_num, sr );
 
-    ChangedLine( l_num );
+    ChangedLineLen( l_num );
 
     if( SavingHist() ) m_history.Save_InsertLine( l_num );
 
-    m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
+  //m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
 
     InsertLine_Adjust_Views_topLines( l_num );
   }
@@ -1133,11 +1137,11 @@ class FileBuf
     m_lines.add( l_num, lr );
     m_styles.add( l_num, sp );
 
-    ChangedLine( l_num );
+    ChangedLineLen( l_num );
 
     if( SavingHist() ) m_history.Save_InsertLine( l_num );
 
-    m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
+  //m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
 
     InsertLine_Adjust_Views_topLines( l_num );
   }
@@ -1155,12 +1159,12 @@ class FileBuf
     lr.insert( c_num, C );
     sr.insert( c_num, '\u0000' );
 
-    ChangedLine( l_num );
+    ChangedLineLen( l_num );
 
     if( SavingHist() ) m_history.Save_InsertChar( l_num, c_num );
     // Add to the m_updates list:
 
-    m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
+  //m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
   }
 
   // Append line to end of line l_num
@@ -1175,7 +1179,7 @@ class FileBuf
     // Simply need to increase sr's length to match lr's new length:
     sr.setLength( lr.length() );
 
-    ChangedLine( l_num );
+    ChangedLineLen( l_num );
 
     final int first_insert = lr.length() - line.length();
 
@@ -1186,7 +1190,7 @@ class FileBuf
         m_history.Save_InsertChar( l_num, first_insert + k );
       }
     }
-    m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
+  //m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
   }
   void AppendLineToLine( final int l_num, final String s )
   {
@@ -1221,11 +1225,11 @@ class FileBuf
     lr.append_c( C );
     sr.append_c( (char)0 );
 
-    ChangedLine( l_num );
+    ChangedLineLen( l_num );
 
     if( SavingHist() ) m_history.Save_InsertChar( l_num, lr.length()-1 );
 
-    m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
+  //m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
   }
   // Add byte C to last line.  If no lines in file, add a line.
   //

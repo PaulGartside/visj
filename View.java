@@ -2061,19 +2061,18 @@ class View
   void Do_x_range_pre( Ptr_Int p_st_line, Ptr_Int p_st_char
                      , Ptr_Int p_fn_line, Ptr_Int p_fn_char )
   {
-  //if( p_fn_line.val < p_st_line.val
-  // || (p_fn_line.val == p_st_line.val && p_fn_char.val < p_st_char.val) )
-  //{
-  //  Utils.Swap( p_st_line, p_fn_line );
-  //  Utils.Swap( p_st_char, p_fn_char );
-  //}
-    if( p_fn_line.val < p_st_line.val )
+    if( m_inVisualBlock )
     {
-      Utils.Swap( p_st_line, p_fn_line );
+      if( p_fn_line.val < p_st_line.val ) Utils.Swap( p_st_line, p_fn_line );
+      if( p_fn_char.val < p_st_char.val ) Utils.Swap( p_st_char, p_fn_char );
     }
-    if( p_fn_char.val < p_st_char.val )
-    {
-      Utils.Swap( p_st_char, p_fn_char );
+    else {
+      if( p_fn_line.val < p_st_line.val
+       || (p_fn_line.val == p_st_line.val && p_fn_char.val < p_st_char.val) )
+      {
+        Utils.Swap( p_st_line, p_fn_line );
+        Utils.Swap( p_st_char, p_fn_char );
+      }
     }
     m_vis.m_reg.clear();
   }
