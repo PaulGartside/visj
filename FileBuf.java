@@ -678,6 +678,18 @@ class FileBuf
     }
     return 0;
   }
+  int LongestLineLen()
+  {
+    int longest = 0;
+
+    final int NUM_LINES =  m_lines.size();
+
+    for( int k=0; k<NUM_LINES; k++ )
+    {
+      longest = Math.max( m_lines.get( k ).length(), longest );
+    }
+    return longest;
+  }
   char Get( final int l_num, final int c_num )
   {
     if( l_num < m_lines.size() )
@@ -1030,7 +1042,7 @@ class FileBuf
 
       for( int w2=0; w2<m_vis.m_num_wins; w2++ )
       {
-        if( rV == m_vis.GetWinView( w2, 0 ) )
+        if( rV == m_vis.GetView_Win( w2 ) )
         {
           // rV is a view of this file currently displayed, perform needed update:
           rV.Update();

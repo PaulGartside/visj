@@ -1132,6 +1132,12 @@ class View
 
     SetViewPos();
   }
+  boolean TilePos_FullWidth()
+  {
+    return m_tile_pos == Tile_Pos.FULL
+        || m_tile_pos == Tile_Pos.TOP__HALF
+        || m_tile_pos == Tile_Pos.BOT__HALF;
+  }
   void SetViewPos()
   {
     TilePos_2_x();

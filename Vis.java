@@ -167,8 +167,8 @@ public class Vis implements WindowFocusListener
       m_num_wins = 2;
       m_file_hist[ 0 ].set( 0, 5 );
       m_file_hist[ 1 ].set( 0, 6 );
-      GetWinView( 0, 0 ).SetTilePos( Tile_Pos.LEFT_HALF );
-      GetWinView( 1, 0 ).SetTilePos( Tile_Pos.RITE_HALF );
+      GetView_Win( 0 ).SetTilePos( Tile_Pos.LEFT_HALF );
+      GetView_Win( 1 ).SetTilePos( Tile_Pos.RITE_HALF );
 
       Exe_Colon_DoDiff();
     }
@@ -584,7 +584,7 @@ public class Vis implements WindowFocusListener
   {
     for( int w=0; w<m_num_wins; w++ )
     {
-      GetWinView( w, 0 ).PrintPatterns( HIGHLIGHT );
+      GetView_Win( w ).PrintPatterns( HIGHLIGHT );
     }
   }
   void Do_Star_ClearPatterns()
@@ -597,7 +597,7 @@ public class Vis implements WindowFocusListener
     // Remove star patterns from displayed FileBuf's only:
     for( int w=0; w<m_num_wins; w++ )
     {
-      GetWinView( w, 0 ).m_fb.ClearStars();
+      GetView_Win( w ).m_fb.ClearStars();
     }
   }
   void Do_Star_FindPatterns()
@@ -610,7 +610,7 @@ public class Vis implements WindowFocusListener
     // Only find new pattern now for FileBuf's that are displayed:
     for( int w=0; w<m_num_wins; w++ )
     {
-      GetWinView( w, 0 ).m_fb.Find_Stars();
+      GetView_Win( w ).m_fb.Find_Stars();
     }
   }
 
@@ -1058,8 +1058,8 @@ public class Vis implements WindowFocusListener
 
       m_win = (++m_win) % m_num_wins;
 
-      View pV     = GetWinView( m_win  , 0 );
-      View pV_old = GetWinView( win_old, 0 );
+      View pV     = GetView_Win( m_win   );
+      View pV_old = GetView_Win( win_old );
 
       pV_old.Print_Borders();
       pV    .Print_Borders();
@@ -1090,8 +1090,8 @@ public class Vis implements WindowFocusListener
       // If next view to go to is found, m_win will be updated to new value
       if( GoToNextWindow_l_Find() )
       {
-        View pV     = GetWinView( m_win  , 0 );
-        View pV_old = GetWinView( win_old, 0 );
+        View pV     = GetView_Win( m_win   );
+        View pV_old = GetView_Win( win_old );
 
         pV_old.Print_Borders();
         pV    .Print_Borders();
@@ -1113,7 +1113,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_HALF         == TP
          || Tile_Pos.TOP__RITE_QTR     == TP
          || Tile_Pos.BOT__RITE_QTR     == TP
@@ -1126,7 +1126,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_HALF     == TP
          || Tile_Pos.TOP__LEFT_QTR == TP
          || Tile_Pos.BOT__LEFT_QTR == TP
@@ -1139,7 +1139,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_HALF         == TP
          || Tile_Pos.TOP__RITE_QTR     == TP
          || Tile_Pos.RITE_CTR__QTR     == TP
@@ -1150,7 +1150,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_HALF     == TP
          || Tile_Pos.LEFT_QTR      == TP
          || Tile_Pos.TOP__LEFT_QTR == TP
@@ -1161,7 +1161,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_HALF         == TP
          || Tile_Pos.BOT__RITE_QTR     == TP
          || Tile_Pos.RITE_CTR__QTR     == TP
@@ -1172,7 +1172,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_HALF     == TP
          || Tile_Pos.LEFT_QTR      == TP
          || Tile_Pos.BOT__LEFT_QTR == TP
@@ -1183,7 +1183,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_CTR__QTR     == TP
          || Tile_Pos.TOP__LEFT_CTR_8TH == TP
          || Tile_Pos.BOT__LEFT_CTR_8TH == TP ) { m_win = k; found = true; }
@@ -1193,7 +1193,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_HALF     == TP
          || Tile_Pos.LEFT_QTR      == TP
          || Tile_Pos.TOP__LEFT_8TH == TP
@@ -1204,7 +1204,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_HALF         == TP
          || Tile_Pos.RITE_CTR__QTR     == TP
          || Tile_Pos.TOP__RITE_CTR_8TH == TP
@@ -1215,7 +1215,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_QTR      == TP
          || Tile_Pos.TOP__RITE_8TH == TP
          || Tile_Pos.BOT__RITE_8TH == TP ) { m_win = k; found = true; }
@@ -1225,7 +1225,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_CTR__QTR     == TP
          || Tile_Pos.TOP__LEFT_CTR_8TH == TP ) { m_win = k; found = true; }
       }
@@ -1234,7 +1234,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_CTR__QTR     == TP
          || Tile_Pos.BOT__LEFT_CTR_8TH == TP ) { m_win = k; found = true; }
       }
@@ -1243,7 +1243,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_HALF         == TP
          || Tile_Pos.RITE_CTR__QTR     == TP
          || Tile_Pos.TOP__RITE_QTR     == TP
@@ -1254,7 +1254,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_HALF         == TP
          || Tile_Pos.RITE_CTR__QTR     == TP
          || Tile_Pos.BOT__RITE_QTR     == TP
@@ -1265,7 +1265,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_QTR      == TP
          || Tile_Pos.TOP__RITE_8TH == TP ) { m_win = k; found = true; }
       }
@@ -1274,7 +1274,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_QTR      == TP
          || Tile_Pos.BOT__RITE_8TH == TP ) { m_win = k; found = true; }
       }
@@ -1283,7 +1283,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_HALF     == TP
          || Tile_Pos.LEFT_QTR      == TP
          || Tile_Pos.TOP__LEFT_QTR == TP
@@ -1294,7 +1294,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_HALF     == TP
          || Tile_Pos.LEFT_QTR      == TP
          || Tile_Pos.BOT__LEFT_QTR == TP
@@ -1314,8 +1314,8 @@ public class Vis implements WindowFocusListener
       // If next view to go to is found, m_win will be updated to new value
       if( GoToNextWindow_h_Find() )
       {
-        View pV     = GetWinView( m_win  , 0 );
-        View pV_old = GetWinView( win_old, 0 );
+        View pV     = GetView_Win( m_win   );
+        View pV_old = GetView_Win( win_old );
 
         pV_old.Print_Borders();
         pV    .Print_Borders();
@@ -1335,7 +1335,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_HALF     == TP
          || Tile_Pos.TOP__RITE_QTR == TP
          || Tile_Pos.BOT__RITE_QTR == TP
@@ -1348,7 +1348,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_HALF         == TP
          || Tile_Pos.TOP__LEFT_QTR     == TP
          || Tile_Pos.BOT__LEFT_QTR     == TP
@@ -1361,7 +1361,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_HALF     == TP
          || Tile_Pos.TOP__RITE_QTR == TP
          || Tile_Pos.RITE_QTR      == TP
@@ -1372,7 +1372,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_HALF         == TP
          || Tile_Pos.LEFT_CTR__QTR     == TP
          || Tile_Pos.TOP__LEFT_QTR     == TP
@@ -1383,7 +1383,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_HALF     == TP
          || Tile_Pos.BOT__RITE_QTR == TP
          || Tile_Pos.RITE_QTR      == TP
@@ -1394,7 +1394,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_HALF         == TP
          || Tile_Pos.LEFT_CTR__QTR     == TP
          || Tile_Pos.BOT__LEFT_QTR     == TP
@@ -1405,7 +1405,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_HALF     == TP
          || Tile_Pos.RITE_QTR      == TP
          || Tile_Pos.TOP__RITE_8TH == TP
@@ -1416,7 +1416,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_CTR__QTR     == TP
          || Tile_Pos.TOP__RITE_CTR_8TH == TP
          || Tile_Pos.BOT__RITE_CTR_8TH == TP ) { m_win = k; found = true; }
@@ -1426,7 +1426,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_QTR      == TP
          || Tile_Pos.TOP__LEFT_8TH == TP
          || Tile_Pos.BOT__LEFT_8TH == TP ) { m_win = k; found = true; }
@@ -1436,7 +1436,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_HALF         == TP
          || Tile_Pos.LEFT_CTR__QTR     == TP
          || Tile_Pos.TOP__LEFT_QTR     == TP
@@ -1449,7 +1449,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_HALF     == TP
          || Tile_Pos.TOP__RITE_QTR == TP
          || Tile_Pos.RITE_QTR      == TP
@@ -1460,7 +1460,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_HALF     == TP
          || Tile_Pos.BOT__RITE_QTR == TP
          || Tile_Pos.RITE_QTR      == TP
@@ -1471,7 +1471,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_QTR      == TP
          || Tile_Pos.TOP__LEFT_8TH == TP ) { m_win = k; found = true; }
       }
@@ -1480,7 +1480,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_QTR      == TP
          || Tile_Pos.BOT__LEFT_8TH == TP ) { m_win = k; found = true; }
       }
@@ -1489,7 +1489,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_HALF         == TP
          || Tile_Pos.TOP__LEFT_QTR     == TP
          || Tile_Pos.LEFT_CTR__QTR     == TP
@@ -1500,7 +1500,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.LEFT_HALF         == TP
          || Tile_Pos.BOT__LEFT_QTR     == TP
          || Tile_Pos.LEFT_CTR__QTR     == TP
@@ -1511,7 +1511,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_CTR__QTR     == TP
          || Tile_Pos.TOP__RITE_CTR_8TH == TP ) { m_win = k; found = true; }
       }
@@ -1520,7 +1520,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.RITE_CTR__QTR     == TP
          || Tile_Pos.BOT__RITE_CTR_8TH == TP ) { m_win = k; found = true; }
       }
@@ -1538,8 +1538,8 @@ public class Vis implements WindowFocusListener
       // If next view to go to is found, m_win will be updated to new value
       if( GoToNextWindow_jk_Find() )
       {
-        View pV     = GetWinView( m_win  , 0 );
-        View pV_old = GetWinView( win_old, 0 );
+        View pV     = GetView_Win( m_win   );
+        View pV_old = GetView_Win( win_old );
   
         pV_old.Print_Borders();
         pV    .Print_Borders();
@@ -1559,7 +1559,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.BOT__HALF         == TP
          || Tile_Pos.BOT__LEFT_QTR     == TP
          || Tile_Pos.BOT__RITE_QTR     == TP
@@ -1573,7 +1573,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.TOP__HALF         == TP
          || Tile_Pos.TOP__LEFT_QTR     == TP
          || Tile_Pos.TOP__RITE_QTR     == TP
@@ -1587,7 +1587,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.BOT__HALF         == TP
          || Tile_Pos.BOT__LEFT_QTR     == TP
          || Tile_Pos.BOT__LEFT_8TH     == TP
@@ -1598,7 +1598,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.BOT__HALF         == TP
          || Tile_Pos.BOT__RITE_QTR     == TP
          || Tile_Pos.BOT__RITE_8TH     == TP
@@ -1609,7 +1609,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.TOP__HALF         == TP
          || Tile_Pos.TOP__LEFT_QTR     == TP
          || Tile_Pos.TOP__LEFT_8TH     == TP
@@ -1620,7 +1620,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.TOP__HALF         == TP
          || Tile_Pos.TOP__RITE_QTR     == TP
          || Tile_Pos.TOP__RITE_8TH     == TP
@@ -1631,7 +1631,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.BOT__HALF     == TP
          || Tile_Pos.BOT__LEFT_QTR == TP
          || Tile_Pos.BOT__LEFT_8TH == TP ) { m_win = k; found = true; }
@@ -1641,7 +1641,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.BOT__HALF     == TP
          || Tile_Pos.BOT__RITE_QTR == TP
          || Tile_Pos.BOT__RITE_8TH == TP ) { m_win = k; found = true; }
@@ -1651,7 +1651,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.BOT__HALF         == TP
          || Tile_Pos.BOT__LEFT_QTR     == TP
          || Tile_Pos.BOT__LEFT_CTR_8TH == TP ) { m_win = k; found = true; }
@@ -1661,7 +1661,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.BOT__HALF         == TP
          || Tile_Pos.BOT__RITE_QTR     == TP
          || Tile_Pos.BOT__RITE_CTR_8TH == TP ) { m_win = k; found = true; }
@@ -1671,7 +1671,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.TOP__HALF     == TP
          || Tile_Pos.TOP__LEFT_QTR == TP
          || Tile_Pos.TOP__LEFT_8TH == TP ) { m_win = k; found = true; }
@@ -1681,7 +1681,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.TOP__HALF     == TP
          || Tile_Pos.TOP__RITE_QTR == TP
          || Tile_Pos.TOP__RITE_8TH == TP ) { m_win = k; found = true; }
@@ -1691,7 +1691,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.TOP__HALF         == TP
          || Tile_Pos.TOP__LEFT_QTR     == TP
          || Tile_Pos.TOP__LEFT_CTR_8TH == TP ) { m_win = k; found = true; }
@@ -1701,7 +1701,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; !found && k<m_num_wins; k++ )
       {
-        final Tile_Pos TP = GetWinView( k, 0 ).m_tile_pos;
+        final Tile_Pos TP = GetView_Win( k ).m_tile_pos;
         if( Tile_Pos.TOP__HALF         == TP
          || Tile_Pos.TOP__RITE_QTR     == TP
          || Tile_Pos.TOP__RITE_CTR_8TH == TP ) { m_win = k; found = true; }
@@ -1715,8 +1715,8 @@ public class Vis implements WindowFocusListener
     if( 1 < m_num_wins )
     {
       // This code only works for MAX_WINS == 2
-      View pV1 = GetWinView( 0, 0 );
-      View pV2 = GetWinView( 1, 0 );
+      View pV1 = GetView_Win( 0 );
+      View pV2 = GetView_Win( 1 );
   
       if( pV1 != pV2 )
       {
@@ -2078,7 +2078,7 @@ public class Vis implements WindowFocusListener
   {
     for( int k=0; k<m_num_wins; k++ )
     {
-      View v = GetWinView( k, 0 );
+      View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
   
       if     ( TP == Tile_Pos.RITE_HALF         ) { v.SetTilePos( Tile_Pos.FULL ); break; }
@@ -2096,7 +2096,7 @@ public class Vis implements WindowFocusListener
   {
     for( int k=0; k<m_num_wins; k++ )
     {
-      View v = GetWinView( k, 0 );
+      View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
   
       if     ( TP == Tile_Pos.LEFT_HALF         ) { v.SetTilePos( Tile_Pos.FULL ); break; }
@@ -2114,7 +2114,7 @@ public class Vis implements WindowFocusListener
   {
     for( int k=0; k<m_num_wins; k++ )
     {
-      View v = GetWinView( k, 0 );
+      View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
  
       if     ( TP == Tile_Pos.BOT__HALF         ) { v.SetTilePos( Tile_Pos.FULL ); break; }
@@ -2130,7 +2130,7 @@ public class Vis implements WindowFocusListener
   {
     for( int k=0; k<m_num_wins; k++ )
     {
-      View v = GetWinView( k, 0 );
+      View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
   
       if     ( TP == Tile_Pos.TOP__HALF         ) { v.SetTilePos( Tile_Pos.FULL ); break; }
@@ -2148,7 +2148,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if     ( TP == Tile_Pos.TOP__RITE_QTR     ) { v.SetTilePos( Tile_Pos.TOP__HALF ); break; }
@@ -2159,7 +2159,7 @@ public class Vis implements WindowFocusListener
     else {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if     ( TP == Tile_Pos.BOT__LEFT_QTR     ) { v.SetTilePos( Tile_Pos.LEFT_HALF ); break; }
@@ -2174,7 +2174,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if     ( TP == Tile_Pos.TOP__LEFT_QTR     ) { v.SetTilePos( Tile_Pos.TOP__HALF ); break; }
@@ -2185,7 +2185,7 @@ public class Vis implements WindowFocusListener
     else {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if     ( TP == Tile_Pos.BOT__RITE_QTR     ) { v.SetTilePos( Tile_Pos.RITE_HALF ); break; }
@@ -2200,7 +2200,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if     ( TP == Tile_Pos.BOT__RITE_QTR     ) { v.SetTilePos( Tile_Pos.BOT__HALF ); break; }
@@ -2211,7 +2211,7 @@ public class Vis implements WindowFocusListener
     else {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if     ( TP == Tile_Pos.TOP__LEFT_QTR     ) { v.SetTilePos( Tile_Pos.LEFT_HALF ); break; }
@@ -2226,7 +2226,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if     ( TP == Tile_Pos.BOT__LEFT_QTR     ) { v.SetTilePos( Tile_Pos.BOT__HALF ); break; }
@@ -2237,7 +2237,7 @@ public class Vis implements WindowFocusListener
     else {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if     ( TP == Tile_Pos.TOP__RITE_QTR     ) { v.SetTilePos( Tile_Pos.RITE_HALF ); break; }
@@ -2250,7 +2250,7 @@ public class Vis implements WindowFocusListener
   {
     for( int k=0; k<m_num_wins; k++ )
     {
-      View v = GetWinView( k, 0 );
+      View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
   
       if     ( TP == Tile_Pos.LEFT_CTR__QTR     ) { v.SetTilePos( Tile_Pos.LEFT_HALF ); break; }
@@ -2262,7 +2262,7 @@ public class Vis implements WindowFocusListener
   {
     for( int k=0; k<m_num_wins; k++ )
     {
-      View v = GetWinView( k, 0 );
+      View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
   
       if     ( TP == Tile_Pos.RITE_CTR__QTR     ) { v.SetTilePos( Tile_Pos.RITE_HALF ); break; }
@@ -2274,7 +2274,7 @@ public class Vis implements WindowFocusListener
   {
     for( int k=0; k<m_num_wins; k++ )
     {
-      View v = GetWinView( k, 0 );
+      View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
   
       if     ( TP == Tile_Pos.LEFT_QTR      ) { v.SetTilePos( Tile_Pos.LEFT_HALF ); break; }
@@ -2286,7 +2286,7 @@ public class Vis implements WindowFocusListener
   {
     for( int k=0; k<m_num_wins; k++ )
     {
-      View v = GetWinView( k, 0 );
+      View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
   
       if     ( TP == Tile_Pos.RITE_QTR      ) { v.SetTilePos( Tile_Pos.RITE_HALF ); break; }
@@ -2300,7 +2300,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if( TP == Tile_Pos.TOP__LEFT_CTR_8TH ) { v.SetTilePos( Tile_Pos.TOP__LEFT_QTR ); break; }
@@ -2309,7 +2309,7 @@ public class Vis implements WindowFocusListener
     else {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if( TP == Tile_Pos.BOT__LEFT_8TH ) { v.SetTilePos( Tile_Pos.LEFT_QTR ); break; }
@@ -2322,7 +2322,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if( TP == Tile_Pos.TOP__RITE_CTR_8TH ) { v.SetTilePos( Tile_Pos.TOP__RITE_QTR ); break; }
@@ -2331,7 +2331,7 @@ public class Vis implements WindowFocusListener
     else {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if( TP == Tile_Pos.BOT__RITE_8TH ) { v.SetTilePos( Tile_Pos.RITE_QTR ); break; }
@@ -2344,7 +2344,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if( TP == Tile_Pos.TOP__LEFT_8TH ) { v.SetTilePos( Tile_Pos.TOP__LEFT_QTR ); break; }
@@ -2353,7 +2353,7 @@ public class Vis implements WindowFocusListener
     else {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if( TP == Tile_Pos.BOT__LEFT_CTR_8TH ) { v.SetTilePos( Tile_Pos.LEFT_CTR__QTR ); break; }
@@ -2366,7 +2366,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if( TP == Tile_Pos.TOP__RITE_8TH ) { v.SetTilePos( Tile_Pos.TOP__RITE_QTR ); break; }
@@ -2375,7 +2375,7 @@ public class Vis implements WindowFocusListener
     else {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if( TP == Tile_Pos.BOT__RITE_CTR_8TH ) { v.SetTilePos( Tile_Pos.RITE_CTR__QTR ); break; }
@@ -2388,7 +2388,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if( TP == Tile_Pos.BOT__LEFT_CTR_8TH ) { v.SetTilePos( Tile_Pos.BOT__LEFT_QTR ); break; }
@@ -2397,7 +2397,7 @@ public class Vis implements WindowFocusListener
     else {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if( TP == Tile_Pos.TOP__LEFT_8TH ) { v.SetTilePos( Tile_Pos.LEFT_QTR ); break; }
@@ -2410,7 +2410,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if( TP == Tile_Pos.BOT__RITE_CTR_8TH ) { v.SetTilePos( Tile_Pos.BOT__RITE_QTR ); break; }
@@ -2419,7 +2419,7 @@ public class Vis implements WindowFocusListener
     else {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if( TP == Tile_Pos.TOP__RITE_8TH ) { v.SetTilePos( Tile_Pos.RITE_QTR ); break; }
@@ -2432,7 +2432,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if( TP == Tile_Pos.BOT__LEFT_8TH ) { v.SetTilePos( Tile_Pos.BOT__LEFT_QTR ); break; }
@@ -2441,7 +2441,7 @@ public class Vis implements WindowFocusListener
     else {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if( TP == Tile_Pos.TOP__LEFT_CTR_8TH ) { v.SetTilePos( Tile_Pos.LEFT_CTR__QTR ); break; }
@@ -2454,7 +2454,7 @@ public class Vis implements WindowFocusListener
     {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if( TP == Tile_Pos.BOT__RITE_8TH ) { v.SetTilePos( Tile_Pos.BOT__RITE_QTR ); break; }
@@ -2463,7 +2463,7 @@ public class Vis implements WindowFocusListener
     else {
       for( int k=0; k<m_num_wins; k++ )
       {
-        View v = GetWinView( k, 0 );
+        View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
   
         if( TP == Tile_Pos.TOP__RITE_CTR_8TH ) { v.SetTilePos( Tile_Pos.RITE_CTR__QTR ); break; }
@@ -2474,7 +2474,7 @@ public class Vis implements WindowFocusListener
   {
     for( int k=0; k<m_num_wins; k++ )
     {
-      View v = GetWinView( k, 0 );
+      View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
   
       if( TP == Tile_Pos.BOT__HALF ) return true;
@@ -2485,7 +2485,7 @@ public class Vis implements WindowFocusListener
   {
     for( int k=0; k<m_num_wins; k++ )
     {
-      View v = GetWinView( k, 0 );
+      View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
   
       if( TP == Tile_Pos.TOP__HALF ) return true;
@@ -2496,7 +2496,7 @@ public class Vis implements WindowFocusListener
   {
     for( int k=0; k<m_num_wins; k++ )
     {
-      View v = GetWinView( k, 0 );
+      View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
   
       if( TP == Tile_Pos.BOT__LEFT_QTR ) return true;
@@ -2507,7 +2507,7 @@ public class Vis implements WindowFocusListener
   {
     for( int k=0; k<m_num_wins; k++ )
     {
-      View v = GetWinView( k, 0 );
+      View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
   
       if( TP == Tile_Pos.TOP__LEFT_QTR ) return true;
@@ -2518,7 +2518,7 @@ public class Vis implements WindowFocusListener
   {
     for( int k=0; k<m_num_wins; k++ )
     {
-      View v = GetWinView( k, 0 );
+      View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
   
       if( TP == Tile_Pos.BOT__RITE_QTR ) return true;
@@ -2529,7 +2529,7 @@ public class Vis implements WindowFocusListener
   {
     for( int k=0; k<m_num_wins; k++ )
     {
-      View v = GetWinView( k, 0 );
+      View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
   
       if( TP == Tile_Pos.TOP__RITE_QTR ) return true;
@@ -2547,12 +2547,11 @@ public class Vis implements WindowFocusListener
     // Must be exactly 2 buffers to do diff:
     if( 2 == m_num_wins )
     {
-      View v0 = GetWinView( 0, 0 );
-      View v1 = GetWinView( 1, 0 );
+      View v0 = GetView_Win( 0 );
+      View v1 = GetView_Win( 1 );
       FileBuf fb0 = v0.m_fb;
       FileBuf fb1 = v1.m_fb;
  
-//Utils.Log( "fb0.m_isDir="+ fb0.m_isDir + ", fb1.m_isDir="+ fb1.m_isDir );
       // New code in progress:
       boolean ok = true;
       if( !fb0.m_isDir && fb1.m_isDir )
@@ -2653,7 +2652,7 @@ public class Vis implements WindowFocusListener
       {
         SetWinToBuffer( win_idx, file_index.val, false );
 
-        return GetWinView( win_idx, 0 );
+        return GetView_Win( win_idx );
       }
     }
     return null;
@@ -2882,18 +2881,11 @@ public class Vis implements WindowFocusListener
     }
     else {
       // Switch to a different buffer:
-      if( m_sb.toString().equals("b#") ) // :b#
-      {
-        if( BE_FILE == m_file_hist[ m_win ].get( 1 ) )
-        {
-          GoToBuffer( m_file_hist[ m_win ].get( 2 ) );
-        }
-        else GoToBuffer( m_file_hist[ m_win ].get( 1 ) );
-      }
-      else if( m_sb.toString().equals("bc") ) GoToCurrBuffer(); // :bc
-      else if( m_sb.toString().equals("be") ) BufferEditor();   // :be
-      else if( m_sb.toString().equals("bm") ) BufferMessage();  // :bm
-      else {                                                    // :b<number>
+      if     ( m_sb.toString().equals("b#") ) GoToPoundBuffer(); // :b#
+      else if( m_sb.toString().equals("bc") ) GoToCurrBuffer();  // :bc
+      else if( m_sb.toString().equals("be") ) GoToFileBuffer();  // :be
+      else if( m_sb.toString().equals("bm") ) GoToMsgBuffer();   // :bm
+      else {                                                     // :b<number>
         Ptr_Int buffer_num = new Ptr_Int( 0 );
         if( Utils.String_2_Int( m_sb.substring(1), buffer_num ) )
         {
@@ -2948,7 +2940,7 @@ public class Vis implements WindowFocusListener
     {
       m_file_hist[m_num_wins].copy( m_file_hist[m_win] );
  
-      View nv = GetWinView( m_num_wins, 0 );
+      View nv = GetView_Win( m_num_wins );
  
       nv.Set_Context( cv );
  
@@ -3019,7 +3011,7 @@ public class Vis implements WindowFocusListener
     {
       m_file_hist[m_num_wins].copy( m_file_hist[m_win] );
 
-      View nv = GetWinView( m_num_wins, 0 );
+      View nv = GetView_Win( m_num_wins );
 
       nv.Set_Context( cv );
 
@@ -3072,11 +3064,23 @@ public class Vis implements WindowFocusListener
   {
     GoToBuffer( CMD_FILE );
   }
+//void GoToFile()
+//{
+//  String fname = CV().GetFileName_UnderCursor();
+//
+//  if( null != fname ) GoToBuffer_Fname( fname );
+//}
   void GoToFile()
   {
     String fname = CV().GetFileName_UnderCursor();
 
-    if( null != fname ) GoToBuffer_Fname( fname );
+    if( null != fname )
+    {
+      Stop_BE_Full_Mode();
+
+      GoToBuffer_Fname( fname );
+      UpdateViews();
+    }
   }
   // Return true if went to buffer indicated by fname, else false
   boolean GoToBuffer_Fname( String fname )
@@ -3188,13 +3192,24 @@ public class Vis implements WindowFocusListener
             m_file_hist[ win_idx ].remove( k );
           }
         }
-        View pV_curr = GetWinView( win_idx, 0 );
-        View pV_prev = GetWinView( win_idx, 1 );
+        View pV_curr = GetView_WinPrev( win_idx, 0 );
+        View pV_prev = GetView_WinPrev( win_idx, 1 );
 
                      pV_curr.SetTilePos( pV_prev.m_tile_pos );
         if( update ) pV_curr.Update();
       }
     }
+  }
+
+  void GoToPoundBuffer()
+  {
+    Stop_BE_Full_Mode();
+
+    if( BE_FILE == m_file_hist[ m_win ].get( 1 ) )
+    {
+      GoToBuffer( m_file_hist[ m_win ].get( 2 ) );
+    }
+    else GoToBuffer( m_file_hist[ m_win ].get( 1 ) );
   }
 
   void GoToCurrBuffer()
@@ -3256,12 +3271,71 @@ public class Vis implements WindowFocusListener
       CV().Update();
     }
   }
-  void BufferEditor()
+  void GoToFileBuffer()
   {
-    GoToBuffer( BE_FILE );
+    FileBuf be = m_files.get( BE_FILE );
+
+    final int      LLL = be.LongestLineLen();
+    final View     cv  = CV();
+
+    if( cv.TilePos_FullWidth()
+     && LLL <= cv.WorkingCols() )
+    {
+      GoToBuffer( BE_FILE );
+    }
+    else {
+      Start_BE_Full_Mode( be );
+
+      CV().Update();
+    }
+  }
+  void Start_BE_Full_Mode( FileBuf be )
+  {
+    if( !m_BE_full_mode )
+    {
+      m_BE_full_mode        = true;
+      m_vd_saved.m_win      = m_win;
+      m_vd_saved.m_num_wins = m_num_wins;
+
+      for( int k=0; k<MAX_WINS; k++ )
+      {
+        m_vd_saved.m_views[k].copy( m_views[k] );
+        m_vd_saved.m_file_hist[k].copy( m_file_hist[k] );
+      }
+      // Reset view data:
+      m_win = 0;
+      m_num_wins = 1;
+      m_views[0].clear();
+      m_views[0].add( be.m_views.get( m_vd_saved.m_win ) );
+      m_views[0].add( be.m_views.get( m_vd_saved.m_win ) );
+      m_file_hist[0].clear();
+      m_file_hist[0].add( BE_FILE );
+      m_file_hist[0].add( BE_FILE );
+      m_views[0].get(0).SetTilePos( Tile_Pos.FULL );
+      m_views[0].get(1).SetTilePos( Tile_Pos.FULL );
+    }
+  }
+  void Stop_BE_Full_Mode()
+  {
+    if( m_BE_full_mode )
+    {
+      m_BE_full_mode = false;
+      m_win          = m_vd_saved.m_win;
+      m_num_wins     = m_vd_saved.m_num_wins;
+
+      for( int k=0; k<MAX_WINS; k++ )
+      {
+        m_views    [k].copy( m_vd_saved.m_views    [k] );
+        m_file_hist[k].copy( m_vd_saved.m_file_hist[k] );
+
+        m_vd_saved.m_views    [k].clear();
+        m_vd_saved.m_file_hist[k].clear();
+      }
+      UpdateViews();
+    }
   }
 
-  void BufferMessage()
+  void GoToMsgBuffer()
   {
     GoToBuffer( MSG_FILE );
   }
@@ -3276,7 +3350,7 @@ public class Vis implements WindowFocusListener
 
       for( int w=0; w<m_num_wins; w++ )
       {
-        View v = GetWinView( w, 0 );
+        View v = GetView_Win( w );
 
         if( cv.m_fb == v.m_fb )
         {
@@ -3346,7 +3420,7 @@ public class Vis implements WindowFocusListener
     else {
       for( int w=0; w<m_num_wins; w++ )
       {
-        GetWinView( w, 0 ).Update();
+        GetView_Win( w ).Update();
       }
     }
   }
@@ -3358,7 +3432,7 @@ public class Vis implements WindowFocusListener
     for( int w=0; w<m_num_wins; w++ )
     {
       // pV points to currently displayed view in window w:
-      final View rV = GetWinView( w, 0 );
+      final View rV = GetView_Win( w );
 
       if( rV.m_unsaved_changes != rV.m_fb.Changed() )
       {
@@ -3421,16 +3495,21 @@ public class Vis implements WindowFocusListener
 
   View CV()
   {
-    return GetWinView( m_win, 0 );
+    return GetView_WinPrev( m_win, 0 );
   }
   View PV()
   {
-    return GetWinView( m_win, 1 );
+    return GetView_WinPrev( m_win, 1 );
+  }
+  // Get view of window w, currently displayed file
+  View GetView_Win( final int w )
+  {
+    return m_views[w].get( m_file_hist[w].get( 0 ) );
   }
   // Get view of window w, filebuf'th previously displayed file
-  View GetWinView( final int w, final int filebuf )
+  View GetView_WinPrev( final int w, final int prev )
   {
-    return m_views[w].get( m_file_hist[w].get(filebuf) );
+    return m_views[w].get( m_file_hist[w].get( prev ) );
   }
   static final int KEY_REPEAT_PERIOD =  10; // ms between key repeats
   static final int KEY_REPEAT_DELAY  = 250; // ms to wait for first key repeat
@@ -3470,6 +3549,7 @@ public class Vis implements WindowFocusListener
   char               m_fast_char;
   boolean            m_diff_mode;
   boolean            m_run_mode;
+  boolean            m_BE_full_mode;
   Diff               m_diff;
   StringBuilder      m_sb        = new StringBuilder();
   StringBuilder      m_sb2       = new StringBuilder();
@@ -3484,6 +3564,23 @@ public class Vis implements WindowFocusListener
   String             m_cover_key = new String();
   ArrayList<Byte>    m_cover_buf = new ArrayList<>();
   Shell              m_shell;
+  ViewData           m_vd_saved = new ViewData();
+}
+
+class ViewData
+{
+  ViewData()
+  {
+    for( int w=0; w<Vis.MAX_WINS; w++ )
+    {
+      m_views[w]     = new ViewList();
+      m_file_hist[w] = new  IntList();
+    }
+  }
+  int        m_win       = 0;
+  int        m_num_wins  = 1;
+   IntList[] m_file_hist = new IntList[ Vis.MAX_WINS ];
+  ViewList[] m_views     = new ViewList[ Vis.MAX_WINS ];
 }
 
 // Run threads using lambdas.
