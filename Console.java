@@ -198,7 +198,7 @@ class Console extends JComponent
   }
   int GetFontSize()
   {
-    int font_size = 16;
+    int font_size = 17;
 
   //String os = System.getenv("OS");
   //

@@ -29,6 +29,10 @@ class IntList
   {
     return m_ints.size();
   }
+  void clear()
+  {
+    m_ints.clear();
+  }
   int get( int pos )
   {
     return m_ints.get( pos );

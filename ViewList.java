@@ -29,6 +29,10 @@ class ViewList
   {
     return m_views.size();
   }
+  void clear()
+  {
+    m_views.clear();
+  }
   View get( int pos )
   {
     return m_views.get( pos );
