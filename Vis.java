@@ -2015,6 +2015,8 @@ public class Vis implements WindowFocusListener
 
     if( m_num_wins <= 1 ) Exe_Colon_qa();
     else {
+      m_diff_mode = false;
+
       if( m_win < m_num_wins-1 )
       {
         Quit_ShiftDown();
@@ -2792,6 +2794,8 @@ public class Vis implements WindowFocusListener
   }
   void Exe_Colon_Cover()
   {
+    Exe_Colon_NoDiff();
+
     View V = CV();
     FileBuf fb = V.m_fb;
 
@@ -2911,6 +2915,8 @@ public class Vis implements WindowFocusListener
       CV().PrintCursor();
     }
     else {
+      Exe_Colon_NoDiff();
+
       Tile_Pos tp_old = CV().m_tile_pos;
 
       // Move view index at back to front of m_file_hist
@@ -2924,6 +2930,8 @@ public class Vis implements WindowFocusListener
   }
   void Exe_Colon_vsp()
   {
+    Exe_Colon_NoDiff();
+
     View cv = CV();
     final Tile_Pos cv_tp = cv.m_tile_pos;
  
@@ -2997,6 +3005,8 @@ public class Vis implements WindowFocusListener
   }
   void Exe_Colon_sp()
   {
+    Exe_Colon_NoDiff();
+
     View cv = CV();
     final Tile_Pos cv_tp = cv.m_tile_pos;
 
@@ -3123,6 +3133,8 @@ public class Vis implements WindowFocusListener
         CV().PrintCursor();
       }
       else {
+        Exe_Colon_NoDiff();
+
         m_file_hist[ m_win ].add( 0, buf_idx );
 
         // Remove subsequent buf_idx's from m_file_hist[ m_win ]:
@@ -3191,6 +3203,8 @@ public class Vis implements WindowFocusListener
 
   void GoToPoundBuffer()
   {
+    Exe_Colon_NoDiff();
+
     if( BE_FILE == m_file_hist[ m_win ].get( 1 ) )
     {
       GoToBuffer( m_file_hist[ m_win ].get( 2 ) );
@@ -3207,6 +3221,8 @@ public class Vis implements WindowFocusListener
      || CVI == HELP_FILE
      || CVI == SE_FILE )  
     {
+      Exe_Colon_NoDiff();
+
       GoToBuffer( m_file_hist[ m_win ].get( 1 ) );
     }
     else {
@@ -3245,6 +3261,8 @@ public class Vis implements WindowFocusListener
       CV().PrintCursor();
     }
     else {
+      Exe_Colon_NoDiff();
+
       View     pV_old = CV();
       Tile_Pos tp_old = pV_old.m_tile_pos;
 
