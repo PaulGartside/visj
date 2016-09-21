@@ -2815,7 +2815,7 @@ public class Vis implements WindowFocusListener
       // Read in covered file:
       fb.ReadArray( m_cover_buf );
 
-      // Keep V.m_unsaved_changes in sync with V.m_fb.Changed()
+      // Make sure all windows have proper change status in borders
       Update_Change_Statuses();
 
       // Reset view position:
@@ -3369,6 +3369,9 @@ public class Vis implements WindowFocusListener
       }
     }
   }
+  // This ensures that proper change status is displayed around each window:
+  // '+++' for unsaved changes, and
+  // '   ' for no unsaved changes
   boolean Update_Change_Statuses()
   {
     // Update buffer changed status around windows:

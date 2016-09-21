@@ -381,29 +381,7 @@ class View
     }
     m_console.Update();
   }
-//void PrintRunning()
-//{
-//  m_console.SetS( Cmd__Line_Row(), Col_Win_2_GL( 0 ), "--RUNNING--", Style.BANNER );
-//
-////final int WC = WorkingCols();
-////
-////// 11 = Strlen of "--RUNNING--"
-////for( int col=11; col<WC; col++ )
-////{
-////  m_console.Set( Cmd__Line_Row(), Col_Win_2_GL( col ), ' ', Style.NORMAL );
-////}
-//}
 
-//void UpdateLines( int st_line, int fn_line )
-//{
-//  // Figure out which lines are currently on screen:
-//  if( st_line < m_topLine ) st_line = m_topLine;
-//  if( BotLine() < fn_line ) fn_line = BotLine();
-//  if( fn_line < st_line ) return; // Nothing to update
-//
-//  // Re-draw lines:
-//  PrintLines( st_line, fn_line );
-//}
   void UpdateLines( int st_line, int fn_line )
   {
     // Limit st_line, fn_line to screen:
@@ -3186,6 +3164,9 @@ class View
   }
   void Do_y_v_block()
   {
+    final int old_v_st_line = v_st_line;
+    final int old_v_st_char = v_st_char;
+
     Swap_Visual_Block_If_Needed();
 
     for( int L=v_st_line; L<=v_fn_line; L++ )
@@ -3202,14 +3183,14 @@ class View
     }
     m_vis.m_paste_mode = Paste_Mode.BLOCK;
 
-    // Try to put cursor at (v_st_line, v_st_char), but
+    // Try to put cursor at (old_v_st_line, old_v_st_char), but
     // make sure the cursor is in bounds after the deletion:
     final int NUM_LINES = m_fb.NumLines();
-    int ncl = v_st_line;
+    int ncl = old_v_st_line;
     if( NUM_LINES <= ncl ) ncl = NUM_LINES-1;
     final int NLL = m_fb.LineLen( ncl );
     int ncc = 0;
-    if( 0<NLL ) ncc = NLL <= v_st_char ? NLL-1 : v_st_char;
+    if( 0<NLL ) ncc = NLL <= old_v_st_char ? NLL-1 : old_v_st_char;
 
     GoToCrsPos_NoWrite( ncl, ncc );
   }
@@ -3268,20 +3249,8 @@ class View
   }
   void Do_y_v_st_fn()
   {
-    m_vis.m_reg.clear();
+    Swap_Visual_St_Fn_If_Needed();
 
-    if( v_fn_line < v_st_line )
-    {
-      // Visual mode went backwards over multiple lines
-      int T = v_st_line; v_st_line = v_fn_line; v_fn_line = v_st_line;
-          T = v_st_char; v_st_char = v_fn_char; v_fn_char = v_st_char;
-    }
-    else if( v_fn_line == v_st_line
-          && v_fn_char <  v_st_char )
-    {
-      // Visual mode went backwards over one line
-      int T = v_st_char; v_st_char = v_fn_char; v_fn_char = v_st_char;
-    }
     for( int L=v_st_line; L<=v_fn_line; L++ )
     {
       Line nlr = new Line();
@@ -3669,17 +3638,17 @@ class View
       else if( 0<m_topLine ) m_topLine--;
     }
   }
-//void Swap_Visual_St_Fn_If_Needed()
-//{
-//  if( v_fn_line < v_st_line
-//   || (v_fn_line == v_st_line && v_fn_char < v_st_char) )
-//  {
-//    // Visual mode went backwards over multiple lines, or
-//    // Visual mode went backwards over one line
-//    int T = v_st_line; v_st_line = v_fn_line; v_fn_line = T;
-//        T = v_st_char; v_st_char = v_fn_char; v_fn_char = T;
-//  }
-//}
+  void Swap_Visual_St_Fn_If_Needed()
+  {
+    if( v_fn_line < v_st_line
+     || (v_fn_line == v_st_line && v_fn_char < v_st_char) )
+    {
+      // Visual mode went backwards over multiple lines, or
+      // Visual mode went backwards over one line
+      int T = v_st_line; v_st_line = v_fn_line; v_fn_line = T;
+          T = v_st_char; v_st_char = v_fn_char; v_fn_char = T;
+    }
+  }
   void Swap_Visual_Block_If_Needed()
   {
     if( v_fn_line < v_st_line )

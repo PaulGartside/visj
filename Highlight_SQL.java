@@ -405,31 +405,39 @@ class Highlight_SQL extends Highlight_Base
   }
   HiKeyVal[] m_HiPairs =
   {
+    new HiKeyVal( "PRAGMA", Highlight_Type.DEFINE ),
+
+    new HiKeyVal( "NULL", Highlight_Type.CONST ),
+
     new HiKeyVal( "AUTOINCREMENT", Highlight_Type.CONTROL ),
+    new HiKeyVal( "BEGIN"        , Highlight_Type.CONTROL ),
     new HiKeyVal( "CASCADE"      , Highlight_Type.CONTROL ),
     new HiKeyVal( "CHECK"        , Highlight_Type.CONTROL ),
+    new HiKeyVal( "COMMIT"       , Highlight_Type.CONTROL ),
     new HiKeyVal( "CREATE"       , Highlight_Type.CONTROL ),
     new HiKeyVal( "DEFAULT"      , Highlight_Type.CONTROL ),
     new HiKeyVal( "DELETE"       , Highlight_Type.CONTROL ),
     new HiKeyVal( "DROP"         , Highlight_Type.CONTROL ),
     new HiKeyVal( "EXISTS"       , Highlight_Type.CONTROL ),
+    new HiKeyVal( "FROM"         , Highlight_Type.CONTROL ),
     new HiKeyVal( "IF"           , Highlight_Type.CONTROL ),
     new HiKeyVal( "INSERT"       , Highlight_Type.CONTROL ),
     new HiKeyVal( "INTO"         , Highlight_Type.CONTROL ),
     new HiKeyVal( "NOT"          , Highlight_Type.CONTROL ),
     new HiKeyVal( "ON"           , Highlight_Type.CONTROL ),
+    new HiKeyVal( "TRANSACTION"  , Highlight_Type.CONTROL ),
     new HiKeyVal( "UPDATE"       , Highlight_Type.CONTROL ),
     new HiKeyVal( "VALUES"       , Highlight_Type.CONTROL ),
 
     new HiKeyVal( "FOREIGN"   , Highlight_Type.VARTYPE ),
     new HiKeyVal( "KEY"       , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "BOOL"      , Highlight_Type.VARTYPE ),
     new HiKeyVal( "INTEGER"   , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "NUMERIC"   , Highlight_Type.VARTYPE ),
     new HiKeyVal( "PRIMARY"   , Highlight_Type.VARTYPE ),
     new HiKeyVal( "REFERENCES", Highlight_Type.VARTYPE ),
     new HiKeyVal( "TABLE"     , Highlight_Type.VARTYPE ),
     new HiKeyVal( "TEXT"      , Highlight_Type.VARTYPE ),
-
-    new HiKeyVal( "NULL", Highlight_Type.CONST ),
   };
 
   Hi_State m_state = Hi_State.In_None;

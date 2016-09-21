@@ -716,7 +716,7 @@ class Diff
          && SAME_FNL_S < ca.fnl_s()
          && SAME_FNL_L < ca.fnl_l() )
         {
-          // Only one new CompArea after same:
+          // Only one new DiffArea after same:
           DiffArea ca1 = new DiffArea( SAME_FNL_S, ca.fnl_s()-SAME_FNL_S
                                      , SAME_FNL_L, ca.fnl_l()-SAME_FNL_L );
           compList.push( ca1 );
@@ -725,7 +725,7 @@ class Diff
               && ca.ln_s < same.m_ln_s
               && ca.ln_l < same.m_ln_l )
         {
-          // Only one new CompArea before same:
+          // Only one new DiffArea before same:
           DiffArea ca1 = new DiffArea( ca.ln_s, same.m_ln_s-ca.ln_s
                                      , ca.ln_l, same.m_ln_l-ca.ln_l );
           compList.push( ca1 );
@@ -733,7 +733,7 @@ class Diff
         else if( ca.ln_s < same.m_ln_s && SAME_FNL_S < ca.fnl_s()
               && ca.ln_l < same.m_ln_l && SAME_FNL_L < ca.fnl_l() )
         {
-          // Two new CompArea's, one before same, and one after same:
+          // Two new DiffArea's, one before same, and one after same:
           DiffArea ca1 = new DiffArea( ca.ln_s, same.m_ln_s-ca.ln_s
                                      , ca.ln_l, same.m_ln_l-ca.ln_l );
           DiffArea ca2 = new DiffArea( SAME_FNL_S, ca.fnl_s()-SAME_FNL_S
@@ -854,7 +854,7 @@ class Diff
 
       if( 0<nlines_s_da || 0<nlines_l_da )
       {
-        // DiffArea at beginning of CompArea:
+        // DiffArea at beginning of DiffArea:
         DiffArea da = new DiffArea( CA.ln_s, nlines_s_da, CA.ln_l, nlines_l_da );
         m_diffList.add( da );
       }
@@ -885,7 +885,7 @@ class Diff
         m_diffList.add( da );
       }
     }
-    else // No SameArea, so whole CompArea is a DiffArea:
+    else // No SameArea, so whole DiffArea is a DiffArea:
     {
       DiffArea da = new DiffArea( CA.ln_s, nLines_S_CA, CA.ln_l, nLines_L_CA );
       m_diffList.add(da );
@@ -957,7 +957,7 @@ class Diff
 
   void Popu_DI_List_NoSameArea()
   {
-    // Should only be one DiffArea, which is the whole CompArea:
+    // Should only be one DiffArea, which is the whole DiffArea:
     final int DLL = m_diffList.size();
     Utils.Assert( DLL==1, "DLL = "+ DLL +", Expected 1");
 
@@ -966,7 +966,7 @@ class Diff
 
   void Popu_DI_List_NoDiffArea()
   {
-    // Should only be one SameArea, which is the whole CompArea:
+    // Should only be one SameArea, which is the whole DiffArea:
     final int SLL = m_sameList.size();
     Utils.Assert( SLL==1, "SLL = "+ SLL +", Expected 1");
 
@@ -1129,7 +1129,7 @@ class Diff
          && siml.ln_s+1 < ca.fnl_s()
          && siml.ln_l+1 < ca.fnl_l() )
         {
-          // Only one new CompArea after siml:
+          // Only one new DiffArea after siml:
           DiffArea ca1 = new DiffArea( siml.ln_s+1, ca.fnl_s()-siml.ln_s-1
                                      , siml.ln_l+1, ca.fnl_l()-siml.ln_l-1 );
           compList.push( ca1 );
@@ -1138,7 +1138,7 @@ class Diff
               && ca.ln_s < siml.ln_s
               && ca.ln_l < siml.ln_l )
         {
-          // Only one new CompArea before siml:
+          // Only one new DiffArea before siml:
           DiffArea ca1 = new DiffArea( ca.ln_s, siml.ln_s-ca.ln_s
                                      , ca.ln_l, siml.ln_l-ca.ln_l );
           compList.push( ca1 );
@@ -1146,7 +1146,7 @@ class Diff
         else if( ca.ln_s < siml.ln_s && siml.ln_s+1 < ca.fnl_s()
               && ca.ln_l < siml.ln_l && siml.ln_l+1 < ca.fnl_l() )
         {
-          // Two new CompArea's, one before siml, and one after siml:
+          // Two new DiffArea's, one before siml, and one after siml:
           DiffArea ca1 = new DiffArea( ca.ln_s, siml.ln_s-ca.ln_s
                                      , ca.ln_l, siml.ln_l-ca.ln_l );
           DiffArea ca2 = new DiffArea( siml.ln_s+1, ca.fnl_s()-siml.ln_s-1
@@ -1260,9 +1260,9 @@ class Diff
     }
     if( 0==most_same.nbytes )
     {
-      // This if() block ensures that each line in the short CompArea is
-      // matched to a line in the long CompArea.  Each line in the short
-      // CompArea must be matched to a line in the long CompArea or else
+      // This if() block ensures that each line in the short DiffArea is
+      // matched to a line in the long DiffArea.  Each line in the short
+      // DiffArea must be matched to a line in the long DiffArea or else
       // SimiList_2_DI_Lists wont work right.
       most_same.ln_s   = ca.ln_s;
       most_same.ln_l   = ca.ln_l;
