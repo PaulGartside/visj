@@ -133,20 +133,20 @@ class Highlight_XML extends Highlight_Base
           m_p++; // Move past '-'
           m_state = Hi_State.Comment;
         }
-        else if( c0=='\'')
-        {
-          m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
-          m_p++; // Move past '\''
-          m_state = Hi_State.In_SingleQuote;
-          m_qtXSt = Hi_State.In_None;
-        }
-        else if( c0=='\"')
-        {
-          m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
-          m_p++; // Move past '\"'
-          m_state = Hi_State.In_DoubleQuote;
-          m_qtXSt = Hi_State.In_None;
-        }
+      //else if( c0=='\'')
+      //{
+      //  m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+      //  m_p++; // Move past '\''
+      //  m_state = Hi_State.In_SingleQuote;
+      //  m_qtXSt = Hi_State.In_None;
+      //}
+      //else if( c0=='\"')
+      //{
+      //  m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+      //  m_p++; // Move past '\"'
+      //  m_state = Hi_State.In_DoubleQuote;
+      //  m_qtXSt = Hi_State.In_None;
+      //}
         else if( !Utils.IsIdent( c1 )
               && Character.isDigit( c0 ) )
         {

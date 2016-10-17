@@ -125,6 +125,7 @@ class FileBuf
           || Find_File_Type_CPP ()
           || Find_File_Type_IDL ()
           || Find_File_Type_Java()
+          || Find_File_Type_Make()
           || Find_File_Type_SQL ()
           || Find_File_Type_STL ()
           || Find_File_Type_XML () )
@@ -206,6 +207,27 @@ class FileBuf
     {
       m_file_type = File_Type.JAVA;
       m_Hi = new Highlight_Java( this );
+      return true;
+    }
+    return false;
+  }
+  boolean Find_File_Type_Make()
+  {
+    if( m_fname.endsWith(".Make"    )
+     || m_fname.endsWith(".make"    )
+     || m_fname.endsWith(".Make.new")
+     || m_fname.endsWith(".make.new")
+     || m_fname.endsWith(".Make.old")
+     || m_fname.endsWith(".make.old")
+     || m_fname.endsWith("Makefile")
+     || m_fname.endsWith("makefile")
+     || m_fname.endsWith("Makefile.new")
+     || m_fname.endsWith("makefile.new")
+     || m_fname.endsWith("Makefile.old")
+     || m_fname.endsWith("makefile.old") )
+    {
+      m_file_type = File_Type.MAKE;
+      m_Hi = new Highlight_Make( this );
       return true;
     }
     return false;
@@ -334,6 +356,11 @@ class FileBuf
         m_file_type = File_Type.JAVA;
         m_Hi = new Highlight_Java( this );
       }
+      else if( syn.equals("make") )
+      {
+        m_file_type = File_Type.MAKE;
+        m_Hi = new Highlight_Make( this );
+      }
       else if( syn.equals("sql") )
       {
         m_file_type = File_Type.SQL;
@@ -443,7 +470,7 @@ class FileBuf
     {
       View v = m_views.get( w );
 
-      v.Clear_Context();
+      v.Check_Context();
     }
     return ok;
   }
@@ -486,6 +513,8 @@ class FileBuf
 
       if( Files.isDirectory( path ) )
       {
+        fname = Check_4_SymbolicLink( fname, path );
+
         if( false == fname.endsWith( Utils.DIR_DELIM_STR ) )
         {
           fname += Utils.DIR_DELIM_STR;
@@ -493,6 +522,8 @@ class FileBuf
         dirs.add( fname );
       }
       else {
+        fname = Check_4_SymbolicLink( fname, path );
+
         files.add( fname );
       }
     }
@@ -503,6 +534,25 @@ class FileBuf
 
     for( String d : dirs  ) PushLine( d );
     for( String f : files ) PushLine( f );
+  }
+  String Check_4_SymbolicLink( String fname, Path path )
+  {
+    try {
+      if( Files.isSymbolicLink( path ) )
+      {
+        StringBuilder fname_sb = new StringBuilder( fname );
+        fname_sb.append(" -> ");
+        try {
+          Path real = path.toRealPath();
+          fname_sb.append( real.toString() );
+        }
+        catch( Exception e ) {}
+        fname = fname_sb.toString();
+      }
+    }
+    catch( Exception e ) {}
+
+    return fname;
   }
   // File is read in one byte at a time:
   void ReadExistingFile() throws FileNotFoundException, IOException
@@ -1068,8 +1118,6 @@ class FileBuf
 
     if( SavingHist() ) m_history.Save_RemoveChar( l_num, c_num, C );
 
-  //m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
-
     return C;
   }
   boolean SavingHist()
@@ -1112,8 +1160,6 @@ class FileBuf
 
     if( SavingHist() ) m_history.Save_RemoveLine( l_num, lr );
 
-  //m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
-
     RemovedLine_Adjust_Views_topLines( l_num );
 
     return lr;
@@ -1134,8 +1180,6 @@ class FileBuf
 
     if( SavingHist() ) m_history.Save_InsertLine( l_num );
 
-  //m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
-
     InsertLine_Adjust_Views_topLines( l_num );
   }
   // Insert a new empty line on line l_num.
@@ -1152,8 +1196,6 @@ class FileBuf
     ChangedLineLen( l_num );
 
     if( SavingHist() ) m_history.Save_InsertLine( l_num );
-
-  //m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
 
     InsertLine_Adjust_Views_topLines( l_num );
   }
@@ -1174,9 +1216,6 @@ class FileBuf
     ChangedLineLen( l_num );
 
     if( SavingHist() ) m_history.Save_InsertChar( l_num, c_num );
-    // Add to the m_updates list:
-
-  //m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
   }
 
   // Append line to end of line l_num
@@ -1202,7 +1241,6 @@ class FileBuf
         m_history.Save_InsertChar( l_num, first_insert + k );
       }
     }
-  //m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
   }
   void AppendLineToLine( final int l_num, final String s )
   {
@@ -1240,8 +1278,6 @@ class FileBuf
     ChangedLineLen( l_num );
 
     if( SavingHist() ) m_history.Save_InsertChar( l_num, lr.length()-1 );
-
-  //m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
   }
   // Add byte C to last line.  If no lines in file, add a line.
   //

@@ -67,99 +67,94 @@ class Highlight_Dir extends Highlight_Base
     }
   }
 
-//void Hi_In_None()
-//{
-//  for( ; m_l<m_fb.NumLines(); m_l++ )
-//  {
-//          Line lp = m_fb.GetLine( m_l );
-//    final int  LL = lp.length();
-//
-//    if( 0<LL )
-//    {
-//      final char c_end = m_fb.Get( m_l, LL-1 );
-//
-//      if( c_end == Utils.DIR_DELIM )
-//      {
-//        for( int k=0; k<LL-1; k++ )
-//        {
-//          final char C = m_fb.Get( m_l, k );
-//          if( C == '.' )
-//            m_fb.SetSyntaxStyle( m_l, k, Highlight_Type.CONST.val );
-//          else
-//            m_fb.SetSyntaxStyle( m_l, k, Highlight_Type.VARTYPE.val );
-//        }
-//        m_fb.SetSyntaxStyle( m_l, LL-1, Highlight_Type.CONTROL.val );
-//      }
-//      else if( 1<LL )
-//      {
-//        final char c0    = m_fb.Get( m_l, 0 );
-//        final char c1 = m_fb.Get( m_l, 1 );
-//
-//        if( c0=='.' && c1=='.' )
-//        {
-//          m_fb.SetSyntaxStyle( m_l, 0, Highlight_Type.CONST.val );
-//          m_fb.SetSyntaxStyle( m_l, 1, Highlight_Type.CONST.val );
-//        }
-//        else {
-//          for( int k=0; k<LL; k++ )
-//          {
-//            final char C = m_fb.Get( m_l, k );
-//            if( C == '.' )
-//              m_fb.SetSyntaxStyle( m_l, k, Highlight_Type.VARTYPE.val );
-//          }
-//        }
-//      }
-//    }
-//    m_p = 0;
-//  }
-//  m_state = Hi_State.Done;
-//}
   void Hi_In_None()
   {
     for( ; m_l<m_fb.NumLines(); m_l++ )
     {
-            Line lp = m_fb.GetLine( m_l );
+      final Line lp = m_fb.GetLine( m_l );
       final int  LL = lp.length();
  
       if( 0<LL )
       {
         final char c_end = m_fb.Get( m_l, LL-1 );
 
-        if( c_end == Utils.DIR_DELIM )
-        {
-          for( int k=0; k<LL-1; k++ )
-          {
-            final char C = m_fb.Get( m_l, k );
-            if( C == '.' )
-              m_fb.SetSyntaxStyle( m_l, k, Highlight_Type.VARTYPE.val );
-            else
-              m_fb.SetSyntaxStyle( m_l, k, Highlight_Type.CONTROL.val );
-          }
-          m_fb.SetSyntaxStyle( m_l, LL-1, Highlight_Type.CONST.val );
-        }
-        else if( 1<LL )
-        {
-          final char c0    = m_fb.Get( m_l, 0 );
-          final char c1 = m_fb.Get( m_l, 1 );
+        final char C0 =        m_fb.Get( m_l, 0 );
+        final char C1 = 1<LL ? m_fb.Get( m_l, 1 ) : 0;
 
-          if( c0=='.' && c1=='.' )
-          {
-            m_fb.SetSyntaxStyle( m_l, 0, Highlight_Type.DEFINE.val );
-            m_fb.SetSyntaxStyle( m_l, 1, Highlight_Type.DEFINE.val );
-          }
-          else {
-            for( int k=0; k<LL; k++ )
-            {
-              final char C = m_fb.Get( m_l, k );
-              if( C == '.' )
-                m_fb.SetSyntaxStyle( m_l, k, Highlight_Type.VARTYPE.val );
-            }
-          }
+        if( 2==LL && C0=='.' && C1=='.' )
+        {
+          m_fb.SetSyntaxStyle( m_l, 0, Highlight_Type.DEFINE.val );
+          m_fb.SetSyntaxStyle( m_l, 1, Highlight_Type.DEFINE.val );
+        }
+        else if( c_end == Utils.DIR_DELIM )
+        {
+          Hi_In_None_Dir( m_l, LL );
+        }
+        else  {
+          Hi_In_None_File( m_l, LL );
         }
       }
       m_p = 0;
     }
     m_state = Hi_State.Done;
+  }
+
+  void Hi_In_None_Dir( final int l, final int LL )
+  {
+    boolean found_sym_link = false;
+
+    for( int k=0; k<LL; k++ )
+    {
+      final char C0 = 0<k ? m_fb.Get( l, k-1 ) : 0;
+      final char C1 =       m_fb.Get( l, k );
+
+      if( C1 == '.' )
+      {
+        m_fb.SetSyntaxStyle( l, k, Highlight_Type.VARTYPE.val );
+      }
+      else if( C0 == '-' && C1 == '>' )
+      {
+        found_sym_link = true;
+        // -> means symbolic link
+        m_fb.SetSyntaxStyle( l, k-1, Highlight_Type.DEFINE.val );
+        m_fb.SetSyntaxStyle( l, k  , Highlight_Type.DEFINE.val );
+      }
+      else if( found_sym_link && C1 == Utils.DIR_DELIM )
+      {
+        m_fb.SetSyntaxStyle( l, k, Highlight_Type.CONST.val );
+      }
+      else {
+        m_fb.SetSyntaxStyle( l, k, Highlight_Type.CONTROL.val );
+      }
+    }
+    m_fb.SetSyntaxStyle( l, LL-1, Highlight_Type.CONST.val );
+  }
+
+  void Hi_In_None_File( final int l, final int LL )
+  {
+    boolean found_sym_link = false;
+
+    for( int k=0; k<LL; k++ )
+    {
+      final char C0 = 0<k ? m_fb.Get( l, k-1 ) : 0;
+      final char C1 =       m_fb.Get( l, k );
+
+      if( C1 == '.' )
+      {
+        m_fb.SetSyntaxStyle( l, k, Highlight_Type.VARTYPE.val );
+      }
+      else if( C0 == '-' && C1 == '>' )
+      {
+        found_sym_link = true;
+        // -> means symbolic link
+        m_fb.SetSyntaxStyle( l, k-1, Highlight_Type.DEFINE.val );
+        m_fb.SetSyntaxStyle( l, k  , Highlight_Type.DEFINE.val );
+      }
+      else if( found_sym_link && C1 == Utils.DIR_DELIM )
+      {
+        m_fb.SetSyntaxStyle( l, k, Highlight_Type.CONST.val );
+      }
+    }
   }
 
   Hi_State m_state = Hi_State.In_None;

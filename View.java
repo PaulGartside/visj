@@ -44,6 +44,45 @@ class View
   int RightChar()   { return m_leftChar + WorkingCols()-1; }
   int BotLine()     { return m_topLine  + WorkingRows()-1; }
   int TopLine()     { return m_topLine; }
+  int LeftChar()    { return m_leftChar; }
+  int CrsRow()      { return m_crsRow; }
+  int CrsCol()      { return m_crsCol; }
+
+  void SetTopLine ( final int val )
+  {
+    m_topLine = val;
+  }
+  void SetLeftChar( final int val )
+  {
+    m_leftChar = val;
+  }
+  void SetCrsRow( int val )
+  {
+    final int NUM_LINES = m_fb.NumLines();
+
+    // Do some limit checks to make sure we dont crash on the next Update
+    if( 0 < NUM_LINES )
+    {
+      if( WorkingRows() < val )
+      {
+        val = WorkingRows()-1;
+      }
+      if( NUM_LINES < val )
+      {
+        val = NUM_LINES-1;
+      }
+      if( NUM_LINES <= m_topLine + val )
+      {
+        m_topLine = NUM_LINES - val - 1;
+      }
+      m_crsRow = val;
+    }
+  }
+  void SetCrsCol( final int val )
+  {
+    m_crsCol = val;
+  }
+
   // Translates zero based working view row to zero based global row
   int Row_Win_2_GL( final int win_row )
   {
@@ -161,6 +200,24 @@ class View
       PrintCmdLine();
 
       PrintCursor(); // Does m_console.Update()
+    }
+  }
+  void Update_DoNot_PrintCursor()
+  {
+    if( !m_console.m_get_from_dot_buf )
+    {
+      m_fb.Find_Styles( m_topLine + WorkingRows() );
+      m_fb.ClearStars();
+      m_fb.Find_Stars();
+
+      RepositionView();
+      Print_Borders();
+      PrintWorkingView();
+      PrintStsLine();
+      PrintFileLine();
+      PrintCmdLine();
+
+      m_console.Update();
     }
   }
   void RepositionView()
@@ -382,44 +439,44 @@ class View
     m_console.Update();
   }
 
-  void UpdateLines( int st_line, int fn_line )
-  {
-    // Limit st_line, fn_line to screen:
-    st_line = Math.max( st_line, m_topLine );
-    fn_line = Math.min( fn_line, BotLine() );
-
-    if( st_line <= fn_line )
-    {
-      // Re-draw lines:
-      PrintLines( st_line, fn_line );
-    }
-  }
-  private void PrintLines( final int st_line, final int fn_line )
-  {
-    final int NUM_LINES = m_fb.NumLines();
-    final int WC        = WorkingCols();
-
-    for( int k=st_line; k<NUM_LINES && k<=fn_line; k++ )
-    {
-      // Dont allow line wrap:
-      final int LL = m_fb.LineLen( k );
-      final int G_ROW = Line_2_GL( k );
-
-      int col=0;
-      for( int i=m_leftChar; i<LL && col<WC; i++, col++ )
-      {
-        final Style s = Get_Style( k, i );
-        final char  C = m_fb.Get( k, i );
-
-        PrintWorkingView_Set( LL, G_ROW, col, i, C, s );
-      }
-      for( ; col<WC; col++ )
-      {
-        m_console.Set( G_ROW, Col_Win_2_GL( col ), ' ', Style.EMPTY );
-      }
-    }
-    m_console.Update();
-  }
+//void UpdateLines( int st_line, int fn_line )
+//{
+//  // Limit st_line, fn_line to screen:
+//  st_line = Math.max( st_line, m_topLine );
+//  fn_line = Math.min( fn_line, BotLine() );
+//
+//  if( st_line <= fn_line )
+//  {
+//    // Re-draw lines:
+//    PrintLines( st_line, fn_line );
+//  }
+//}
+//private void PrintLines( final int st_line, final int fn_line )
+//{
+//  final int NUM_LINES = m_fb.NumLines();
+//  final int WC        = WorkingCols();
+//
+//  for( int k=st_line; k<NUM_LINES && k<=fn_line; k++ )
+//  {
+//    // Dont allow line wrap:
+//    final int LL = m_fb.LineLen( k );
+//    final int G_ROW = Line_2_GL( k );
+//
+//    int col=0;
+//    for( int i=m_leftChar; i<LL && col<WC; i++, col++ )
+//    {
+//      final Style s = Get_Style( k, i );
+//      final char  C = m_fb.Get( k, i );
+//
+//      PrintWorkingView_Set( LL, G_ROW, col, i, C, s );
+//    }
+//    for( ; col<WC; col++ )
+//    {
+//      m_console.Set( G_ROW, Col_Win_2_GL( col ), ' ', Style.EMPTY );
+//    }
+//  }
+//  m_console.Update();
+//}
 
   void GoDown( final int num )
   {
@@ -1256,6 +1313,13 @@ class View
       m_num_cols++;
     }
   }
+
+  void GoToFile()
+  {
+    String fname = GetFileName_UnderCursor();
+
+    if( null != fname ) m_vis.GoToBuffer_Fname( fname );
+  }
   String GetFileName_UnderCursor()
   {
     StringBuilder fname = null;
@@ -1265,8 +1329,8 @@ class View
 
     if( 0<LL ) {
       MoveInBounds();
-      final int CC = CrsChar();
-      char C = m_fb.Get( CL, CC );
+      final int CP = CrsChar();
+      char C = m_fb.Get( CL, CP );
 
       if( Utils.IsFileNameChar( C ) )
       {
@@ -1275,7 +1339,7 @@ class View
         fname.append( C );
 
         // Search backwards, until white space is found:
-        for( int k=CC-1; -1<k; k-- )
+        for( int k=CP-1; -1<k; k-- )
         {
           C = m_fb.Get( CL, k );
 
@@ -1283,7 +1347,7 @@ class View
           else fname.insert( 0, C );
         }
         // Search forwards, until white space is found:
-        for( int k=CC+1; k<LL; k++ )
+        for( int k=CP+1; k<LL; k++ )
         {
           C = m_fb.Get( CL, k );
 
@@ -1553,15 +1617,16 @@ class View
   void InsertBackspace()
   {
     // If no lines in buffer, no backspacing to be done
-    if( 0==m_fb.NumLines() ) return;
+    if( 0<m_fb.NumLines() )
+    {
+      final int OCL = CrsLine();  // Old cursor line
 
-    final int OCL = CrsLine();  // Old cursor line
+      final int OCP = CrsChar();            // Old cursor position
+      final int OLL = m_fb.LineLen( OCL );  // Old line length
 
-    final int OCP = CrsChar();            // Old cursor position
-    final int OLL = m_fb.LineLen( OCL );  // Old line length
-
-    if( 0<OCP ) InsertBackspace_RmC ( OCL, OCP );
-    else        InsertBackspace_RmNL( OCL );
+      if( 0<OCP ) InsertBackspace_RmC ( OCL, OCP );
+      else        InsertBackspace_RmNL( OCL );
+    }
   }
   void InsertAddChar( final char C )
   {
@@ -1924,7 +1989,7 @@ class View
     final int OCL = CrsLine(); // Old cursor line
 
     // Can only delete one of the user files out of buffer editor
-    if( m_vis.CMD_FILE < OCL )
+    if( m_vis.SHELL_FILE < OCL )
     {
       Line lr = m_fb.GetLine( OCL );
 
@@ -1968,21 +2033,28 @@ class View
   // Else return 1.
   int Do_dw()
   {
-    int st_line = CrsLine();
-    int st_char = CrsChar();
+    final int NUM_LINES = m_fb.NumLines();
 
-    final int LL = m_fb.LineLen( st_line );
-
-    // If past end of line, nothing to do
-    if( st_char < LL )
+    if( 0< NUM_LINES )
     {
-      CrsPos ncp = Do_dw_get_fn( st_line, st_char );
+      final int st_line = CrsLine();
+      final int st_char = CrsChar();
 
-      if( null != ncp )
+      final int LL = m_fb.LineLen( st_line );
+
+      // If past end of line, nothing to do
+      if( st_char < LL )
       {
-        Do_x_range( st_line, st_char, ncp.crsLine, ncp.crsChar );
-        boolean deleted_last_char = ncp.crsChar == LL-1;
-        return deleted_last_char ? 2 : 1;
+        CrsPos ncp = Do_dw_get_fn( st_line, st_char );
+
+        if( null != ncp )
+        {
+          Do_x_range( st_line, st_char, ncp.crsLine, ncp.crsChar );
+
+          boolean deleted_last_char = ncp.crsChar == LL-1;
+
+          return deleted_last_char ? 2 : 1;
+        }
       }
     }
     return 0;
@@ -1992,9 +2064,8 @@ class View
     final int  LL = m_fb.LineLen( st_line );
     final char C  = m_fb.Get( st_line, st_char );
 
-    if( Utils.IsSpace( C ) // On white space
-     || ( st_char < LL-1   // On non-white space before white space
-     //&& Utils.NotSpace( C )
+    if( Utils.IsSpace( C )         // On white space
+     || ( st_char < Utils.LLM1(LL) // On non-white space before white space
        && Utils.IsSpace( m_fb.Get( st_line, st_char+1 ) ) ) )
     {
       // w:
@@ -2368,16 +2439,7 @@ class View
       Do_x();
       Do_i();
     }
-    else if( EOL < CP )
-    {
-      // Extend line out to where cursor is:
-      for( int k=LL; k<CP; k++ )
-      {
-        m_fb.PushChar( CL, ' ' );
-      }
-      Do_a();
-    }
-    else // CP == EOL
+    else // EOL <= CP
     {
       Do_x();
       Do_a();
@@ -2405,40 +2467,14 @@ class View
       m_vis.m_paste_mode = Paste_Mode.LINE;
     }
   }
-//void Do_yw()
-//{
-//  // If there is nothing to 'yw', just return:
-//  if( 0<m_fb.NumLines() )
-//  {
-//    int st_line = CrsLine();
-//    int st_char = CrsChar();
-//
-//    // Determine fn_line, fn_char:
-//    Ptr_Int p_fn_line = new Ptr_Int( 0 );
-//    Ptr_Int p_fn_char = new Ptr_Int( 0 );
-//
-//    Do_dw_get_fn( p_fn_line, p_fn_char );
-//    if( p_fn_line.val == st_line && p_fn_char.val <= st_char ) return;
-//
-//    m_vis.m_reg.clear();
-//    Line l = new Line();
-//
-//    // st_line and fn_line should be the same
-//    for( int k=st_char; k<=p_fn_char.val; k++ )
-//    {
-//      l.append_c( m_fb.Get( st_line, k ) );
-//    }
-//    m_vis.m_reg.add( l );
-//    m_vis.m_paste_mode = Paste_Mode.ST_FN;
-//  }
-//}
+
   void Do_yw()
   {
     // If there is nothing to 'yw', just return:
     if( 0<m_fb.NumLines() )
     {
-      int st_line = CrsLine();
-      int st_char = CrsChar();
+      final int st_line = CrsLine();
+      final int st_char = CrsChar();
 
       // Determine yank up to position:
       CrsPos ncp = Do_dw_get_fn( st_line, st_char );
@@ -2809,6 +2845,7 @@ class View
         GoToCrsPos_Write( ncp.crsLine, ncp.crsChar );
       }
       else {
+        // Pattern not found, so put cursor back in view:
         PrintCursor();
       }
     }
@@ -2874,16 +2911,19 @@ class View
   // Go to previous pattern
   void Do_N()
   {
-    final int NUM_LINES = m_fb.NumLines();
-
-    if( NUM_LINES == 0 ) return;
-
-    // Next cursor position
-    CrsPos ncp = Do_N_FindPrevPattern();
-
-    if( null != ncp )
+    if( 0 < m_fb.NumLines() )
     {
-      GoToCrsPos_Write( ncp.crsLine, ncp.crsChar );
+      // Next cursor position
+      CrsPos ncp = Do_N_FindPrevPattern();
+
+      if( null != ncp )
+      {
+        GoToCrsPos_Write( ncp.crsLine, ncp.crsChar );
+      }
+      else {
+        // Pattern not found, so put cursor back in view:
+        PrintCursor();
+      }
     }
   }
   CrsPos Do_N_FindPrevPattern()
@@ -3016,8 +3056,8 @@ class View
   }
   void run_v_end()
   {
-    Undo_v();
     Remove_Banner();
+    Undo_v();
 
     m_vis.m_states.removeFirst();
 
@@ -3037,10 +3077,12 @@ class View
   {
     if( m_undo_v )
     {
-      final int st_line = Math.min( v_st_line, v_fn_line );
-      final int fn_line = Math.max( v_st_line, v_fn_line );
+      m_fb.Update();
 
-      UpdateLines( st_line, fn_line );
+    //final int st_line = Math.min( v_st_line, v_fn_line );
+    //final int fn_line = Math.max( v_st_line, v_fn_line );
+    //
+    //UpdateLines( st_line, fn_line );
     }
   }
 
@@ -3228,11 +3270,22 @@ class View
     }
     m_inVisualMode = false;
   }
+  boolean Do_s_v_cursor_at_end_of_line()
+  {
+    final int LL = m_fb.LineLen( CrsLine() );
+
+    if( m_inVisualBlock )
+    {
+      return 0<LL ? LL-1 <= CrsChar()
+                  : 0    <  CrsChar();
+    }
+    return 0<LL ? CrsChar() == LL-1 : false;
+  }
   void Do_s_v()
   {
     // Need to know if cursor is at end of line before Do_x_v() is called:
     final int LL = m_fb.LineLen( CrsLine() );
-    final boolean CURSOR_AT_END_OF_LINE = 0<LL ? CrsChar() == LL-1 : false;
+    final boolean CURSOR_AT_END_OF_LINE = Do_s_v_cursor_at_end_of_line();
 
     Do_x_v();
 
@@ -3576,39 +3629,35 @@ class View
   void Do_semicolon( final char FAST_CHAR )
   {
     final int NUM_LINES = m_fb.NumLines();
-    if( 0==NUM_LINES ) return;
 
-    final int OCL = CrsLine();           // Old cursor line
-    final int LL  = m_fb.LineLen( OCL ); // Line length
-    final int OCP = CrsChar();           // Old cursor position
-
-    if( LL-1 <= OCP ) return;
-
-    int NCP = 0;
-    boolean found_char = false;
-    for( int p=OCP+1; !found_char && p<LL; p++ )
+    if( 0<NUM_LINES )
     {
-      final char C = m_fb.Get( OCL, p );
+      final int OCL = CrsLine();           // Old cursor line
+      final int LL  = m_fb.LineLen( OCL ); // Line length
+      final int OCP = CrsChar();           // Old cursor position
 
-      if( C == FAST_CHAR )
+      if( OCP < Utils.LLM1(LL) )
       {
-        NCP = p;
-        found_char = true;
+        int NCP = 0;
+        boolean found_char = false;
+        for( int p=OCP+1; !found_char && p<LL; p++ )
+        {
+          final char C = m_fb.Get( OCL, p );
+      
+          if( C == FAST_CHAR )
+          {
+            NCP = p;
+            found_char = true;
+          }
+        }
+        if( found_char )
+        {
+          GoToCrsPos_Write( OCL, NCP );
+        }
       }
     }
-    if( found_char )
-    {
-      GoToCrsPos_Write( OCL, NCP );
-    }
   }
 
-  void Clear_Context()
-  {
-    m_topLine  = 0;
-    m_leftChar = 0;
-    m_crsRow   = 0;
-    m_crsCol   = 0;
-  }
   boolean Has_Context()
   {
     return 0 != m_topLine
@@ -3623,6 +3672,44 @@ class View
     m_crsRow   = vr.m_crsRow  ;
     m_crsCol   = vr.m_crsCol  ;
   }
+  void Clear_Context()
+  {
+    m_topLine  = 0;
+    m_leftChar = 0;
+    m_crsRow   = 0;
+    m_crsCol   = 0;
+  }
+  void Check_Context()
+  {
+    final int NUM_LINES = m_fb.NumLines();
+
+    if( 0 == NUM_LINES )
+    {
+      Clear_Context();
+    }
+    else {
+      boolean changed = false;
+      int CL = CrsLine();
+
+      if( NUM_LINES <= CrsLine() )
+      {
+        CL = NUM_LINES-1;
+        changed = true;
+      }
+      final int LL = m_fb.LineLen( CL );
+      int CP = CrsChar();
+      if( LL <= CP )
+      {
+        CP = Utils.LLM1(LL);
+        changed = true;
+      }
+      if( changed )
+      {
+        GoToCrsPos_NoWrite( CL, CP );
+      }
+    }
+  }
+
   void InsertedLine_Adjust_TopLine( final int l_num )
   {
     if( l_num < m_topLine ) m_topLine++;

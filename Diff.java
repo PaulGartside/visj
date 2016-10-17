@@ -88,9 +88,15 @@ class Diff
   //PrintDI_List( CA );
 
     final long t2 = System.currentTimeMillis();
-  //m_diff_secs = ( t1 - t2 )/1000;
     m_diff_ms = t2 - t1;
     m_printed_diff_ms = false;
+
+    View pV = m_vis.CV();
+
+    m_topLine  = DiffLine( pV, pV.TopLine() );
+    m_leftChar =               pV.LeftChar();
+    m_crsRow   =               pV.CrsRow();
+    m_crsCol   =               pV.CrsCol();
   }
 
   void CleanDiff()
@@ -147,8 +153,10 @@ class Diff
     m_fL.Find_Styles( ViewLine( m_vL, m_topLine ) + WorkingRows( m_vL ) );
     m_fL.ClearStars();
     m_fL.Find_Stars();
+
+    RepositionViews();
  
-    m_vL.RepositionView();
+  //m_vL.RepositionView();
     m_vL.Print_Borders();
     PrintWorkingView( m_vL );
     PrintStsLine( m_vL );
@@ -160,7 +168,7 @@ class Diff
     m_fS.ClearStars();
     m_fS.Find_Stars();
  
-    m_vS.RepositionView();
+  //m_vS.RepositionView();
     m_vS.Print_Borders();
     PrintWorkingView( m_vS );
     PrintStsLine( m_vS );
@@ -176,6 +184,37 @@ class Diff
     }
     m_console.Update();
   }
+
+  void RepositionViews()
+  {
+    // If a window re-size has taken place, and the window has gotten
+    // smaller, change top line and left char if needed, so that the
+    // cursor is in the buffer when it is re-drawn
+    View pV = m_vis.CV();
+
+    if( WorkingRows( pV ) <= m_crsRow )
+    {
+      m_topLine += ( m_crsRow - WorkingRows( pV ) + 1 );
+      m_crsRow  -= ( m_crsRow - WorkingRows( pV ) + 1 );
+    }
+    if( WorkingCols( pV ) <= m_crsCol )
+    {
+      m_leftChar += ( m_crsCol - WorkingCols( pV ) + 1 );
+      m_crsCol   -= ( m_crsCol - WorkingCols( pV ) + 1 );
+    }
+  }
+
+  int GetTopLine( View pV )
+  {
+    if( pV == m_vS || pV == m_vL )
+    {
+      return ViewLine( pV, m_topLine );
+    }
+    return 0;
+  }
+  int GetLeftChar() { return m_leftChar;  }
+  int GetCrsRow  () { return m_crsRow;  }
+  int GetCrsCol  () { return m_crsCol;  }
 
   int WorkingRows( View pV ) { return pV.m_num_rows - 5; }
   int WorkingCols( View pV ) { return pV.m_num_cols - 2; }
@@ -247,47 +286,55 @@ class Diff
                           : m_DI_List_L.get( diff_line ).diff_type;
   }
 
+  // Return the diff line of the view line on the short side
   int DiffLine_S( final int view_line )
   {
     final int LEN = m_DI_List_S.size();
 
-    // Diff line is greater or equal to view line,
-    // so start at view line number and search forward
-    boolean ok = true;
-    for( int k=view_line; k<LEN && ok; k++ )
+    if( 0 < m_vS.m_fb.NumLines() )
     {
-      Diff_Info di = m_DI_List_S.get( k );
-  
-      if( Diff_Type.SAME     == di.diff_type
-       || Diff_Type.CHANGED  == di.diff_type
-       || Diff_Type.INSERTED == di.diff_type )
+      // Diff line is greater or equal to view line,
+      // so start at view line number and search forward
+      boolean ok = true;
+      for( int k=view_line; k<LEN && ok; k++ )
       {
-        if( view_line == di.line_num ) return k;
+        Diff_Info di = m_DI_List_S.get( k );
+
+        if( Diff_Type.SAME     == di.diff_type
+         || Diff_Type.CHANGED  == di.diff_type
+         || Diff_Type.INSERTED == di.diff_type )
+        {
+          if( view_line == di.line_num ) return k;
+        }
       }
+      Utils.Assert( false, "view_line : "+ view_line +" : not found");
     }
-    Utils.Assert( false, "view_line : "+ view_line +" : not found");
     return 0;
   }
 
+  // Return the diff line of the view line on the long side
   int DiffLine_L( final int view_line )
   {
     final int LEN = m_DI_List_L.size();
 
-    // Diff line is greater or equal to view line,
-    // so start at view line number and search forward
-    boolean ok = true;
-    for( int k=view_line; k<LEN && ok; k++ )
+    if( 0 < m_vL.m_fb.NumLines() )
     {
-      Diff_Info di = m_DI_List_L.get( k );
-  
-      if( Diff_Type.SAME     == di.diff_type
-       || Diff_Type.CHANGED  == di.diff_type
-       || Diff_Type.INSERTED == di.diff_type )
+      // Diff line is greater or equal to view line,
+      // so start at view line number and search forward
+      boolean ok = true;
+      for( int k=view_line; k<LEN && ok; k++ )
       {
-        if( view_line == di.line_num ) return k;
+        Diff_Info di = m_DI_List_L.get( k );
+
+        if( Diff_Type.SAME     == di.diff_type
+         || Diff_Type.CHANGED  == di.diff_type
+         || Diff_Type.INSERTED == di.diff_type )
+        {
+          if( view_line == di.line_num ) return k;
+        }
       }
+      Utils.Assert( false, "view_line : "+ view_line +" : not found");
     }
-    Utils.Assert( false, "view_line : "+ view_line +" : not found");
     return 0;
   }
 
@@ -429,7 +476,9 @@ class Diff
     final int CLd = CrsLine();                   // Line position diff
     final int CLv = DI_List.get( CLd ).line_num; // Line position view
     final int CC = CrsChar();                    // Char position
-    final int LL = 0<NumLines() ? fb.LineLen( CLv )  : 0;
+    final int LL = 0<NumLines()
+                 ? ( 0 < fb.NumLines() ? fb.LineLen( CLv ) : 0 )
+                 : 0;
     final int WC = WorkingCols( pV );
 
     String str = "";
@@ -1271,12 +1320,13 @@ class Diff
     return most_same;
   }
 
+  // Returns number of bytes that are the same between the two lines
+  // and fills in li_s and li_l
   int Compare_Lines( Line ls, LineInfo li_s
                    , Line ll, LineInfo li_l )
   {
     if( 0==ls.length() && 0==ll.length() ) { return 1; }
     li_s.clear(); li_l.clear();
-    SameLineSec max_same = new SameLineSec();
     Line pls = ls; LineInfo pli_s = li_s;
     Line pll = ll; LineInfo pli_l = li_l;
     if( ll.length() < ls.length() ) { pls = ll; pli_s = li_l;
@@ -1284,86 +1334,48 @@ class Diff
     final int SLL = pls.length();
     final int LLL = pll.length();
 
-    for( int _ch_s = 0; _ch_s<SLL; _ch_s++ )
+    pli_l.clear(); pli_l.ensureCapacity( LLL );
+    pli_s.clear(); pli_s.ensureCapacity( LLL );
+
+    int num_same = 0;
+    int i_s = 0;
+    int i_l = 0;
+
+    while( i_s < SLL && i_l < LLL )
     {
-      int ch_s = _ch_s;
-      SameLineSec cur_same = new SameLineSec();
-
-      for( int ch_l = 0; ch_s<SLL && ch_l<LLL; ch_l++ )
+      final char cs = pls.charAt( i_s );
+      final char cl = pll.charAt( i_l );
+ 
+      if( cs == cl )
       {
-        final char cs = pls.charAt( ch_s );
-        final char cl = pll.charAt( ch_l );
-
-        if( cs != cl ) { cur_same.m_nbytes = 0; ch_s = _ch_s; }
-        else {
-          if( 0 == max_same.m_nbytes ) // First char match
-          {
-            max_same.Init( ch_s, ch_l );
-            cur_same.Init( ch_s, ch_l );
-          }
-          else if( 0 == cur_same.m_nbytes ) // First char match this outer loop
-          {
-            cur_same.Init( ch_s, ch_l );
-          }
-          else { // Continuation of cur_same
-            cur_same.m_nbytes++;
-            if( max_same.m_nbytes < cur_same.m_nbytes ) max_same.Set( cur_same );
-          }
-          ch_s++;
+        num_same++;
+        pli_s.add( Diff_Type.SAME ); i_s++;
+        pli_l.add( Diff_Type.SAME ); i_l++;
+      }
+      else {
+        final int remaining_s = SLL - i_s;
+        final int remaining_l = LLL - i_l;
+ 
+        if( 0<remaining_s
+         && 0<remaining_l && remaining_s == remaining_l )
+        {
+          pli_s.add( Diff_Type.CHANGED ); i_s++;
+          pli_l.add( Diff_Type.CHANGED ); i_l++;
+        }
+        else if( remaining_s < remaining_l )
+        {
+          pli_l.add( Diff_Type.INSERTED ); i_l++;
+        }
+        else if( remaining_l < remaining_s )
+        {
+          pli_s.add( Diff_Type.INSERTED ); i_s++;
         }
       }
     }
-    Fill_In_LineInfo( SLL, LLL, pli_s, pli_l, max_same, pls, pll );
-
-    return max_same.m_nbytes;
-  }
-
-  void Fill_In_LineInfo( final int SLL
-                       , final int LLL
-                       , final LineInfo pli_s
-                       , final LineInfo pli_l
-                       , SameLineSec max_same
-                       , Line pls
-                       , Line pll )
-  {
-    pli_l.ensureCapacity( LLL );
-    pli_s.ensureCapacity( LLL );
-
-    for( int k=0; k<SLL; k++ )
-    {
-      pli_s.add( Diff_Type.CHANGED );
-      pli_l.add( Diff_Type.CHANGED );
-    }
-    for( int k=SLL; k<LLL; k++ )
-    {
-      pli_s.add( Diff_Type.DELETED  );
-      pli_l.add( Diff_Type.INSERTED );
-    }
-    for( int k=0; k<max_same.m_nbytes; k++ )
-    {
-      pli_s.set( k+max_same.m_ch_s, Diff_Type.SAME );
-      pli_l.set( k+max_same.m_ch_l, Diff_Type.SAME );
-    }
-    final int SAME_ST = Math.min( max_same.m_ch_s, max_same.m_ch_l );
-    final int SAME_FN = Math.max( max_same.m_ch_s+max_same.m_nbytes
-                                , max_same.m_ch_l+max_same.m_nbytes );
-
-    for( int k=0; k<SAME_ST; k++ )
-    {
-      if( pls.charAt( k ) == pll.charAt( k ) )
-      {
-        pli_s.set( k, Diff_Type.SAME );
-        pli_l.set( k, Diff_Type.SAME );
-      }
-    }
-    for( int k=SAME_FN; k<SLL; k++ )
-    {
-      if( pls.charAt( k ) == pll.charAt( k ) )
-      {
-        pli_s.set( k, Diff_Type.SAME );
-        pli_l.set( k, Diff_Type.SAME );
-      }
-    }
+    for( int k=SLL; k<LLL; k++ ) pli_s.add( Diff_Type.DELETED );
+    for( int k=i_l; k<LLL; k++ ) pli_l.add( Diff_Type.INSERTED );
+ 
+    return num_same;
   }
 
   void Set_crsRow( final int row )
@@ -2025,18 +2037,18 @@ class Diff
   void GoToOppositeBracket()
   {
     View pV = m_vis.CV();
-  
-    pV.MoveInBounds();
-  
+
+    MoveInBounds();
+
     final int NUM_LINES = pV.m_fb.NumLines();
     final int CL        = ViewLine( pV, CrsLine() ); //< View line
     final int CC        = CrsChar();
     final int LL        = LineLen();
-  
+
     if( 0==NUM_LINES || 0==LL ) return;
-  
+
     final char C = pV.m_fb.Get( CL, CC );
-  
+
     if( C=='{' || C=='[' || C=='(' )
     {
       char finish_char = 0;
@@ -2044,7 +2056,7 @@ class Diff
       else if( C=='[' ) finish_char = ']';
       else if( C=='(' ) finish_char = ')';
       else              Utils.Assert( false, "Un-handled case" );
-  
+
       GoToOppositeBracket_Forward( C, finish_char );
     }
     else if( C=='}' || C==']' || C==')' )
@@ -2054,7 +2066,7 @@ class Diff
       else if( C==']' ) finish_char = '[';
       else if( C==')' ) finish_char = '(';
       else              Utils.Assert( false, "Un-handled case" );
-  
+
       GoToOppositeBracket_Backward( C, finish_char );
     }
   }
@@ -2063,7 +2075,7 @@ class Diff
   {
     View pV = m_vis.CV();
  
-    pV.MoveInBounds();
+    MoveInBounds();
  
     final char  start_char = '}';
     final char finish_char = '{';
@@ -2073,7 +2085,7 @@ class Diff
   {
     View pV = m_vis.CV();
  
-    pV.MoveInBounds();
+    MoveInBounds();
  
     final char  start_char = '{';
     final char finish_char = '}';
@@ -2183,7 +2195,7 @@ class Diff
   
     // Convert from diff line (CrsLine()), to view line:
     final int OCL = ViewLine( pV, CrsLine() ); //< Old cursor view line
-    final int OCP = CrsChar();                 // Old cursor position
+    final int OCP = CrsChar();                 //< Old cursor position
 
     boolean ident = true; // Looking for identifier
 
@@ -2397,6 +2409,57 @@ class Diff
     return new CrsPos( ncp_crsLine, ncp_crsChar );
   }
 
+  void GoToFile()
+  {
+    String fname = GetFileName_UnderCursor();
+
+    if( null != fname ) m_vis.GoToBuffer_Fname( fname );
+  }
+  String GetFileName_UnderCursor()
+  {
+    StringBuilder fname = null;
+
+    View pV = m_vis.CV();
+ 
+    final int DL = CrsLine();
+    final int VL = ViewLine( pV, DL ); // View line number
+    final int LL = pV.m_fb.LineLen( VL );
+
+    if( 0<LL ) {
+      MoveInBounds();
+      final int CP = CrsChar();
+      char C = pV.m_fb.Get( VL, CP );
+
+      if( Utils.IsFileNameChar( C ) )
+      {
+        // Get the file name:
+        fname = new StringBuilder();
+        fname.append( C );
+
+        // Search backwards, until white space is found:
+        for( int k=CP-1; -1<k; k-- )
+        {
+          C = pV.m_fb.Get( VL, k );
+
+          if( !Utils.IsFileNameChar( C ) ) break;
+          else fname.insert( 0, C );
+        }
+        // Search forwards, until white space is found:
+        for( int k=CP+1; k<LL; k++ )
+        {
+          C = pV.m_fb.Get( VL, k );
+
+          if( !Utils.IsFileNameChar( C ) ) break;
+          else fname.append( C );
+        }
+        Ptr_StringBuilder p_sb = new Ptr_StringBuilder( fname );
+        Utils.EnvKeys2Vals( p_sb );
+        fname = p_sb.val;
+      }
+    }
+    return null != fname ? fname.toString() : null;
+  }
+
   void Do_n()
   {
     if( 0 < m_vis.m_star.length() ) Do_n_Pattern();
@@ -2409,13 +2472,14 @@ class Diff
 
     final int NUM_LINES = pV.m_fb.NumLines();
 
-    if( NUM_LINES <= 0 ) return;
-
-    CrsPos ncp = new CrsPos( 0, 0 ); // Next cursor position
-
-    if( Do_n_FindNextPattern( ncp ) )
+    if( 0 < NUM_LINES )
     {
-      GoToCrsPos_Write( ncp.crsLine, ncp.crsChar );
+      CrsPos ncp = new CrsPos( 0, 0 ); // Next cursor position
+
+      if( Do_n_FindNextPattern( ncp ) )
+      {
+        GoToCrsPos_Write( ncp.crsLine, ncp.crsChar );
+      }
     }
   }
 
@@ -2493,34 +2557,37 @@ class Diff
   void Do_n_Diff()
   {
     final int NUM_LINES = NumLines();
-    if( 0==NUM_LINES ) return;
 
-    Ptr_Int dl = new Ptr_Int( CrsLine() );
-
-    View pV = m_vis.CV();
-
-    ArrayList<Diff_Info> DI_List = (pV == m_vS) ? m_DI_List_S : m_DI_List_L;
-
-    final Diff_Type DT = DI_List.get( dl.val ).diff_type; // Current diff type
-
-    boolean found = true;
-
-    if( DT == Diff_Type.CHANGED
-     || DT == Diff_Type.INSERTED
-     || DT == Diff_Type.DELETED )
+    if( 0 < NUM_LINES )
     {
-      found = Do_n_Search_for_Same( dl, DI_List );
-    }
-    if( found )
-    {
-      found = Do_n_Search_for_Diff( dl, DI_List );
+      Ptr_Int dl = new Ptr_Int( CrsLine() ); // Diff line, changed by search methods below
 
+      View pV = m_vis.CV();
+
+      ArrayList<Diff_Info> DI_List = (pV == m_vS) ? m_DI_List_S : m_DI_List_L;
+
+      final Diff_Type DT = DI_List.get( dl.val ).diff_type; // Current diff type
+
+      boolean found = true;
+
+      if( DT == Diff_Type.CHANGED
+       || DT == Diff_Type.INSERTED
+       || DT == Diff_Type.DELETED )
+      {
+        // If currently on a diff, search for same before searching for diff
+        found = Do_n_Search_for_Same( dl, DI_List );
+      }
       if( found )
       {
-        final int NCL = dl.val;
-        final int NCP = CrsChar();
+        found = Do_n_Search_for_Diff( dl, DI_List );
 
-        GoToCrsPos_Write( NCL, NCP );
+        if( found )
+        {
+          final int NCL = dl.val;
+          final int NCP = CrsChar();
+
+          GoToCrsPos_Write( NCL, NCP );
+        }
       }
     }
   }
@@ -2529,19 +2596,38 @@ class Diff
                               , final ArrayList<Diff_Info> DI_List )
   {
     final int NUM_LINES = NumLines();
+    final int dl_st = dl.val;
 
     // Search forward for Diff_Type.SAME
     boolean found = false;
 
-    while( !found && dl.val<NUM_LINES )
+    if( 1 < NUM_LINES )
     {
-      final Diff_Type DT = DI_List.get( dl.val ).diff_type;
-
-      if( DT == Diff_Type.SAME )
+      while( !found && dl.val<NUM_LINES )
       {
-        found = true;
+        final Diff_Type DT = DI_List.get( dl.val ).diff_type;
+
+        if( DT == Diff_Type.SAME )
+        {
+          found = true;
+        }
+        else dl.val++;
       }
-      else dl.val++;
+      if( !found )
+      {
+        // Wrap around back to top and search again:
+        dl.val = 0;
+        while( !found && dl.val<dl_st )
+        {
+          final Diff_Type DT = DI_List.get( dl.val ).diff_type;
+
+          if( DT == Diff_Type.SAME )
+          {
+            found = true;
+          }
+          else dl.val++;
+        }
+      }
     }
     return found;
   }
@@ -2550,21 +2636,42 @@ class Diff
                               , final ArrayList<Diff_Info> DI_List )
   {
     final int NUM_LINES = NumLines();
+    final int dl_st = dl.val;
   
     // Search forward for non-Diff_Type.SAME
     boolean found = false;
   
-    while( !found && dl.val<NUM_LINES )
+    if( 1 < NUM_LINES )
     {
-      final Diff_Type DT = DI_List.get( dl.val ).diff_type;
-  
-      if( DT == Diff_Type.CHANGED
-       || DT == Diff_Type.INSERTED
-       || DT == Diff_Type.DELETED )
+      while( !found && dl.val<NUM_LINES )
       {
-        found = true;
+        final Diff_Type DT = DI_List.get( dl.val ).diff_type;
+  
+        if( DT == Diff_Type.CHANGED
+         || DT == Diff_Type.INSERTED
+         || DT == Diff_Type.DELETED )
+        {
+          found = true;
+        }
+        else dl.val++;
       }
-      else dl.val++;
+      if( !found )
+      {
+        // Wrap around back to top and search again:
+        dl.val = 0;
+        while( !found && dl.val<dl_st )
+        {
+          final Diff_Type DT = DI_List.get( dl.val ).diff_type;
+
+          if( DT == Diff_Type.CHANGED
+           || DT == Diff_Type.INSERTED
+           || DT == Diff_Type.DELETED )
+          {
+            found = true;
+          }
+          else dl.val++;
+        }
+      }
     }
     return found;
   }
@@ -2657,34 +2764,37 @@ class Diff
   void Do_N_Diff()
   {
     final int NUM_LINES = NumLines();
-    if( 0==NUM_LINES
-     || CrsLine() <= 0 ) return;
 
-    Ptr_Int dl = new Ptr_Int( CrsLine() );
-
-    View pV = m_vis.CV();
-
-    ArrayList<Diff_Info> DI_List = (pV == m_vS) ? m_DI_List_S : m_DI_List_L;
-
-    final Diff_Type DT = DI_List.get( dl.val ).diff_type; // Current diff type
-
-    boolean found = true;
-    if( DT == Diff_Type.CHANGED
-     || DT == Diff_Type.INSERTED
-     || DT == Diff_Type.DELETED )
+    if( 0 < NUM_LINES )
     {
-      found = Do_N_Search_for_Same( dl, DI_List );
-    }
-    if( found )
-    {
-      found = Do_N_Search_for_Diff( dl, DI_List );
-  
+      Ptr_Int dl = new Ptr_Int( CrsLine() );
+
+      View pV = m_vis.CV();
+
+      ArrayList<Diff_Info> DI_List = (pV == m_vS) ? m_DI_List_S : m_DI_List_L;
+
+      final Diff_Type DT = DI_List.get( dl.val ).diff_type; // Current diff type
+
+      boolean found = true;
+
+      if( DT == Diff_Type.CHANGED
+       || DT == Diff_Type.INSERTED
+       || DT == Diff_Type.DELETED )
+      {
+        // If currently on a diff, search for same before searching for diff
+        found = Do_N_Search_for_Same( dl, DI_List );
+      }
       if( found )
       {
-        final int NCL = dl.val;
-        final int NCP = CrsChar();
+        found = Do_N_Search_for_Diff( dl, DI_List );
   
-        GoToCrsPos_Write( NCL, NCP );
+        if( found )
+        {
+          final int NCL = dl.val;
+          final int NCP = CrsChar();
+  
+          GoToCrsPos_Write( NCL, NCP );
+        }
       }
     }
   }
@@ -2692,16 +2802,39 @@ class Diff
   boolean Do_N_Search_for_Same( Ptr_Int dl
                               , final ArrayList<Diff_Info> DI_List )
   {
+    final int NUM_LINES = NumLines();
+    final int dl_st = dl.val;
+
     // Search backwards for Diff_Type.SAME
     boolean found = false;
-  
-    while( !found && 0<=dl.val )
+
+    if( 1 < NUM_LINES )
     {
-      if( Diff_Type.SAME == DI_List.get( dl.val ).diff_type )
+      while( !found && 0<=dl.val )
       {
-        found = true;
+        final Diff_Type DT = DI_List.get( dl.val ).diff_type;
+
+        if( DT == Diff_Type.SAME )
+        {
+          found = true;
+        }
+        else dl.val--;
       }
-      else dl.val--;
+      if( !found )
+      {
+        // Wrap around back to bottom and search again:
+        dl.val = NUM_LINES-1;
+        while( !found && dl_st<dl.val )
+        {
+          final Diff_Type DT = DI_List.get( dl.val ).diff_type;
+
+          if( DT == Diff_Type.SAME )
+          {
+            found = true;
+          }
+          else dl.val--;
+        }
+      }
     }
     return found;
   }
@@ -2709,20 +2842,43 @@ class Diff
   boolean Do_N_Search_for_Diff( Ptr_Int dl
                               , final ArrayList<Diff_Info> DI_List )
   {
+    final int NUM_LINES = NumLines();
+    final int dl_st = dl.val;
+
     // Search backwards for non-Diff_Type.SAME
     boolean found = false;
 
-    while( !found && 0<=dl.val )
+    if( 1 < NUM_LINES )
     {
-      final Diff_Type DT = DI_List.get( dl.val ).diff_type;
-
-      if( DT == Diff_Type.CHANGED
-       || DT == Diff_Type.INSERTED
-       || DT == Diff_Type.DELETED )
+      while( !found && 0<=dl.val )
       {
-        found = true;
+        final Diff_Type DT = DI_List.get( dl.val ).diff_type;
+
+        if( DT == Diff_Type.CHANGED
+         || DT == Diff_Type.INSERTED
+         || DT == Diff_Type.DELETED )
+        {
+          found = true;
+        }
+        else dl.val--;
       }
-      else dl.val--;
+      if( !found )
+      {
+        // Wrap around back to bottom and search again:
+        dl.val = NUM_LINES-1;
+        while( !found && dl_st<dl.val )
+        {
+          final Diff_Type DT = DI_List.get( dl.val ).diff_type;
+
+          if( DT == Diff_Type.CHANGED
+           || DT == Diff_Type.INSERTED 
+           || DT == Diff_Type.DELETED )
+          {
+            found = true;
+          }
+          else dl.val--;
+        }
+      }
     }
     return found;
   }
@@ -2781,7 +2937,7 @@ class Diff
   //
   boolean MoveInBounds()
   {
-    View pV  = m_vis.CV();
+    View pV = m_vis.CV();
 
     final int DL  = CrsLine();  // Diff line
     final int VL  = ViewLine( pV, DL );      // View line
@@ -3318,17 +3474,7 @@ class Diff
       Do_x();
       Do_i();
     }
-    else if( EOL < CP )
-    {
-      // Extend line out to where cursor is:
-      for( int k=LL; k<CP; k++ )
-      {
-        pfb.PushChar( VL, ' ' );
-      }
-      Patch_Diff_Info_Changed( pV, DL );
-      Do_a();
-    }
-    else // CP == EOL
+    else // EOL <= CP
     {
       Do_x();
       Do_a();
@@ -3409,6 +3555,93 @@ class Diff
       }
     }
   }
+
+  // If nothing was deleted, return 0.
+  // If last char on line was deleted, return 2,
+  // Else return 1.
+  int Do_dw()
+  {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+
+    // If there is nothing to 'yw', just return:
+    if( 0 < pfb.NumLines() )
+    {
+      final int  DL = CrsLine(); // Diff line
+      final Diff_Type DT = DiffType( pV, DL );
+
+      if( DT == Diff_Type.SAME
+       || DT == Diff_Type.CHANGED
+       || DT == Diff_Type.INSERTED )
+      {
+        final int st_line_v = ViewLine( pV, DL ); // View line
+        final int st_char   = CrsChar();
+
+        final int LL = pfb.LineLen( st_line_v );
+
+        // If past end of line, nothing to do
+        if( st_char < LL )
+        {
+          // Determine m_fn_line_d, m_fn_char:
+          CrsPos ncp = Do_dw_get_fn( DL, st_char );
+
+          if( null != ncp )
+          {
+            Do_x_range( DL, st_char, ncp.crsLine, ncp.crsChar );
+
+            boolean deleted_last_char = ncp.crsChar == LL-1;
+
+            return deleted_last_char ? 2 : 1;
+          }
+        }
+      }
+    }
+    return 0;
+  }
+  void Do_cw()
+  {
+    final int result = Do_dw();
+
+    if     ( result==1 ) Do_i();
+    else if( result==2 ) Do_a();
+  }
+  // CrsPos and st_line_d are in terms of diff line
+  CrsPos Do_dw_get_fn( final int st_line_d, final int st_char )
+  {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+
+    final int  st_line_v = ViewLine( pV, st_line_d );
+    final int  LL        = pfb.LineLen( st_line_v );
+    final char C         = pfb.Get( st_line_v, st_char );
+
+    if( Utils.IsSpace( C )          // On white space
+      || ( st_char < Utils.LLM1(LL) // On non-white space before white space
+        && Utils.IsSpace( pfb.Get( st_line_v, st_char+1 ) ) ) )
+    {
+      // w:
+      CrsPos ncp_w = GoToNextWord_GetPosition();
+
+      if( null != ncp_w && 0 < ncp_w.crsChar ) ncp_w.crsChar--;
+      if( null != ncp_w && st_line_d == ncp_w.crsLine
+                        && st_char   <= ncp_w.crsChar )
+      {
+        return ncp_w;
+      }
+    }
+    // if not on white space, and
+    // not on non-white space before white space,
+    // or fell through, try e:
+    CrsPos ncp_e = GoToEndOfWord_GetPosition();
+
+    if( null != ncp_e && st_line_d == ncp_e.crsLine
+                      && st_char   <= ncp_e.crsChar )
+    {
+      return ncp_e;
+    }
+    return null;
+  }
+
   void Do_J()
   {
     View    pV  = m_vis.CV();
@@ -3439,12 +3672,6 @@ class Diff
       }
     }
   }
-  void Do_dw()
-  {
-  }
-  void Do_cw()
-  {
-  }
   void Do_yy()
   {
     View pV = m_vis.CV();
@@ -3470,6 +3697,47 @@ class Diff
       }
     }
   }
+  void Do_yw()
+  {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+
+    // If there is nothing to 'yw', just return:
+    if( 0<pfb.NumLines() )
+    {
+      final int       DL = CrsLine(); // Diff line
+      final Diff_Type DT = DiffType( pV, DL );
+
+      if( DT == Diff_Type.SAME
+       || DT == Diff_Type.CHANGED
+       || DT == Diff_Type.INSERTED )
+      {
+        final int st_line_v = ViewLine( pV, DL ); // View line
+        final int st_char   = CrsChar();
+
+        // Determine fn_line_d, fn_char:
+        CrsPos ncp = Do_dw_get_fn( DL, st_char );
+
+        if( null != ncp )
+        {
+          final int fn_line_d = ncp.crsLine; // Finish line diff
+          final int fn_char   = ncp.crsChar;
+
+          Line nlr = new Line();
+          m_vis.m_reg.clear();
+          m_vis.m_reg.add( nlr );
+
+          // DL and fn_line_d should be the same
+          for( int k=st_char; k<=fn_char; k++ )
+          {
+          //m_vis.m_reg.get(0).append_c( pfb.Get( st_line_v, k ) );
+            nlr.append_c( pfb.Get( st_line_v, k ) );
+          }
+          m_vis.m_paste_mode = Paste_Mode.ST_FN;
+        }
+      }
+    }
+  }
   void Do_y_v()
   {
     m_vis.m_reg.clear();
@@ -3484,7 +3752,7 @@ class Diff
     View    pV  = m_vis.CV();
     FileBuf pfb = pV.m_fb;
 
-    Swap_Visual_Block_If_Needed();
+    Swap_Visual_St_Fn_If_Needed();
 
     for( int DL=v_st_line; DL<=v_fn_line; DL++ )
     {
@@ -3517,7 +3785,7 @@ class Diff
     View    pV  = m_vis.CV();
     FileBuf pfb = pV.m_fb;
 
-    Swap_Visual_Block_If_Needed();
+    Swap_Visual_St_Fn_If_Needed();
 
     for( int L=v_st_line; L<=v_fn_line; L++ )
     {
@@ -3560,7 +3828,7 @@ class Diff
     View    pV  = m_vis.CV();
     FileBuf pfb = pV.m_fb;
 
-    Swap_Visual_Block_If_Needed();
+    Swap_Visual_St_Fn_If_Needed();
 
     for( int L=v_st_line; L<=v_fn_line; L++ )
     {
@@ -3592,7 +3860,7 @@ class Diff
     FileBuf pfb = pV.m_fb;
 
     m_vis.m_reg.clear();
-    Swap_Visual_Block_If_Needed();
+    Swap_Visual_St_Fn_If_Needed();
 
     boolean removed_line = false;
     ArrayList<Diff_Info> cDI_List = (pV == m_vS) ? m_DI_List_S : m_DI_List_L; // Current diff info list
@@ -3651,18 +3919,180 @@ class Diff
     GoToCrsPos_NoWrite( ncld, ncc );
   }
 
+  void InsertBackspace_vb()
+  {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+
+    final int DL = CrsLine();          // Diff line number
+    final int VL = ViewLine( pV, DL ); // View line number
+    final int CP = CrsChar();          // Cursor position
+
+    if( 0<CP )
+    {
+      final int N_REG_LINES = m_vis.m_reg.size();
+
+      for( int k=0; k<N_REG_LINES; k++ )
+      {
+        pfb.RemoveChar( VL+k, CP-1 );
+
+        Patch_Diff_Info_Changed( pV, DL+k );
+      }
+      GoToCrsPos_NoWrite( DL, CP-1 );
+    }
+  }
+
+  void InsertAddChar_vb( final char c )
+  {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+
+    final int DL = CrsLine();          // Diff line number
+    final int VL = ViewLine( pV, DL ); // View line number
+    final int CP = CrsChar();          // Cursor position
+
+    final int N_REG_LINES = m_vis.m_reg.size();
+
+    for( int k=0; k<N_REG_LINES; k++ )
+    {
+      final int LL = pfb.LineLen( VL+k );
+
+      if( LL < CP )
+      {
+        // Fill in line with white space up to CP:
+        for( int i=0; i<(CP-LL); i++ )
+        {
+          // Insert at end of line so undo will be atomic:
+          final int NLL = pfb.LineLen( VL+k ); // New line length
+          pfb.InsertChar( VL+k, NLL, ' ' );
+        }
+      }
+      pfb.InsertChar( VL+k, CP, c );
+
+      Patch_Diff_Info_Changed( pV, DL+k );
+    }
+    GoToCrsPos_NoWrite( DL, CP+1 );
+  }
+
+  void Do_i_vb()
+  {
+    m_vis.m_states.addFirst( m_run_i_vb_end );
+    m_vis.m_states.addFirst( m_run_i_vb_mid );
+    m_vis.m_states.addFirst( m_run_i_vb_beg );
+  }
+  void run_i_vb_end()
+  {
+    View pV = m_vis.CV();
+
+    pV.m_inInsertMode = true;
+    DisplayBanner();
+
+    m_i_count = 0;
+
+    m_vis.m_states.removeFirst();
+  }
+  void run_i_vb_mid()
+  {
+    if( 0<m_console.KeysIn() )
+    {
+      final char c = m_console.GetKey();
+
+      if( c == ESC )
+      {
+        m_vis.m_states.removeFirst(); // Done
+      }
+      else if( BS == c || DEL == c )
+      {
+        if( 0<m_i_count )
+        {
+          InsertBackspace_vb();
+          m_i_count--;
+          Update();
+        }
+      }
+      else if( Utils.IsEndOfLineDelim( c ) )
+      {
+        ; // Ignore end of line delimiters
+      }
+      else {
+        InsertAddChar_vb( c );
+        m_i_count++;
+        Update();
+      }
+    }
+  }
+  void run_i_vb_beg()
+  {
+    View pV = m_vis.CV();
+
+    Remove_Banner();
+    pV.m_inInsertMode = false;
+
+    m_vis.m_states.removeFirst();
+  }
+
+  void Do_a_vb()
+  {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+
+    final int DL = CrsLine();          // Diff line number
+    final int VL = ViewLine( pV, DL ); // View line number
+    final int LL = pfb.LineLen( VL );
+
+    if( 0==LL ) { Do_i_vb(); return; }
+
+    final boolean CURSOR_AT_EOL = ( CrsChar() == LL-1 );
+    if( CURSOR_AT_EOL )
+    {
+      GoToCrsPos_NoWrite( DL, LL );
+    }
+    final boolean CURSOR_AT_RIGHT_COL = ( m_crsCol == WorkingCols( pV )-1 );
+
+    if( CURSOR_AT_RIGHT_COL )
+    {
+      // Only need to scroll window right, and then enter insert i:
+      m_leftChar++; //< This increments CrsChar()
+    }
+    else if( !CURSOR_AT_EOL ) // If cursor was at EOL, already moved cursor forward
+    {
+      // Only need to move cursor right, and then enter insert i:
+      m_crsCol += 1; //< This increments CrsChar()
+    }
+    Update();
+
+    Do_i_vb();
+  }
+
+  boolean Do_s_v_cursor_at_end_of_line()
+  {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+
+    final int DL = CrsLine();  // Diff line
+    final int VL = ViewLine( pV, DL );
+    final int LL = pfb.LineLen( VL );
+
+    if( m_inVisualBlock )
+    {
+      return 0<LL ? LL-1 <= CrsChar()
+                  : 0    <  CrsChar();
+    }
+    return 0<LL ? CrsChar() == LL-1 : false;
+  }
+
   void Do_s_v()
   {
     // Need to know if cursor is at end of line before Do_x_v() is called:
     final int LL = LineLen();
-    final boolean CURSOR_AT_END_OF_LINE = 0<LL ? CrsChar() == LL-1 : false;
+    final boolean CURSOR_AT_END_OF_LINE = Do_s_v_cursor_at_end_of_line();
 
     Do_x_v();
 
     if( m_inVisualBlock )
     {
-    //if( CURSOR_AT_END_OF_LINE ) Do_a_vb();
-    //else                        Do_i_vb(); 
+      if( CURSOR_AT_END_OF_LINE ) Do_a_vb();
+      else                        Do_i_vb(); 
     }
     else {
       if( CURSOR_AT_END_OF_LINE ) Do_a();
@@ -3673,7 +4103,7 @@ class Diff
 
   void Do_Tilda_v()
   {
-    Swap_Visual_Block_If_Needed();
+    Swap_Visual_St_Fn_If_Needed();
 
     if( m_inVisualBlock ) Do_Tilda_v_block();
     else                  Do_Tilda_v_st_fn();
@@ -3740,14 +4170,21 @@ class Diff
       Do_x_range_block();
     }
     else {
-      Do_x_range();
+      // Do_x_range is used by Do_dw, so it needs to accept parameters
+      Do_x_range( v_st_line, v_st_char, v_fn_line, v_fn_char );
     }
     m_inVisualMode = false;
 
     Update(); //<- No need to Undo_v() or Remove_Banner() because of this
   }
-  void Do_x_range()
+  void Do_x_range( int st_line, int st_char
+                 , int fn_line, int fn_char )
   {
+    v_st_line = st_line;
+    v_st_char = st_char;
+    v_fn_line = fn_line;
+    v_fn_char = fn_char;
+
     Do_x_range_pre();
 
     if( v_st_line == v_fn_line )
@@ -3761,7 +4198,7 @@ class Diff
   }
   void Do_x_range_pre()
   {
-    Swap_Visual_Block_If_Needed();
+    Swap_Visual_St_Fn_If_Needed();
 
     m_vis.m_reg.clear();
   }
@@ -3785,15 +4222,18 @@ class Diff
     if( 0<NCLL ) ncc = st_char < NCLL ? st_char : NCLL-1;
  
     GoToCrsPos_NoWrite( ncld, ncc );
+
+    m_inVisualMode = false;
+
+    Update(); //<- No need to Undo_v() or Remove_Banner() because of this
   }
-  void Do_x_range_single( final int L
+  void Do_x_range_single( final int DL
                         , final int st_char
                         , final int fn_char )
   {
     View    pV  = m_vis.CV();
     FileBuf pfb = pV.m_fb;
 
-    final int DL = L;
     final int VL = ViewLine( pV, DL ); // View line
 
     Line nlp = new Line();
@@ -4370,39 +4810,40 @@ class Diff
       if     ( c2 == 'g' ) GoToTopOfFile();
       else if( c2 == '0' ) GoToStartOfRow();
       else if( c2 == '$' ) GoToEndOfRow();
-    //else if( c2 == 'f' ) Do_v_Handle_gf();
+      else if( c2 == 'f' ) Do_v_Handle_gf();
       else if( c2 == 'p' ) Do_v_Handle_gp();
 
       m_vis.m_states.removeFirst();
     }
   }
-//void Do_v_Handle_gf()
-//{
-//  if( v_st_line == v_fn_line )
-//  {
-//    View    pV  = m_vis.CV();
-//    FileBuf pfb = pV.m_fb;
-//
-//    final int m_v_st_char = v_st_char < v_fn_char ? v_st_char : v_fn_char;
-//    final int m_v_fn_char = v_st_char < v_fn_char ? v_fn_char : v_st_char;
-//
-//    m_sb.setLength( 0 );
-//
-//    for( int P = m_v_st_char; P<=m_v_fn_char; P++ )
-//    {
-//      m_sb.append( pfb.Get( v_st_line, P ) );
-//    }
-//    boolean went_to_file = m_vis.GoToBuffer_Fname( m_sb.toString() );
-//
-//    if( went_to_file )
-//    {
-//      // If we made it to buffer indicated by fname, no need to Undo_v() or
-//      // Remove_Banner() because the whole view pane will be redrawn
-//      m_inVisualMode = false;
-//      m_undo_v       = false;
-//    }
-//  }
-//}
+  void Do_v_Handle_gf()
+  {
+    if( v_st_line == v_fn_line )
+    {
+      View    pV  = m_vis.CV();
+      FileBuf pfb = pV.m_fb;
+
+      Swap_Visual_St_Fn_If_Needed();
+
+      final int VL = ViewLine( pV, v_st_line );
+
+      m_sb.setLength( 0 );
+
+      for( int P = v_st_char; P<=v_fn_char; P++ )
+      {
+        m_sb.append( pfb.Get( VL, P ) );
+      }
+      boolean went_to_file = m_vis.GoToBuffer_Fname( m_sb.toString() );
+
+      if( went_to_file )
+      {
+        // If we made it to buffer indicated by fname, no need to Undo_v() or
+        // Remove_Banner() because the whole view pane will be redrawn
+        m_inVisualMode = false;
+        m_undo_v       = false;
+      }
+    }
+  }
   void Do_v_Handle_gp()
   {
     if( v_st_line == v_fn_line )
@@ -4410,7 +4851,7 @@ class Diff
       View    pV  = m_vis.CV();
       FileBuf pfb = pV.m_fb;
 
-      Swap_Visual_Block_If_Needed();
+      Swap_Visual_St_Fn_If_Needed();
 
       final int VL = ViewLine( pV, v_st_line );
 
@@ -4658,6 +5099,14 @@ class Diff
       Update();
     }
   }
+  void Do_u()
+  {
+    // FIXME: Need to implement
+  }
+  void Do_U()
+  {
+    // FIXME: Need to implement
+  }
 
   boolean On_Deleted_View_Line_Zero( final int DL )
   {
@@ -4865,28 +5314,33 @@ class Diff
       }
     }
   }
-//void Swap_Visual_St_Fn_If_Needed()
-//{
-//  if( v_fn_line < v_st_line
-//   || (v_fn_line == v_st_line && v_fn_char < v_st_char) )
-//  {
-//    // Visual mode went backwards over multiple lines, or
-//    // Visual mode went backwards over one line
-//    int T = v_st_line; v_st_line = v_fn_line; v_fn_line = T;
-//        T = v_st_char; v_st_char = v_fn_char; v_fn_char = T;
-//  }
-//}
-  void Swap_Visual_Block_If_Needed()
+  void Swap_Visual_St_Fn_If_Needed()
   {
-    if( v_fn_line < v_st_line )
+    if( m_inVisualBlock )
     {
-      int T = v_st_line; v_st_line = v_fn_line; v_fn_line = T;
+      if( v_fn_line < v_st_line ) { int T = v_st_line; v_st_line = v_fn_line; v_fn_line = T; }
+      if( v_fn_char < v_st_char ) { int T = v_st_char; v_st_char = v_fn_char; v_fn_char = T; }
     }
-    if( v_fn_char < v_st_char )
+    if( v_fn_line < v_st_line
+     || (v_fn_line == v_st_line && v_fn_char < v_st_char) )
     {
-      int T = v_st_char; v_st_char = v_fn_char; v_fn_char = T;
+      // Visual mode went backwards over multiple lines, or
+      // Visual mode went backwards over one line
+      int T = v_st_line; v_st_line = v_fn_line; v_fn_line = T;
+          T = v_st_char; v_st_char = v_fn_char; v_fn_char = T;
     }
   }
+//void Swap_Visual_Block_If_Needed()
+//{
+//  if( v_fn_line < v_st_line )
+//  {
+//    int T = v_st_line; v_st_line = v_fn_line; v_fn_line = T;
+//  }
+//  if( v_fn_char < v_st_char )
+//  {
+//    int T = v_st_char; v_st_char = v_fn_char; v_fn_char = T;
+//  }
+//}
 
   static final char BS  =   8; // Backspace
   static final char ESC =  27; // Escape
@@ -4896,10 +5350,10 @@ class Diff
   Console m_console;
   StringBuilder m_sb = new StringBuilder();
 
-  int m_topLine;   // top  of buffer view line number.
-  int m_leftChar;  // left of buffer view character number.
-  int m_crsRow;    // cursor row    in buffer view. 0 <= m_crsRow < WorkingRows().
-  int m_crsCol;    // cursor column in buffer view. 0 <= m_crsCol < WorkingCols().
+  private int m_topLine;  // top  of buffer view line number.
+  private int m_leftChar; // left of buffer view character number.
+  private int m_crsRow;   // cursor row    in buffer view. 0 <= m_crsRow < WorkingRows().
+  private int m_crsCol;   // cursor column in buffer view. 0 <= m_crsCol < WorkingCols().
 
   View    m_vS;
   View    m_vL;
@@ -4944,6 +5398,9 @@ class Diff
   Thread m_run_g_v   = new Thread() { public void run() { run_g_v  (); } };
   Thread m_run_z     = new Thread() { public void run() { run_z    (); } };
   Thread m_run_f     = new Thread() { public void run() { run_f    (); } };
+  Thread m_run_i_vb_beg = new Thread() { public void run() { run_i_vb_beg(); } };
+  Thread m_run_i_vb_mid = new Thread() { public void run() { run_i_vb_mid(); } };
+  Thread m_run_i_vb_end = new Thread() { public void run() { run_i_vb_end(); } };
 }
 
 // Run threads using lambdas.
@@ -5005,7 +5462,7 @@ class Diff_Info
     this.line_num  = line_num ;
     this.pLineInfo = pLineInfo; 
   }
-  Diff_Type diff_type;
+  Diff_Type diff_type; // Diff type of line this Diff_Info refers to
   int       line_num;  // Line number in file to which this Diff_Info applies (view line)
   LineInfo  pLineInfo;
 }

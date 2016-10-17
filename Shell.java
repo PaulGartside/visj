@@ -73,9 +73,9 @@ class Shell
     // Find first line of command to run.
     // First line is line after first line in which the first non-space character is #
     int first_line = 0;
+    int LAST_LINE = m_sh_fb.NumLines() - 1;
 
     boolean found_first_line = false;
-    int LAST_LINE = m_sh_fb.NumLines() - 1;
     for( int l=LAST_LINE; !found_first_line && 0<=l; l-- )
     {
       final int LL = m_sh_fb.LineLen( l );
@@ -110,6 +110,7 @@ class Shell
       for( int p=0; p<LL; p++ )
       {
         final char C = m_sh_fb.Get( k, p );
+        if( C == '#' ) break; //< Ignore # to end of line
         m_sb.append( C );
       }
       // Add a space between concatenated lines:
@@ -234,72 +235,6 @@ class Shell
     }
   }
 
-//void run_sh_wait()
-//{
-//  boolean done = false;
-//  try {
-//    final int C = m_sh_is.read();
-//    if     (  -1  == C ) done = true;
-//    else if( '\n' != C ) m_sh_fb.PushChar( (char)C );
-//    else { //'\n' == C
-//      m_sh_fb.PushLine(); 
-//      long T2 = System.currentTimeMillis();
-//      if( 500 < (T2-m_sh_T1) ) {
-//        m_sh_T1 = T2;
-//        // Move cursor to bottom of file
-//        final int NUM_LINES = m_sh_fb.NumLines();
-//        m_sh_view.GoToCrsPos_NoWrite( NUM_LINES-1, 0 );
-//        m_sh_fb.Update();
-//      }
-//    }
-//  }
-//  catch( IOException e ) { done = true; }
-//
-//  if( done ) {
-//    m_vis.m_states.removeFirst(); //< Pop m_run_sh_wait() off state stack
-//    m_vis.m_states.addFirst( m_run_sh_done ); //< Go into done state
-//  }
-//}
-//void run_sh_wait()
-//{
-//  boolean done = ! m_sh_proc.isAlive();
-//  if( !done ) {
-//    try {
-//      if( 0<m_sh_is.available() )
-//      {
-//        final int C = m_sh_is.read();
-//        if     (  -1  == C ) done = true;
-//        else if( '\n' != C ) m_sh_fb.PushChar( (char)C );
-//        else { //'\n' == C
-//          m_sh_fb.PushLine(); 
-//          long T2 = System.currentTimeMillis();
-//          if( 500 < (T2-m_sh_T1) ) {
-//            m_sh_T1 = T2;
-//            // Move cursor to bottom of file
-//            final int NUM_LINES = m_sh_fb.NumLines();
-//            m_sh_view.GoToCrsPos_NoWrite( NUM_LINES-1, 0 );
-//            m_sh_fb.Update();
-//          }
-//        }
-//      }
-//      if( 0 < m_console.KeysIn() )
-//      {
-//        final int ca = m_console.GetKey();
-//        if( ca == m_console.CTRL_C )
-//        {
-//          m_sh_proc.destroy();
-//          done = true;
-//          m_sh_fb.PushLine("^C");
-//        }
-//      }
-//    }
-//    catch( IOException e ) { done = true; }
-//  }
-//  if( done ) {
-//    m_vis.m_states.removeFirst(); //< Pop m_run_sh_wait() off state stack
-//    m_vis.m_states.addFirst( m_run_sh_done ); //< Go into done state
-//  }
-//}
   void run_sh_wait()
   {
     boolean done = false;

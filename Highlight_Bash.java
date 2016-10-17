@@ -26,13 +26,9 @@ class Highlight_Bash extends Highlight_Base
   enum Hi_State
   {
     In_None       ,
-    In_Comment  ,
-    BegSingleQuote,
+    In_Comment    ,
     In_SingleQuote,
-    EndSingleQuote,
-    BegDoubleQuote,
     In_DoubleQuote,
-    EndDoubleQuote,
     NumberBeg     ,
     NumberIn      ,
     NumberHex     ,
@@ -61,12 +57,8 @@ class Highlight_Bash extends Highlight_Base
     {
     case In_None       : Hi_In_None       (); break;
     case In_Comment    : Hi_In_Comment    (); break;
-    case BegSingleQuote: Hi_BegSingleQuote(); break;
     case In_SingleQuote: Hi_In_SingleQuote(); break;
-    case EndSingleQuote: Hi_EndSingleQuote(); break;
-    case BegDoubleQuote: Hi_BegDoubleQuote(); break;
     case In_DoubleQuote: Hi_In_DoubleQuote(); break;
-    case EndDoubleQuote: Hi_EndDoubleQuote(); break;
     case NumberBeg     : Hi_NumberBeg     (); break;
     case NumberIn      : Hi_NumberIn      (); break;
     case NumberHex     : Hi_NumberHex     (); break;
@@ -96,20 +88,20 @@ class Highlight_Bash extends Highlight_Base
                      , final char c1
                      , final char c0 )
   {
-    return (c1==0    && c0=='\"') //< Quote at beginning of line
-        || (c1!='\\' && c0==qt  ) //< Non-escapted quote
-        || (c2=='\\' && c1=='\\' && c0==qt ); //< Escapted escapte before quote
+    return (c1==0    && c0==qt ) //< Quote at beginning of line
+        || (c1!='\\' && c0==qt ) //< Non-escapted quote
+        || (c2=='\\' && c1=='\\' && c0==qt ); //< Escapted escape before quote
   }
   boolean OneVarType( final char c0 )
   {
-    return c0=='&' || c0=='\\'
+    return c0=='&'
         || c0=='.' || c0=='*'
-        || c0=='[' || c0==']'
-        || c0=='@';
+        || c0=='[' || c0==']';
   }
   boolean OneControl( final char c0 )
   {
-    return c0=='=' || c0=='^' || c0=='~'
+    return c0=='=' || c0=='@'
+        || c0=='^' || c0=='~'
         || c0==':' || c0=='%'
         || c0=='+' || c0=='-'
         || c0=='<' || c0=='>'
@@ -147,8 +139,8 @@ class Highlight_Bash extends Highlight_Base
         final char c0 =           m_fb.Get( m_l, m_p );
 
         if     ( c0=='#'                    ) { m_state = Hi_State.In_Comment; }
-        else if( Quote_Start('\'',c2,c1,c0) ) { m_state = Hi_State.BegSingleQuote; }
-        else if( Quote_Start('\"',c2,c1,c0) ) { m_state = Hi_State.BegDoubleQuote; }
+        else if( Quote_Start('\'',c2,c1,c0) ) { m_state = Hi_State.In_SingleQuote; }
+        else if( Quote_Start('\"',c2,c1,c0) ) { m_state = Hi_State.In_DoubleQuote; }
         else if( !Utils.IsIdent(c1)
                && Character.isDigit(c0) ) { m_state = Hi_State.NumberBeg; }
  
@@ -192,14 +184,10 @@ class Highlight_Bash extends Highlight_Base
     m_state = Hi_State.In_None;
   }
 
-  void Hi_BegSingleQuote()
+  void Hi_In_SingleQuote()
   {
     m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
     m_p++;
-    m_state = Hi_State.In_SingleQuote;
-  }
-  void Hi_In_SingleQuote()
-  {
     for( ; m_l<m_fb.NumLines(); m_l++ )
     {
       final int LL = m_fb.LineLen( m_l );
@@ -214,7 +202,9 @@ class Highlight_Bash extends Highlight_Base
          || (c1!='\\' && c0=='\'')
          || (c1=='\\' && c0=='\'' && slash_escaped) )
         {
-          m_state = Hi_State.EndSingleQuote;
+          m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+          m_p++;
+          m_state = Hi_State.In_None;
         }
         else {
           if( c1=='\\' && c0=='\\' ) slash_escaped = true;
@@ -228,21 +218,11 @@ class Highlight_Bash extends Highlight_Base
     }
     m_state = Hi_State.Done;
   }
-  void Hi_EndSingleQuote()
-  {
-    m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
-    m_p++; //m_p++;
-    m_state = Hi_State.In_None;
-  }
 
-  void Hi_BegDoubleQuote()
+  void Hi_In_DoubleQuote()
   {
     m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
     m_p++;
-    m_state = Hi_State.In_DoubleQuote;
-  }
-  void Hi_In_DoubleQuote()
-  {
     for( ; m_l<m_fb.NumLines(); m_l++ )
     {
       final int LL = m_fb.LineLen( m_l );
@@ -257,7 +237,9 @@ class Highlight_Bash extends Highlight_Base
          || (c1!='\\' && c0=='\"')
          || (c1=='\\' && c0=='\"' && slash_escaped) )
         {
-          m_state = Hi_State.EndDoubleQuote;
+          m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+          m_p++;
+          m_state = Hi_State.In_None;
         }
         else {
           if( c1=='\\' && c0=='\\' ) slash_escaped = true;
@@ -271,12 +253,7 @@ class Highlight_Bash extends Highlight_Base
     }
     m_state = Hi_State.Done;
   }
-  void Hi_EndDoubleQuote()
-  {
-    m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
-    m_p++; //m_p++;
-    m_state = Hi_State.In_None;
-  }
+
 
   void Hi_NumberBeg()
   {
@@ -297,6 +274,7 @@ class Highlight_Bash extends Highlight_Base
       }
     }
   }
+
   void Hi_NumberIn()
   {
     final int LL = m_fb.LineLen( m_l );
@@ -341,8 +319,7 @@ class Highlight_Bash extends Highlight_Base
     if( LL <= m_p ) m_state = Hi_State.In_None;
     else {
       final char c1 = m_fb.Get( m_l, m_p );
-    //if( Character.isDigit(c1) ) // FIXME: Should be isHexDigit
-      if( Utils.IsHexDigit(c1) ) // FIXME: Should be isHexDigit
+      if( Utils.IsHexDigit(c1) )
       {
         m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
         m_p++;
@@ -401,10 +378,10 @@ class Highlight_Bash extends Highlight_Base
     }
   }
 
-  void Find_Styles_Keys()
-  {
-    Hi_FindKey( m_HiPairs );
-  }
+//void Find_Styles_Keys()
+//{
+//  Hi_FindKey( m_HiPairs );
+//}
   // Find keys starting on st up to but not including fn line
   void Find_Styles_Keys_In_Range( final CrsPos st
                                 , final int    fn )
@@ -414,21 +391,19 @@ class Highlight_Bash extends Highlight_Base
 
   HiKeyVal[] m_HiPairs =
   {
-    new HiKeyVal( "if"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "fi"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "else"  , Highlight_Type.CONTROL ),
-    new HiKeyVal( "elsif" , Highlight_Type.CONTROL ),
-    new HiKeyVal( "for"   , Highlight_Type.CONTROL ),
-    new HiKeyVal( "done"  , Highlight_Type.CONTROL ),
-    new HiKeyVal( "while" , Highlight_Type.CONTROL ),
-    new HiKeyVal( "do"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "return", Highlight_Type.CONTROL ),
-    new HiKeyVal( "switch", Highlight_Type.CONTROL ),
-    new HiKeyVal( "case"  , Highlight_Type.CONTROL ),
-    new HiKeyVal( "break" , Highlight_Type.CONTROL ),
-    new HiKeyVal( "then"  , Highlight_Type.CONTROL ),
-
-    new HiKeyVal( "alias"   , Highlight_Type.DEFINE  ),
+    new HiKeyVal( "if"      , Highlight_Type.CONTROL ),
+    new HiKeyVal( "fi"      , Highlight_Type.CONTROL ),
+    new HiKeyVal( "else"    , Highlight_Type.CONTROL ),
+    new HiKeyVal( "elsif"   , Highlight_Type.CONTROL ),
+    new HiKeyVal( "for"     , Highlight_Type.CONTROL ),
+    new HiKeyVal( "done"    , Highlight_Type.CONTROL ),
+    new HiKeyVal( "while"   , Highlight_Type.CONTROL ),
+    new HiKeyVal( "do"      , Highlight_Type.CONTROL ),
+    new HiKeyVal( "return"  , Highlight_Type.CONTROL ),
+    new HiKeyVal( "switch"  , Highlight_Type.CONTROL ),
+    new HiKeyVal( "case"    , Highlight_Type.CONTROL ),
+    new HiKeyVal( "break"   , Highlight_Type.CONTROL ),
+    new HiKeyVal( "then"    , Highlight_Type.CONTROL ),
     new HiKeyVal( "bg"      , Highlight_Type.CONTROL ),
     new HiKeyVal( "bind"    , Highlight_Type.CONTROL ),
     new HiKeyVal( "builtin" , Highlight_Type.CONTROL ),
@@ -439,34 +414,24 @@ class Highlight_Bash extends Highlight_Base
     new HiKeyVal( "complete", Highlight_Type.CONTROL ),
     new HiKeyVal( "compopt" , Highlight_Type.CONTROL ),
     new HiKeyVal( "continue", Highlight_Type.CONTROL ),
-    new HiKeyVal( "declare" , Highlight_Type.VARTYPE ),
-    new HiKeyVal( "dirs"    , Highlight_Type.VARTYPE ),
-    new HiKeyVal( "disown"  , Highlight_Type.VARTYPE ),
     new HiKeyVal( "echo"    , Highlight_Type.CONTROL ),
     new HiKeyVal( "enable"  , Highlight_Type.CONTROL ),
     new HiKeyVal( "eval"    , Highlight_Type.CONTROL ),
     new HiKeyVal( "exec"    , Highlight_Type.CONTROL ),
     new HiKeyVal( "exit"    , Highlight_Type.CONTROL ),
     new HiKeyVal( "export"  , Highlight_Type.CONTROL ),
-    new HiKeyVal( "false"   , Highlight_Type.CONST   ),
     new HiKeyVal( "fc"      , Highlight_Type.CONTROL ),
     new HiKeyVal( "fg"      , Highlight_Type.CONTROL ),
-    new HiKeyVal( "getopts" , Highlight_Type.VARTYPE ),
     new HiKeyVal( "hash"    , Highlight_Type.CONTROL ),
     new HiKeyVal( "help"    , Highlight_Type.CONTROL ),
     new HiKeyVal( "history" , Highlight_Type.CONTROL ),
     new HiKeyVal( "jobs"    , Highlight_Type.CONTROL ),
     new HiKeyVal( "kill"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "let"     , Highlight_Type.VARTYPE ),
-    new HiKeyVal( "local"   , Highlight_Type.VARTYPE ),
     new HiKeyVal( "logout"  , Highlight_Type.CONTROL ),
-    new HiKeyVal( "mapfile" , Highlight_Type.VARTYPE ),
     new HiKeyVal( "popd"    , Highlight_Type.CONTROL ),
     new HiKeyVal( "printf"  , Highlight_Type.CONTROL ),
     new HiKeyVal( "pushd"   , Highlight_Type.CONTROL ),
     new HiKeyVal( "pwd"     , Highlight_Type.CONTROL ),
-    new HiKeyVal( "read"    , Highlight_Type.VARTYPE ),
-    new HiKeyVal( "readonly", Highlight_Type.VARTYPE ),
     new HiKeyVal( "return"  , Highlight_Type.CONTROL ),
     new HiKeyVal( "set"     , Highlight_Type.CONTROL ),
     new HiKeyVal( "shift"   , Highlight_Type.CONTROL ),
@@ -476,14 +441,28 @@ class Highlight_Bash extends Highlight_Base
     new HiKeyVal( "test"    , Highlight_Type.CONTROL ),
     new HiKeyVal( "times"   , Highlight_Type.CONTROL ),
     new HiKeyVal( "trap"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "true"    , Highlight_Type.CONST   ),
-    new HiKeyVal( "type"    , Highlight_Type.VARTYPE ),
-    new HiKeyVal( "typeset" , Highlight_Type.VARTYPE ),
     new HiKeyVal( "ulimit"  , Highlight_Type.CONTROL ),
     new HiKeyVal( "umask"   , Highlight_Type.CONTROL ),
     new HiKeyVal( "unalias" , Highlight_Type.CONTROL ),
     new HiKeyVal( "unset"   , Highlight_Type.CONTROL ),
     new HiKeyVal( "wait"    , Highlight_Type.CONTROL ),
+
+    new HiKeyVal( "declare" , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "dirs"    , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "disown"  , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "getopts" , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "let"     , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "local"   , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "mapfile" , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "read"    , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "readonly", Highlight_Type.VARTYPE ),
+    new HiKeyVal( "type"    , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "typeset" , Highlight_Type.VARTYPE ),
+
+    new HiKeyVal( "false"   , Highlight_Type.CONST   ),
+    new HiKeyVal( "true"    , Highlight_Type.CONST   ),
+
+    new HiKeyVal( "alias"   , Highlight_Type.DEFINE  ),
   };
 
   Hi_State m_state = Hi_State.In_None;

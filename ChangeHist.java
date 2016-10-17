@@ -165,7 +165,7 @@ class ChangeHist
 
       m_fb.Set( rlc.m_lnum, rlc.m_cpos+k, C, true );
     }
-    rV.GoToCrsPos_Write( rlc.m_lnum, rlc.m_cpos );
+    rV.GoToCrsPos_NoWrite( rlc.m_lnum, rlc.m_cpos );
 
     m_fb.Update();
   }
@@ -181,7 +181,7 @@ class ChangeHist
     final int NUM_LINES = m_fb.NumLines();
     final int LINE_NUM  = rlc.m_lnum < NUM_LINES ? rlc.m_lnum : NUM_LINES-1;
   
-    rV.GoToCrsPos_Write( LINE_NUM, rlc.m_cpos );
+    rV.GoToCrsPos_NoWrite( LINE_NUM, rlc.m_cpos );
   
     m_fb.Update();
   }
@@ -191,7 +191,7 @@ class ChangeHist
     // Undo a removed line by inserting the removed line
     m_fb.InsertLine( rlc.m_lnum, rlc.m_line );
 
-    rV.GoToCrsPos_Write( rlc.m_lnum, rlc.m_cpos );
+    rV.GoToCrsPos_NoWrite( rlc.m_lnum, rlc.m_cpos );
 
     m_fb.Update();
   }
@@ -205,7 +205,7 @@ class ChangeHist
     {
       m_fb.RemoveChar( rlc.m_lnum, rlc.m_cpos );
     }
-    rV.GoToCrsPos_Write( rlc.m_lnum, rlc.m_cpos );
+    rV.GoToCrsPos_NoWrite( rlc.m_lnum, rlc.m_cpos );
 
     m_fb.Update();
   }
@@ -221,7 +221,7 @@ class ChangeHist
 
       m_fb.InsertChar( rlc.m_lnum, rlc.m_cpos+k, C );
     }
-    rV.GoToCrsPos_Write( rlc.m_lnum, rlc.m_cpos );
+    rV.GoToCrsPos_NoWrite( rlc.m_lnum, rlc.m_cpos );
 
     m_fb.Update();
   }

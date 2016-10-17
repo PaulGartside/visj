@@ -83,7 +83,7 @@ class Highlight_BufferEditor extends Highlight_Base
          || ls.equals( m_fb.m_vis.HELP_BUF_NAME )
          || ls.equals( m_fb.m_vis.SRCH_BUF_NAME )
          || ls.equals( m_fb.m_vis.MSG__BUF_NAME )
-         || ls.equals( m_fb.m_vis.CMD__BUF_NAME ) )
+         || ls.equals( m_fb.m_vis.SHEL_BUF_NAME ) )
         {
           for( int k=0; k<LL; k++ )
           {

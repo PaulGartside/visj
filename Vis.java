@@ -154,13 +154,13 @@ public class Vis implements WindowFocusListener
     }
     InitBufferEditor();
     InitHelpBuffer();
-    InitSearchEditor();
+    InitSearchBuffer();
     InitMsgBuffer();
-    InitCmdBuffer();
-    boolean run_diff = InitUserFiles();
+    InitShellBuffer();
+    boolean run_diff = InitUserFiles() && ((SHELL_FILE+1+2) == m_files.size());
     InitFileHistory();
 
-    if( run_diff && ( (CMD_FILE+1+2) == m_files.size()) )
+    if( run_diff )
     {
       // User supplied: "-d file1 file2", so run diff:
       m_diff_mode = true;
@@ -188,7 +188,7 @@ public class Vis implements WindowFocusListener
 
     Add_FileBuf_2_Lists_Create_Views( fb, HELP_BUF_NAME );
   }
-  void InitSearchEditor()
+  void InitSearchBuffer()
   {
     // Search editor buffer, 2
     FileBuf fb = new FileBuf( this, SRCH_BUF_NAME, false );
@@ -203,13 +203,26 @@ public class Vis implements WindowFocusListener
 
     Add_FileBuf_2_Lists_Create_Views( fb, MSG__BUF_NAME );
   }
-  void InitCmdBuffer()
+  void InitShellBuffer()
   {
-    // Command buffer, CMD_FILE(4)
-    FileBuf fb = new FileBuf( this, CMD__BUF_NAME, false );
-    fb.PushLine(); // Add an empty line
+    // Command buffer, SHELL_FILE(4)
+    FileBuf fb = new FileBuf( this, SHEL_BUF_NAME, false );
 
-    Add_FileBuf_2_Lists_Create_Views( fb, CMD__BUF_NAME );
+    // Add ######################################
+    String divider = "######################################";
+    fb.PushLine( divider );
+
+    // Add an empty line
+    fb.PushLine();
+
+    Add_FileBuf_2_Lists_Create_Views( fb, SHEL_BUF_NAME );
+
+    // Put cursor on empty line below # line
+    for( int w=0; w<MAX_WINS; w++ )
+    {
+      View pV_shell = m_views[w].get( SHELL_FILE );
+      pV_shell.SetCrsRow( 1 );
+    }
   }
   boolean InitUserFiles()
   {
@@ -806,13 +819,13 @@ public class Vis implements WindowFocusListener
   }
   void Handle_u()
   {
-    if( m_diff_mode ) ; // Need to implement
-    else              CV().Do_u();
+    if( m_diff_mode ) m_diff.Do_u();
+    else                CV().Do_u();
   }
   void Handle_U()
   {
-    if( m_diff_mode ) ; // Need to implement
-    else              CV().Do_U();
+    if( m_diff_mode ) m_diff.Do_U();
+    else                CV().Do_U();
   }
   void Handle_v()
   {
@@ -1007,7 +1020,8 @@ public class Vis implements WindowFocusListener
       }
       else if( c2 == 'f' )
       {
-        if( !m_diff_mode ) GoToFile();
+        if( m_diff_mode ) m_diff.GoToFile();
+        else                CV().GoToFile();
       }
     }
   }
@@ -1760,7 +1774,8 @@ public class Vis implements WindowFocusListener
       }
       else if( c2 == 'w' )
       {
-        CV().Do_yw();
+        if( m_diff_mode ) m_diff.Do_yw();
+        else                CV().Do_yw();
       }
     }
   }
@@ -1914,7 +1929,7 @@ public class Vis implements WindowFocusListener
     else if( m_sb.toString().equals("sp") )   Exe_Colon_sp();
     else if( m_sb.toString().equals("se") )   Exe_Colon_se();
     else if( m_sb.toString().equals("sh")
-          || m_sb.toString().equals("shell")) Exe_Colon_sh();
+          || m_sb.toString().equals("shell")) Exe_Colon_shell();
     else if( m_sb.toString().equals("run") )  Exe_Colon_run();
     else if( m_sb.toString().equals("pwd") )  Exe_Colon_pwd();
     else if( m_sb.toString().equals("map") )  Exe_Colon_MapStart();
@@ -1992,20 +2007,19 @@ public class Vis implements WindowFocusListener
       Do_Star_FindPatterns();
 
       // Highlight new star patterns for windows displayed:
-      if( !m_diff_mode ) Do_Star_PrintPatterns( true );
-
-      if( MOVE_TO_FIRST_PATTERN )
+      if( m_diff_mode )
       {
-        if( m_diff_mode ) m_diff.Do_n(); // Move to first pattern
-        else                CV().Do_n(); // Move to first pattern
+        if( MOVE_TO_FIRST_PATTERN ) m_diff.Do_n(); // Move to first pattern
+        m_diff.Update();
       }
-      if( m_diff_mode ) m_diff.Update();
       else {
         final int COL = CV().Col_Win_2_GL( m_star.length()+1 );
         // Remove cursor from command line row:
         m_console.Set( ROW, COL, ' ', Style.NORMAL );
-        // Print out all the changes:
-        m_console.Update();
+
+        Do_Star_PrintPatterns( true );
+        if( MOVE_TO_FIRST_PATTERN ) CV().Do_n(); // Move to first pattern
+        else                        m_console.Update();
       }
     }
   }
@@ -2666,6 +2680,23 @@ public class Vis implements WindowFocusListener
     {
       m_diff_mode = false;
 
+      View pvS = m_diff.m_vS;
+      View pvL = m_diff.m_vL;
+
+      if( null != pvS )
+      {
+        pvS.SetTopLine ( m_diff.GetTopLine ( pvS ) );
+        pvS.SetLeftChar( m_diff.GetLeftChar() );
+        pvS.SetCrsRow  ( m_diff.GetCrsRow  () );
+        pvS.SetCrsCol  ( m_diff.GetCrsCol  () );
+      }
+      if( null != pvL )
+      {
+        pvL.SetTopLine ( m_diff.GetTopLine ( pvL ) );
+        pvL.SetLeftChar( m_diff.GetLeftChar() );
+        pvL.SetCrsRow  ( m_diff.GetCrsRow  () );
+        pvL.SetCrsCol  ( m_diff.GetCrsCol  () );
+      }
       UpdateViews();
     }
   }
@@ -2680,7 +2711,7 @@ public class Vis implements WindowFocusListener
 
   void Exe_Colon_run()
   {
-    if( CMD_FILE == m_file_hist[ m_win ].get( 0 ) )
+    if( SHELL_FILE == m_file_hist[ m_win ].get( 0 ) )
     {
       if( null == m_shell )
       {
@@ -2833,7 +2864,7 @@ public class Vis implements WindowFocusListener
 
     if( m_sb.toString().equals("w") ) // :w
     {
-      if( V == m_views[ m_win ].get( CMD_FILE ) )
+      if( V == m_views[ m_win ].get( SHELL_FILE ) )
       {
         // Dont allow SHELL_BUFFER to be saved with :w.
         // Require :w filename.
@@ -2849,7 +2880,7 @@ public class Vis implements WindowFocusListener
     }
     else // :w file_name
     {
-      // Edit file of supplied file name:
+      // Write file of supplied file name:
       String fname = new String( m_sb.substring(1) );
 
       fname = CV().m_fb.Relative_2_FullFname( fname );
@@ -3070,16 +3101,16 @@ public class Vis implements WindowFocusListener
   {
     GoToBuffer( SE_FILE );
   }
-  void Exe_Colon_sh()
+  void Exe_Colon_shell()
   {
-    GoToBuffer( CMD_FILE );
+    GoToBuffer( SHELL_FILE );
   }
-  void GoToFile()
-  {
-    String fname = CV().GetFileName_UnderCursor();
-
-    if( null != fname ) GoToBuffer_Fname( fname );
-  }
+//void GoToFile()
+//{
+//  String fname = CV().GetFileName_UnderCursor();
+//
+//  if( null != fname ) GoToBuffer_Fname( fname );
+//}
   // Return true if went to buffer indicated by fname, else false
   boolean GoToBuffer_Fname( String fname )
   {
@@ -3315,7 +3346,7 @@ public class Vis implements WindowFocusListener
 
       final int FILE_NUM = m_file_hist[ m_win ].get( 0 );
 
-      if( CMD_FILE < FILE_NUM )
+      if( SHELL_FILE < FILE_NUM )
       {
         // Get full file name relative to path of current file:
         fname = cv.m_fb.Relative_2_FullFname( fname );
@@ -3365,8 +3396,9 @@ public class Vis implements WindowFocusListener
     else {
       for( int w=0; w<m_num_wins; w++ )
       {
-        GetView_Win( w ).Update();
+        GetView_Win( w ).Update_DoNot_PrintCursor();
       }
+      CV().PrintCursor();
     }
   }
   // This ensures that proper change status is displayed around each window:
@@ -3465,13 +3497,13 @@ public class Vis implements WindowFocusListener
   static final int HELP_FILE = 1;    // Help          view
   static final int SE_FILE   = 2;    // Search editor view
   static final int MSG_FILE  = 3;    // Message       view
-  static final int CMD_FILE  = 4;    // Command Shell view
+  static final int SHELL_FILE  = 4;    // Command Shell view
   static final int MAX_WINS  = 8;    // Maximum number of sub-windows
   static final String EDIT_BUF_NAME = "BUFFER_EDITOR";
   static final String HELP_BUF_NAME = "VIS_HELP";
   static final String SRCH_BUF_NAME = "SEARCH_EDITOR";
   static final String MSG__BUF_NAME = "MESSAGE_BUFFER";
-  static final String CMD__BUF_NAME = "SHELL_BUFFER";
+  static final String SHEL_BUF_NAME = "SHELL_BUFFER";
   String[]           m_args;
   Deque<Thread>      m_states     = new ArrayDeque<Thread>();
   Thread             m_run_init   = new Thread() { public void run() { run_init  (); } };

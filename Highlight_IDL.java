@@ -28,10 +28,10 @@ class Highlight_IDL extends Highlight_Code
     super( fb );
   }
 
-  void Find_Styles_Keys()
-  {
-    Hi_FindKey( m_HiPairs );
-  }
+//void Find_Styles_Keys()
+//{
+//  Hi_FindKey( m_HiPairs );
+//}
   // Find keys starting on st up to but not including fn line
   void Find_Styles_Keys_In_Range( final CrsPos st
                                 , final int    fn )

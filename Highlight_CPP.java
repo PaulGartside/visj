@@ -28,10 +28,10 @@ class Highlight_CPP extends Highlight_Code
     super( fb );
   }
 
-  void Find_Styles_Keys()
-  {
-    Hi_FindKey( m_HiPairs );
-  }
+//void Find_Styles_Keys()
+//{
+//  Hi_FindKey( m_HiPairs );
+//}
   // Find keys starting on st up to but not including fn line
   void Find_Styles_Keys_In_Range( final CrsPos st
                                 , final int    fn )
@@ -52,7 +52,6 @@ class Highlight_CPP extends Highlight_Code
     new HiKeyVal( "default"            , Highlight_Type.CONTROL ),
     new HiKeyVal( "continue"           , Highlight_Type.CONTROL ),
     new HiKeyVal( "template"           , Highlight_Type.CONTROL ),
-    new HiKeyVal( "struct"             , Highlight_Type.CONTROL ),
     new HiKeyVal( "public"             , Highlight_Type.CONTROL ),
     new HiKeyVal( "protected"          , Highlight_Type.CONTROL ),
     new HiKeyVal( "private"            , Highlight_Type.CONTROL ),
@@ -64,10 +63,13 @@ class Highlight_CPP extends Highlight_Code
     new HiKeyVal( "namespace"          , Highlight_Type.CONTROL ),
     new HiKeyVal( "goto"               , Highlight_Type.CONTROL ),
     new HiKeyVal( "friend"             , Highlight_Type.CONTROL ),
+    new HiKeyVal( "try"                , Highlight_Type.CONTROL ),
+    new HiKeyVal( "catch"              , Highlight_Type.CONTROL ),
     new HiKeyVal( "throw"              , Highlight_Type.CONTROL ),
     new HiKeyVal( "and"                , Highlight_Type.CONTROL ),
     new HiKeyVal( "or"                 , Highlight_Type.CONTROL ),
     new HiKeyVal( "not"                , Highlight_Type.CONTROL ),
+
     new HiKeyVal( "new"                , Highlight_Type.VARTYPE ),
     new HiKeyVal( "const_cast"         , Highlight_Type.VARTYPE ),
     new HiKeyVal( "static_cast"        , Highlight_Type.VARTYPE ),
@@ -92,13 +94,19 @@ class Highlight_CPP extends Highlight_Code
     new HiKeyVal( "uint16_t"           , Highlight_Type.VARTYPE ),
     new HiKeyVal( "uint32_t"           , Highlight_Type.VARTYPE ),
     new HiKeyVal( "uint64_t"           , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "size_t"             , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "ssize_t"            , Highlight_Type.VARTYPE ),
     new HiKeyVal( "int8_t"             , Highlight_Type.VARTYPE ),
     new HiKeyVal( "int16_t"            , Highlight_Type.VARTYPE ),
     new HiKeyVal( "int32_t"            , Highlight_Type.VARTYPE ),
     new HiKeyVal( "int64_t"            , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "float32_t"          , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "float64_t"          , Highlight_Type.VARTYPE ),
     new HiKeyVal( "FILE"               , Highlight_Type.VARTYPE ),
     new HiKeyVal( "DIR"                , Highlight_Type.VARTYPE ),
     new HiKeyVal( "class"              , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "struct"             , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "union"              , Highlight_Type.VARTYPE ),
     new HiKeyVal( "typename"           , Highlight_Type.VARTYPE ),
     new HiKeyVal( "virtual"            , Highlight_Type.VARTYPE ),
     new HiKeyVal( "inline"             , Highlight_Type.VARTYPE ),

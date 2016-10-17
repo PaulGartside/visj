@@ -394,7 +394,7 @@ class Colon
 
     final int FILE_NUM = m_vis.m_file_hist[ m_vis.m_win ].get( 0 );
 
-    if( m_vis.CMD_FILE < FILE_NUM )
+    if( m_vis.SHELL_FILE < FILE_NUM )
     {
       // Get full file name relative to path of current file:
       f_full_path = m_cv.m_fb.Relative_2_FullFname( f_full_path );

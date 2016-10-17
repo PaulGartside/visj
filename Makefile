@@ -21,7 +21,7 @@
 # DEALINGS IN THE SOFTWARE.                                                  #
 ##############################################################################
 
-.PHONE: source jar clean install run
+.PHONE: source jar clean install
 
 jar: source
 	jar -cvfe vis.jar Vis -C classes .
@@ -62,6 +62,7 @@ source: classes \
         classes/Highlight_Dir.class \
         classes/Highlight_IDL.class \
         classes/Highlight_Java.class \
+        classes/Highlight_Make.class \
         classes/Highlight_SQL.class \
         classes/Highlight_STL.class \
         classes/Highlight_Text.class \
@@ -80,7 +81,6 @@ source: classes \
         classes/Ptr_String.class \
         classes/Ptr_StringBuilder.class \
         classes/SameArea.class \
-        classes/SameLineSec.class \
         classes/Shell.class \
         classes/Style.class \
         classes/Tile_Pos.class \

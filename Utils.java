@@ -38,6 +38,11 @@ class Utils
     System.out.println( msg );
   }
   public static
+  int LLM1( final int LL )
+  {
+    return 0 < LL ? LL-1 : 0;
+  }
+  public static
   OS_Type Get_OS_Type()
   {
     if( !m_determined_os )

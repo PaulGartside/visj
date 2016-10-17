@@ -213,10 +213,9 @@ class Line
   private StringBuilder m_sb;
   private boolean       m_chksum_valid = false;
   private int           m_chksum;
-  private static
-  int[] m_primes = {  43, 101, 149, 193, 241, 293, 353, 409, 461
-                   , 521, 587, 641, 691, 757, 823, 881, 947 };
-  private static
-  final int m_num_primes = m_primes.length;
+  private static int[]  m_primes = {  43, 101, 149, 193, 241, 293,
+                                     353, 409, 461, 521, 587, 641,
+                                     691, 757, 823, 881, 947 };
+  private static final int m_num_primes = m_primes.length;
 }
 
