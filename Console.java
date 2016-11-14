@@ -32,13 +32,17 @@ import java.awt.event.ComponentListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseEvent;
 import javax.swing.JComponent;
 import java.util.Queue;
 import java.util.ArrayDeque;
 import java.util.TreeSet;
 
 class Console extends JComponent
-              implements ComponentListener, KeyListener
+              implements ComponentListener
+                       , MouseMotionListener
+                       , KeyListener
 {
   // ComponentListener interface:
   public void componentResized( ComponentEvent e ) {}
@@ -46,9 +50,20 @@ class Console extends JComponent
   public void componentShown  ( ComponentEvent e ) {}
   public void componentMoved  ( ComponentEvent e ) {}
 
+  // MouseMotionListener
+  @Override
+  public void mouseDragged( MouseEvent e ) {}
+  @Override
+  public void mouseMoved( MouseEvent e )
+  {
+    m_vis.Show_Cursor();
+  }
+
   // KeyListener interface:
   public void keyPressed( KeyEvent ke )
   {
+    m_vis.Hide_Cursor();
+
     final char C = ke.getKeyChar();
 
     if( C == 65535 ) return; // Ignore SHIFT
@@ -101,6 +116,7 @@ class Console extends JComponent
 
     addComponentListener( this );
     addKeyListener( this );
+    addMouseMotionListener( this );
   }
 
   private char LowerToUpper( final char C )
@@ -359,10 +375,6 @@ class Console extends JComponent
     else if( m_get_from_map_buf ) C = In_MapBuf();
     else                          C = m_input.remove();
 
-  //if( m_save_2_map_buf ) m_map_buf.append( C );
-  //if( m_save_2_dot_buf ) m_dot_buf.append( C );
-  //if( m_save_2_vis_buf ) m_vis_buf.append( C );
-
     return C;
   }
   private
@@ -445,13 +457,13 @@ class Console extends JComponent
   void Set( final int ROW, final int COL, final char C, final Style S )
   {
     try {
-      if( m_siz_rows <= ROW )
+      if( m_num_rows <= ROW )
       {
-        throw new Exception( "Console::Set(): m_siz_rows="+ m_siz_rows +", ROW="+ ROW );
+        throw new Exception( "Console::Set(): m_num_rows="+ m_num_rows +", ROW="+ ROW );
       }
-      else if( m_siz_cols <= COL )
+      else if( m_num_cols <= COL )
       {
-        throw new Exception( "Console::Set(): m_siz_cols="+ m_siz_cols +", COL="+ COL );
+        throw new Exception( "Console::Set(): m_num_cols="+ m_num_cols +", COL="+ COL );
       }
       else {
         m_chars__p[ ROW ][ COL ] = C;
