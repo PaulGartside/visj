@@ -26,6 +26,9 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.WindowFocusListener;
 import java.awt.event.WindowEvent;
+import java.awt.Cursor;
+import java.awt.Point;
+import java.awt.image.BufferedImage;
 import javax.swing.SwingUtilities;
 import javax.swing.JFrame;
 import java.io.File;
@@ -118,19 +121,22 @@ public class Vis implements WindowFocusListener
     Toolkit   def_tk    = Toolkit.getDefaultToolkit();
     Dimension screen_sz = def_tk.getScreenSize();
 
-  //if( Utils.Get_OS_Type() == OS_Type.Windows )
-  //{
-      screen_sz.width  *= 0.9;
-      screen_sz.height *= 0.9;
-  //}
+    screen_sz.width  *= 0.9;
+    screen_sz.height *= 0.9;
+
     m_frame.setSize( screen_sz.width, screen_sz.height );
     m_frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+
+    BufferedImage cursorImg = new BufferedImage( 16, 16, BufferedImage.TYPE_INT_ARGB );
+    m_blank_cursor = def_tk.createCustomCursor( cursorImg, new Point(0,0), "blank_cursor");
+    m_frame.setCursor( m_blank_cursor );
 
     m_frame.addWindowFocusListener( this );
     m_frame.setVisible( true );
 
     m_states.removeFirst();
   }
+
   void run_focus()
   {
     if( m_received_focus )
@@ -434,6 +440,8 @@ public class Vis implements WindowFocusListener
   {
     if( !m_console.Resized() )
     {
+      m_frame.setCursor( m_blank_cursor );
+
       // Console done re-sizing
       m_console.Init();
       UpdateViewsConsoleSize();
@@ -3524,11 +3532,12 @@ public class Vis implements WindowFocusListener
   JFrame             m_frame;
   Console            m_console;
   Colon              m_colon;
+  Cursor             m_blank_cursor;
   boolean            m_initialized;
   boolean            m_received_focus;
   char               m_fast_char;
   boolean            m_diff_mode;
-  boolean            m_run_mode;
+  boolean            m_run_mode; // True if running shell command
   Diff               m_diff;
   StringBuilder      m_sb        = new StringBuilder();
   StringBuilder      m_sb2       = new StringBuilder();

@@ -359,10 +359,6 @@ class Console extends JComponent
     else if( m_get_from_map_buf ) C = In_MapBuf();
     else                          C = m_input.remove();
 
-  //if( m_save_2_map_buf ) m_map_buf.append( C );
-  //if( m_save_2_dot_buf ) m_dot_buf.append( C );
-  //if( m_save_2_vis_buf ) m_vis_buf.append( C );
-
     return C;
   }
   private
@@ -445,13 +441,13 @@ class Console extends JComponent
   void Set( final int ROW, final int COL, final char C, final Style S )
   {
     try {
-      if( m_siz_rows <= ROW )
+      if( m_num_rows <= ROW )
       {
-        throw new Exception( "Console::Set(): m_siz_rows="+ m_siz_rows +", ROW="+ ROW );
+        throw new Exception( "Console::Set(): m_num_rows="+ m_num_rows +", ROW="+ ROW );
       }
-      else if( m_siz_cols <= COL )
+      else if( m_num_cols <= COL )
       {
-        throw new Exception( "Console::Set(): m_siz_cols="+ m_siz_cols +", COL="+ COL );
+        throw new Exception( "Console::Set(): m_num_cols="+ m_num_cols +", COL="+ COL );
       }
       else {
         m_chars__p[ ROW ][ COL ] = C;
