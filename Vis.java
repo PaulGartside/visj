@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // VI-Simplified (vis) Java Implementation                                    //
-// Copyright (c) 07 Sep 2015 Paul J. Gartside                                 //
+// Copyright (c) 09 Nov 2016 Paul J. Gartside                                 //
 ////////////////////////////////////////////////////////////////////////////////
 // Permission is hereby granted, free of charge, to any person obtaining a    //
 // copy of this software and associated documentation files (the "Software"), //
@@ -21,16 +21,19 @@
 // DEALINGS IN THE SOFTWARE.                                                  //
 ////////////////////////////////////////////////////////////////////////////////
 
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Toolkit;
-import java.awt.event.WindowFocusListener;
-import java.awt.event.WindowEvent;
-import java.awt.Cursor;
-import java.awt.Point;
-import java.awt.image.BufferedImage;
-import javax.swing.SwingUtilities;
-import javax.swing.JFrame;
+import java.util.List;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.Group;
+import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.Cursor;
+import javafx.stage.Screen;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,49 +46,34 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.ArrayDeque;
 
-public class Vis implements WindowFocusListener
+public class Vis extends Application
 {
-  // WindowFocusListener implementation:
-  public void windowGainedFocus( WindowEvent we )
-  {
-    m_console.requestFocusInWindow();
-    m_received_focus = true;
-  }
-  public void windowLostFocus( WindowEvent we )
-  {
-  }
-
   public static void main( String[] args )
   {
-    try {
-      Vis vis = new Vis( args );
+    launch( args );
+  }
 
-      vis.Run();
+  @Override
+  public void start( Stage stage )
+  {
+    try {
+      m_stage = stage;
+      m_args  = getParameters().getRaw();
+
+      Initialize();
+
+      m_states.add( m_run_init );  // First  state
+      m_states.add( m_run_idle );  // Second state
+
+      m_stage.setOnCloseRequest( (WindowEvent we) -> Die("") );
+      m_stage.show();
+
+      m_scheduler.start();
     }
     catch( Exception e )
     {
       Handle_Exception( e );
     }
-  }
-  static void PrintEnv()
-  {
-    java.util.Map<String, String> env = System.getenv();
-
-    // OS = Windows_NT
-    for( String env_name : env.keySet() )
-    {
-      System.out.format("%s=%s%n", env_name, env.get(env_name) );
-    }
-  }
-  public Vis( String[] args )
-  {
-    m_args = args;
-
-    m_states.add( m_run_init );  // First  state
-    m_states.add( m_run_focus ); // Second state
-    m_states.add( m_run_idle );  // Third  state
-
-    m_received_focus = false;
   }
   static void Handle_Exception( Exception e )
   {
@@ -102,54 +90,99 @@ public class Vis implements WindowFocusListener
     System.out.println( msg );
     System.exit( 0 );
   }
-  void Run() throws Exception
+
+  void Initialize()
   {
-    while( true )
+    Rectangle2D screen_sz = Screen.getPrimary().getVisualBounds();
+
+    m_width  = (int)(screen_sz.getWidth() * 0.8 + 0.5 );
+    m_height = (int)(screen_sz.getHeight()* 0.8 + 0.5 );
+
+    m_console = new Console( this, m_width, m_height );
+    m_group   = new Group( m_console );
+    m_scene   = new Scene( m_group, m_width, m_height );
+
+    m_scene.setOnKeyPressed ( ke -> Key_Pressed ( ke ) );
+    m_scene.setOnKeyReleased( ke -> Key_Released( ke ) );
+    m_scene.setOnKeyTyped   ( ke -> Key_Typed   ( ke ) );
+
+    m_scene.setOnMouseMoved( me -> Cursor_Default() );
+
+    m_scene.widthProperty ().addListener( (o) -> Scene_Width_CB() );
+    m_scene.heightProperty().addListener( (o) -> Scene_Height_CB() );
+
+    m_stage.setTitle("visj");
+    m_stage.setScene( m_scene );
+  }
+  void Key_Pressed( KeyEvent ke )
+  {
+    Cursor_None();
+    m_console.Key_Pressed( ke );
+  }
+  void Key_Released( KeyEvent ke )
+  {
+    Cursor_None();
+    m_console.Key_Released( ke );
+  }
+  void Key_Typed( KeyEvent ke )
+  {
+    Cursor_None();
+    m_console.Key_Typed( ke );
+  }
+  void Cursor_None()
+  {
+    m_scene.setCursor( Cursor.NONE );
+  }
+  void Cursor_Default()
+  {
+    m_scene.setCursor( Cursor.DEFAULT );
+  }
+  void Scheduler()
+  {
+    try {
+      while( 0<m_states.size() )
+      {
+        // Take:
+        m_FX_running = true;
+
+        Platform.runLater( m_states.peekFirst() );
+
+      //Utils.Sleep( KEY_REPEAT_PERIOD );
+
+        while( m_FX_running )
+        {
+          Utils.Sleep( 1 );
+        }
+      }
+    }
+    catch( Exception e )
     {
-      SwingUtilities.invokeAndWait( m_states.peekFirst() );
+      Handle_Exception( e );
     }
   }
+  void Give()
+  {
+    m_FX_running = false;
+  }
+  void Scene_Width_CB()
+  {
+    m_width = (int)(m_scene.getWidth() + 0.5);
+  }
+  void Scene_Height_CB()
+  {
+    m_height = (int)(m_scene.getHeight() + 0.5);
+  }
+
   void run_init()
   {
-    m_frame   = new JFrame("Vis");
-    m_console = new Console( this );
-    m_diff    = new Diff( this, m_console );
+  //m_console.Init();
 
-    Container c = m_frame.getContentPane();
-              c.add( m_console );
+    run_init_files();
+    UpdateViews();
 
-    Toolkit   def_tk    = Toolkit.getDefaultToolkit();
-    Dimension screen_sz = def_tk.getScreenSize();
-
-    screen_sz.width  *= 0.9;
-    screen_sz.height *= 0.9;
-
-    m_frame.setSize( screen_sz.width, screen_sz.height );
-    m_frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
-
-    BufferedImage cursorImg = new BufferedImage( 16, 16, BufferedImage.TYPE_INT_ARGB );
-    m_blank_cursor = def_tk.createCustomCursor( cursorImg, new Point(0,0), "blank_cursor");
-    m_frame.setCursor( m_blank_cursor );
-
-    m_frame.addWindowFocusListener( this );
-    m_frame.setVisible( true );
+    m_console.Update();
 
     m_states.removeFirst();
-  }
-
-  void run_focus()
-  {
-    if( m_received_focus )
-    {
-      m_console.Init();
-
-      run_init_files();
-      UpdateViews();
-
-      m_console.Update();
-
-      m_states.removeFirst();
-    }
   }
   void run_init_files()
   {
@@ -235,14 +268,14 @@ public class Vis implements WindowFocusListener
     boolean run_diff = false;
 
     // User file buffers, 5, 6, ...
-    for( int k=0; k<m_args.length; k++ )
+    for( int k=0; k<m_args.size(); k++ )
     {
-      if( m_args[k].equals("-d") )
+      if( m_args.get(k).equals("-d") )
       {
         run_diff = true;
       }
       else {
-        String file_name = Utils.FindFullFileName_Process( m_args[k] );
+        String file_name = Utils.FindFullFileName_Process( m_args.get(k) );
 
         if( !HaveFile( file_name, null ) )
         {
@@ -440,10 +473,9 @@ public class Vis implements WindowFocusListener
   {
     if( !m_console.Resized() )
     {
-      m_frame.setCursor( m_blank_cursor );
-
       // Console done re-sizing
-      m_console.Init();
+      m_console.Init_RowsCols();
+      m_console.Init_Clear();
       UpdateViewsConsoleSize();
       UpdateViews();
       m_console.Update();
@@ -1883,9 +1915,9 @@ public class Vis implements WindowFocusListener
   {
     if( 0<m_console.KeysIn() )
     {
-      final char c = m_console.GetKey();
+      final char C = m_console.GetKey();
 
-      if( Utils.IsEndOfLineDelim( c ) )
+      if( Utils.IsEndOfLineDelim( C ) )
       {
         m_states.removeFirst();
         Exe_Slash();
@@ -1893,10 +1925,10 @@ public class Vis implements WindowFocusListener
       else {
         final int ROW = CV().Cmd__Line_Row();
 
-        if( Console.BS != c && Console.DEL != c )
+        if( Console.BS != C && Console.DEL != C )
         {
-          m_sb.append( c );
-          m_console.Set( ROW, CV().Col_Win_2_GL( m_sb.length()   ), c  , Style.NORMAL );
+          m_sb.append( C );
+          m_console.Set( ROW, CV().Col_Win_2_GL( m_sb.length()   ), C  , Style.NORMAL );
           m_console.Set( ROW, CV().Col_Win_2_GL( m_sb.length()+1 ), ' ', Style.CURSOR );
         }
         else {  // Backspace or Delete key
@@ -2608,10 +2640,7 @@ public class Vis implements WindowFocusListener
         ok = m_diff.Run( v0, v1 );
         if( ok ) {
           m_diff_mode = true;
-          if( m_states.peekFirst() != m_run_focus )
-          {
-            m_diff.Update();
-          }
+          m_diff.Update();
         }
       }
     }
@@ -3500,7 +3529,6 @@ public class Vis implements WindowFocusListener
     return m_views[w].get( m_file_hist[w].get( prev ) );
   }
   static final int KEY_REPEAT_PERIOD =  10; // ms between key repeats
-  static final int KEY_REPEAT_DELAY  = 250; // ms to wait for first key repeat
   static final int BE_FILE   = 0;    // Buffer editor view
   static final int HELP_FILE = 1;    // Help          view
   static final int SE_FILE   = 2;    // Search editor view
@@ -3512,32 +3540,37 @@ public class Vis implements WindowFocusListener
   static final String SRCH_BUF_NAME = "SEARCH_EDITOR";
   static final String MSG__BUF_NAME = "MESSAGE_BUFFER";
   static final String SHEL_BUF_NAME = "SHELL_BUFFER";
-  String[]           m_args;
+
+  List<String>    m_args;
+  Stage           m_stage;
+  Console         m_console;
+  Group           m_group;
+  Scene           m_scene;
+  int             m_width;
+  int             m_height;
+
   Deque<Thread>      m_states     = new ArrayDeque<Thread>();
-  Thread             m_run_init   = new Thread() { public void run() { run_init  (); } };
-  Thread             m_run_focus  = new Thread() { public void run() { run_focus (); } };
-  Thread             m_run_idle   = new Thread() { public void run() { run_idle  (); } };
-  Thread             m_run_resize = new Thread() { public void run() { run_resize(); } };
-  Thread             m_run_slash  = new Thread() { public void run() { run_slash (); } };
-  Thread             m_run_c      = new Thread() { public void run() { run_c     (); } };
-  Thread             m_run_d      = new Thread() { public void run() { run_d     (); } };
-  Thread             m_run_g      = new Thread() { public void run() { run_g     (); } };
-  Thread             m_run_W      = new Thread() { public void run() { run_W     (); } };
-  Thread             m_run_y      = new Thread() { public void run() { run_y     (); } };
-  Thread             m_run_dot    = new Thread() { public void run() { run_dot   (); } };
-  Thread             m_run_map    = new Thread() { public void run() { run_map   (); } };
-  Thread             m_run_Q      = new Thread() { public void run() { run_Q     (); } };
+  Thread             m_scheduler  = new Thread() { public void run() { Scheduler (); } };
+  Thread             m_run_init   = new Thread() { public void run() { run_init  (); Give(); } };
+  Thread             m_run_idle   = new Thread() { public void run() { run_idle  (); Give(); } };
+  Thread             m_run_resize = new Thread() { public void run() { run_resize(); Give(); } };
+  Thread             m_run_slash  = new Thread() { public void run() { run_slash (); Give(); } };
+  Thread             m_run_c      = new Thread() { public void run() { run_c     (); Give(); } };
+  Thread             m_run_d      = new Thread() { public void run() { run_d     (); Give(); } };
+  Thread             m_run_g      = new Thread() { public void run() { run_g     (); Give(); } };
+  Thread             m_run_W      = new Thread() { public void run() { run_W     (); Give(); } };
+  Thread             m_run_y      = new Thread() { public void run() { run_y     (); Give(); } };
+  Thread             m_run_dot    = new Thread() { public void run() { run_dot   (); Give(); } };
+  Thread             m_run_map    = new Thread() { public void run() { run_map   (); Give(); } };
+  Thread             m_run_Q      = new Thread() { public void run() { run_Q     (); Give(); } };
   int                m_win;
   int                m_num_wins = 1; // Number of sub-windows currently on screen
-  JFrame             m_frame;
-  Console            m_console;
   Colon              m_colon;
-  Cursor             m_blank_cursor;
   boolean            m_initialized;
-  boolean            m_received_focus;
   char               m_fast_char;
   boolean            m_diff_mode;
   boolean            m_run_mode; // True if running shell command
+  boolean            m_FX_running; // True if FX platform thread is running
   Diff               m_diff;
   StringBuilder      m_sb        = new StringBuilder();
   StringBuilder      m_sb2       = new StringBuilder();
@@ -3553,21 +3586,4 @@ public class Vis implements WindowFocusListener
   ArrayList<Byte>    m_cover_buf = new ArrayList<>();
   Shell              m_shell;
 }
-
-// Run threads using lambdas.
-// The syntax is more concise, but according to my research,
-// a new is done every time the lambda is called because the lambda
-// captures a method outside the lambda, so dont use for now.
-//Thread             m_run_init   = new Thread( ()->run_init  () );
-//Thread             m_run_focus  = new Thread( ()->run_focus () );
-//Thread             m_run_idle   = new Thread( ()->run_idle  () );
-//Thread             m_run_resize = new Thread( ()->run_resize() );
-//Thread             m_run_slash  = new Thread( ()->run_slash () );
-//Thread             m_run_c      = new Thread( ()->run_c     () );
-//Thread             m_run_d      = new Thread( ()->run_d     () );
-//Thread             m_run_g      = new Thread( ()->run_g     () );
-//Thread             m_run_W      = new Thread( ()->run_W     () );
-//Thread             m_run_y      = new Thread( ()->run_y     () );
-//Thread             m_run_dot    = new Thread( ()->run_dot   () );
-//Thread             m_run_Q      = new Thread( ()->run_Q     () );
 

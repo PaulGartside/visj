@@ -88,5 +88,5 @@ source: classes \
         classes/Utils.class \
         classes/View.class \
         classes/ViewList.class \
-        classes/Vis.class \
+        classes/Vis.class
 
