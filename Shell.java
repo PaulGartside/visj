@@ -31,17 +31,18 @@ import java.util.ArrayList;
 //
 class Shell
 {
-  Shell( Vis vis, Console console, View sh_view )
+  Shell( Vis vis, Console console )
   {
     m_vis     = vis;
     m_console = console;
-    m_sh_view = sh_view;
-    m_sh_fb   = m_sh_view.m_fb;
+    m_sh_fb   = m_vis.CV().m_fb;
     m_sb      = m_vis.m_sb;
   }
 
   void Run()
   {
+    m_sh_view = m_vis.CV();
+
     boolean ok = Get_Shell_Cmd();
 
     if( ok )
@@ -318,8 +319,8 @@ class Shell
   Process           m_sh_proc;
   InputStream       m_sh_is;
   Long              m_sh_T1;
-  Thread            m_run_sh_st  = new Thread() { public void run() { run_sh_st ();  m_vis.Give(); } };
-  Thread            m_run_sh_wait= new Thread() { public void run() { run_sh_wait(); m_vis.Give(); } };
-  Thread            m_run_sh_done= new Thread() { public void run() { run_sh_done(); m_vis.Give(); } };
+  Thread            m_run_sh_st  = new Thread() { public void run() { run_sh_st (); } };
+  Thread            m_run_sh_wait= new Thread() { public void run() { run_sh_wait();} };
+  Thread            m_run_sh_done= new Thread() { public void run() { run_sh_done();} };
 }
 

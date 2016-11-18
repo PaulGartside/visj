@@ -5386,21 +5386,21 @@ class Diff
   boolean m_printed_diff_ms;
   int     m_i_count;
 
-  Thread m_run_i_beg = new Thread() { public void run() { run_i_beg(); m_vis.Give(); } };
-  Thread m_run_i_mid = new Thread() { public void run() { run_i_mid(); m_vis.Give(); } };
-  Thread m_run_i_end = new Thread() { public void run() { run_i_end(); m_vis.Give(); } };
-  Thread m_run_R_beg = new Thread() { public void run() { run_R_beg(); m_vis.Give(); } };
-  Thread m_run_R_mid = new Thread() { public void run() { run_R_mid(); m_vis.Give(); } };
-  Thread m_run_R_end = new Thread() { public void run() { run_R_end(); m_vis.Give(); } };
-  Thread m_run_v_beg = new Thread() { public void run() { run_v_beg(); m_vis.Give(); } };
-  Thread m_run_v_mid = new Thread() { public void run() { run_v_mid(); m_vis.Give(); } };
-  Thread m_run_v_end = new Thread() { public void run() { run_v_end(); m_vis.Give(); } };
-  Thread m_run_g_v   = new Thread() { public void run() { run_g_v  (); m_vis.Give(); } };
-  Thread m_run_z     = new Thread() { public void run() { run_z    (); m_vis.Give(); } };
-  Thread m_run_f     = new Thread() { public void run() { run_f    (); m_vis.Give(); } };
-  Thread m_run_i_vb_beg = new Thread() { public void run() { run_i_vb_beg(); m_vis.Give(); } };
-  Thread m_run_i_vb_mid = new Thread() { public void run() { run_i_vb_mid(); m_vis.Give(); } };
-  Thread m_run_i_vb_end = new Thread() { public void run() { run_i_vb_end(); m_vis.Give(); } };
+  Thread m_run_i_beg = new Thread() { public void run() { run_i_beg(); } };
+  Thread m_run_i_mid = new Thread() { public void run() { run_i_mid(); } };
+  Thread m_run_i_end = new Thread() { public void run() { run_i_end(); } };
+  Thread m_run_R_beg = new Thread() { public void run() { run_R_beg(); } };
+  Thread m_run_R_mid = new Thread() { public void run() { run_R_mid(); } };
+  Thread m_run_R_end = new Thread() { public void run() { run_R_end(); } };
+  Thread m_run_v_beg = new Thread() { public void run() { run_v_beg(); } };
+  Thread m_run_v_mid = new Thread() { public void run() { run_v_mid(); } };
+  Thread m_run_v_end = new Thread() { public void run() { run_v_end(); } };
+  Thread m_run_g_v   = new Thread() { public void run() { run_g_v  (); } };
+  Thread m_run_z     = new Thread() { public void run() { run_z    (); } };
+  Thread m_run_f     = new Thread() { public void run() { run_f    (); } };
+  Thread m_run_i_vb_beg = new Thread() { public void run() { run_i_vb_beg(); } };
+  Thread m_run_i_vb_mid = new Thread() { public void run() { run_i_vb_mid(); } };
+  Thread m_run_i_vb_end = new Thread() { public void run() { run_i_vb_end(); } };
 }
 
 // Run threads using lambdas.

@@ -470,8 +470,8 @@ class Colon
   int           m_msg_len;
   String        m_partial_path;
   String        m_search__head;
-  Thread        m_run_colon = new Thread() { public void run() { run_colon(); m_vis.Give(); } };
-  Thread        m_run_get_cover_key = new Thread() { public void run() { run_get_cover_key(); m_vis.Give(); } };
+  Thread        m_run_colon = new Thread() { public void run() { run_colon(); } };
+  Thread        m_run_get_cover_key = new Thread() { public void run() { run_get_cover_key(); } };
   ColonOp       m_colon_op;
 }
 

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // VI-Simplified (vis) Java Implementation                                    //
-// Copyright (c) 11 Nov 2016 Paul J. Gartside                                 //
+// Copyright (c) 07 Sep 2015 Paul J. Gartside                                 //
 ////////////////////////////////////////////////////////////////////////////////
 // Permission is hereby granted, free of charge, to any person obtaining a    //
 // copy of this software and associated documentation files (the "Software"), //
@@ -21,175 +21,260 @@
 // DEALINGS IN THE SOFTWARE.                                                  //
 ////////////////////////////////////////////////////////////////////////////////
 
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-import javafx.scene.text.FontSmoothingType;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.paint.Color;
-import javafx.geometry.VPos;
+import java.lang.Math;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.event.ComponentListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseEvent;
+import javax.swing.JComponent;
 import java.util.Queue;
 import java.util.ArrayDeque;
+import java.util.TreeSet;
 
-//Utils.Log("Key_Pressed:"+ code +", ke.isShiftDown():"+ ke.isShiftDown() );
-
-class Console extends Canvas
+class Console extends JComponent
+              implements ComponentListener
+                       , MouseMotionListener
+                       , KeyListener
 {
-  void Key_Pressed( KeyEvent ke )
-  {
-  //final KeyCode code = ke.getCode();
-  //Utils.Log("Key_Pressed:"+ code +", ke.isShiftDown():"+ ke.isShiftDown() );
-  //Utils.Log("Key_Pressed:"+ code );
+  // ComponentListener interface:
+  public void componentResized( ComponentEvent e ) {}
+  public void componentHidden ( ComponentEvent e ) {}
+  public void componentShown  ( ComponentEvent e ) {}
+  public void componentMoved  ( ComponentEvent e ) {}
 
-    if( Add_Key_Char( ke ) )
+  // MouseMotionListener
+  @Override
+  public void mouseDragged( MouseEvent e ) {}
+  @Override
+  public void mouseMoved( MouseEvent e )
+  {
+    m_vis.Show_Cursor();
+  }
+
+  // KeyListener interface:
+  @Override
+  public void keyPressed( KeyEvent ke )
+  {
+    m_vis.Hide_Cursor();
+
+    final char C = ke.getKeyChar();
+
+    if( C == 65535 ) return; // Ignore SHIFT
+
+    if( m_input.add( C ) ) //< Should always be true
     {
-      if( m_input.add( m_C ) ) //< Should always be true
+      if( m_save_2_map_buf ) m_map_buf.append( C );
+      if( m_save_2_dot_buf ) m_dot_buf.append( C );
+      if( m_save_2_vis_buf ) m_vis_buf.append( C );
+
+      if( m_keys.add( C ) ) //< Should always be true
       {
-        if( m_save_2_map_buf ) m_map_buf.append( m_C );
-        if( m_save_2_dot_buf ) m_dot_buf.append( m_C );
-        if( m_save_2_vis_buf ) m_vis_buf.append( m_C );
+        m_key_time = System.currentTimeMillis();
       }
     }
   }
-  void Key_Released( KeyEvent ke )
+  @Override
+  public void keyReleased( KeyEvent ke )
   {
-  //final KeyCode code = ke.getCode();
-  //Utils.Log("Key_Released:"+ code +", ke.isShiftDown():"+ ke.isShiftDown() );
-  }
-  void Key_Typed( KeyEvent ke )
-  {
-  //final String C = ke.getCharacter();
-  //Utils.Log("Key_Typed: '"+ C +"'");
-  }
+    final char C = ke.getKeyChar();
 
-  boolean Add_Key_Char( KeyEvent ke )
-  {
-    final KeyCode CODE  = ke.getCode();
-    final boolean caps_pressed = CODE == KeyCode.CAPS;
-    m_caps_on = caps_pressed ? !m_caps_on : m_caps_on;
-    final boolean SHIFT =  ke.isShiftDown() && !m_caps_on
-                       || !ke.isShiftDown() &&  m_caps_on;
-    boolean add = true;
+    if( C == 65535 ) return; // Ignore SHIFT
 
-    switch( CODE )
+    if( !m_keys.remove( C ) )
     {
-    // Function row:
-    case ESCAPE          : m_C = ESC; break;
-    // Number row:
-    case BACK_QUOTE      : m_C = SHIFT ? '~' : '`'; break;
-    case DIGIT1          : m_C = SHIFT ? '!' : '1'; break;
-    case DIGIT2          : m_C = SHIFT ? '@' : '2'; break;
-    case DIGIT3          : m_C = SHIFT ? '#' : '3'; break;
-    case DIGIT4          : m_C = SHIFT ? '$' : '4'; break;
-    case DIGIT5          : m_C = SHIFT ? '%' : '5'; break;
-    case DIGIT6          : m_C = SHIFT ? '^' : '6'; break;
-    case DIGIT7          : m_C = SHIFT ? '&' : '7'; break;
-    case DIGIT8          : m_C = SHIFT ? '*' : '8'; break;
-    case DIGIT9          : m_C = SHIFT ? '(' : '9'; break;
-    case DIGIT0          : m_C = SHIFT ? ')' : '0'; break;
-    case MINUS           : m_C = SHIFT ? '_' : '-'; break;
-    case EQUALS          : m_C = SHIFT ? '+' : '='; break;
-    case BACK_SPACE      : m_C = SHIFT ? BS  : BS ; break;
-    // Top letter row:
-    case TAB             : m_C = SHIFT ? '\t':'\t'; break;
-    case Q               : m_C = SHIFT ? 'Q' : 'q'; break;
-    case W               : m_C = SHIFT ? 'W' : 'w'; break;
-    case E               : m_C = SHIFT ? 'E' : 'e'; break;
-    case R               : m_C = SHIFT ? 'R' : 'r'; break;
-    case T               : m_C = SHIFT ? 'T' : 't'; break;
-    case Y               : m_C = SHIFT ? 'Y' : 'y'; break;
-    case U               : m_C = SHIFT ? 'U' : 'u'; break;
-    case I               : m_C = SHIFT ? 'I' : 'i'; break;
-    case O               : m_C = SHIFT ? 'O' : 'o'; break;
-    case P               : m_C = SHIFT ? 'P' : 'p'; break;
-    case OPEN_BRACKET    : m_C = SHIFT ? '{' : '['; break;
-    case CLOSE_BRACKET   : m_C = SHIFT ? '}' : ']'; break;
-    case BACK_SLASH      : m_C = SHIFT ? '|' :'\\'; break;
-    // Middle letter row:
-    case A               : m_C = SHIFT ? 'A' : 'a'; break;
-    case S               : m_C = SHIFT ? 'S' : 's'; break;
-    case D               : m_C = SHIFT ? 'D' : 'd'; break;
-    case F               : m_C = SHIFT ? 'F' : 'f'; break;
-    case G               : m_C = SHIFT ? 'G' : 'g'; break;
-    case H               : m_C = SHIFT ? 'H' : 'h'; break;
-    case J               : m_C = SHIFT ? 'J' : 'j'; break;
-    case K               : m_C = SHIFT ? 'K' : 'k'; break;
-    case L               : m_C = SHIFT ? 'L' : 'l'; break;
-    case SEMICOLON       : m_C = SHIFT ? ':' : ';'; break;
-    case QUOTE           : m_C = SHIFT ? '"' :'\''; break;
-    case ENTER           : m_C = SHIFT ? '\n':'\n'; break;
-    // Botom letter row:
-    case Z               : m_C = SHIFT ? 'Z' : 'z'; break;
-    case X               : m_C = SHIFT ? 'X' : 'x'; break;
-    case C               : m_C = SHIFT ? 'C' : 'c'; break;
-    case V               : m_C = SHIFT ? 'V' : 'v'; break;
-    case B               : m_C = SHIFT ? 'B' : 'b'; break;
-    case N               : m_C = SHIFT ? 'N' : 'n'; break;
-    case M               : m_C = SHIFT ? 'M' : 'm'; break;
-    case COMMA           : m_C = SHIFT ? '<' : ','; break;
-    case PERIOD          : m_C = SHIFT ? '>' : '.'; break;
-    case SLASH           : m_C = SHIFT ? '?' : '/'; break;
-    // Spacebar row:
-    case SPACE           : m_C = SHIFT ? ' ' : ' '; break;
-    default: add = false;
+      // User released shift key before primary key,
+      // so convert C to upper and then remove:
+      if( !m_keys.remove( LowerToUpper( C ) ) )
+      {
+        // Should never get here, but need to remove something or else
+        // key repeat will quit working, so remove everything:
+        m_keys.clear();
+      }
     }
-    return add;
+  }
+  @Override
+  public void keyTyped( KeyEvent ke )
+  {
   }
 
-  Console( Vis vis, int width, int height )
+  Console( Vis vis )
   {
-    super( width, height );
-
     m_vis      = vis;
-    m_gc       = getGraphicsContext2D();
+
     m_num_rows = 0;
     m_num_cols = 0;
     m_siz_rows = 0;
     m_siz_cols = 0;
-    m_text_W = (int)(FONT_SIZE*0.6 + 0.5);
-    m_text_H = FONT_SIZE;
-    m_font_plain = Font.font( "Courier", FontWeight.NORMAL, FONT_SIZE );
-    m_font_bold  = Font.font( "Courier", FontWeight.BOLD  , FONT_SIZE );
 
-    Init_Graphics();
-    Init_TextChars();
-    Init_RowsCols();
-    Init_Clear();
-  //Init_Events();
+    m_font_plain = new Font( GetFontName(), Font.PLAIN, m_font_size );
+    m_font_bold  = new Font( GetFontName(), Font.BOLD , m_font_size );
+
+    addComponentListener( this );
+    addKeyListener( this );
+    addMouseMotionListener( this );
+  }
+
+  private char LowerToUpper( final char C )
+  {
+    switch( C )
+    {
+    case '`': return '~';
+    case '1': return '!';
+    case '2': return '@';
+    case '3': return '#';
+    case '4': return '$';
+    case '5': return '%';
+    case '6': return '^';
+    case '7': return '&';
+    case '8': return '*';
+    case '9': return '(';
+    case '0': return ')';
+    case '-': return '_';
+    case '=': return '+';
+
+    case 'q': return 'Q';
+    case 'w': return 'W';
+    case 'e': return 'E';
+    case 'r': return 'R';
+    case 't': return 'T';
+    case 'y': return 'Y';
+    case 'u': return 'U';
+    case 'i': return 'I';
+    case 'o': return 'O';
+    case 'p': return 'P';
+    case '[': return '{';
+    case ']': return '}';
+    case '\\':return '|';
+
+    case 'a': return 'A';
+    case 's': return 'S';
+    case 'd': return 'D';
+    case 'f': return 'F';
+    case 'g': return 'G';
+    case 'h': return 'H';
+    case 'j': return 'J';
+    case 'k': return 'K';
+    case 'l': return 'L';
+    case ';': return ':';
+    case '\'':return '"';
+
+    case 'z': return 'Z';
+    case 'x': return 'X';
+    case 'c': return 'C';
+    case 'v': return 'V';
+    case 'b': return 'B';
+    case 'n': return 'N';
+    case 'm': return 'M';
+    case ',': return '<';
+    case '.': return '>';
+    case '/': return '?';
+    }
+    return C;
+  }
+
+  // 
+  // -------------------------------------------------
+  // | Name        | OSX   | Win32 | Linux | Solaris |
+  // -------------------------------------------------
+  // | Monospaced  | Yes   | Yes   | No    | No      |
+  // -------------------------------------------------
+  // | Monospaced  | No    | Yes   | No    | No      |
+  // -------------------------------------------------
+  // | Courier     | Yes   | Yes   | Yes   | Yes     |
+  // -------------------------------------------------
+  // | Courier New | Yes   | Yes   | No    | Yes     |
+  // -------------------------------------------------
+  // | CourierStd  | No    | Yes   | ???   | ???     |
+  // -------------------------------------------------
+  // | Consolas    | No    | Yes * | ???   | ???     |
+  // -------------------------------------------------
+  // | AndaleMono  | Yes * | No    | ???   | ???     |
+  // -------------------------------------------------
+  // 
+  String GetFontName()
+  {
+    String font_name = "Courier";
+
+  //String os = System.getenv("OS");
+  //
+  //if( null != os )
+  //{
+  //  if( os.equals("Windows_NT") ) font_name = "Consolas";
+  //}
+    if( Utils.Get_OS_Type() == OS_Type.Windows )
+    {
+      font_name = "Courier New";
+    }
+    return font_name;
   }
   int Num_Rows() { return m_num_rows; }
   int Num_Cols() { return m_num_cols; }
 
+  void Init()
+  {
+    // Set this to false to keyEvent's get generated for tab, or
+    // else tab is used to traverse to another window, and
+    // keyEvent's will not get generated for tab.  Another option
+    // is to pre-listen to key events using keyEventDispatcher.
+    setFocusTraversalKeysEnabled( false );
+    setDoubleBuffered( true );
+
+    Init_Graphics();
+    Init_FontMetrics();
+    Init_RowsCols();
+    Init_Clear();
+  }
   void Init_Graphics()
   {
-    m_gc.setFill( Color.BLACK );
-    m_gc.fillRect( 0, 0, getWidth(), getHeight() );
-    m_gc.setFont( m_font_plain );
-    m_gc.setTextBaseline( VPos.TOP );
-  //m_gc.setFontSmoothingType( FontSmoothingType.LCD );
+    m_image = createImage( getWidth(), getHeight() );
+    m_g     = (Graphics2D)m_image.getGraphics();
+    m_g.setColor( Color.black );
+    m_g.fillRect( 0, 0, getWidth(), getHeight() );
+    repaint( 0, 0, getWidth(), getHeight() );
+    m_g.setBackground( Color.black );
+  //m_g.clearRect( 0, 0, getWidth(), getHeight() );
+    m_g.setFont( m_font_plain );
   }
-  void Init_TextChars()
+  void Init_FontMetrics()
   {
-    m_text_chars = new String[256];
+    FontMetrics fm = m_g.getFontMetrics();
 
-    for( char C=0; C<256; C++ )
+    m_text_W = fm.charWidth(' ');
+    m_text_H = fm.getHeight();
+    m_text_L = fm.getLeading();
+    m_text_A = fm.getAscent();
+    m_text_D = fm.getDescent();
+
+    final int MAX_H = m_text_W*2-2;
+    if( MAX_H < m_text_H )
     {
-      char data[] = { C };
-
-      m_text_chars[C] = new String(data);
+      if( 1<m_text_L )
+      {
+         m_text_L = 1;
+         m_text_H = m_text_A + m_text_D + m_text_L;
+      }
+      if( MAX_H < m_text_H ) m_text_H = MAX_H;
     }
   }
   void Init_RowsCols()
   {
-    m_num_rows = (int)(getHeight()/m_text_H+0.5);
-    m_num_cols = (int)(getWidth ()/m_text_W+0.5);
+    m_num_rows = getHeight()/m_text_H;
+    m_num_cols = getWidth ()/m_text_W;
 
     if( m_siz_rows < m_num_rows
      || m_siz_cols < m_num_cols )
     {
       // Window got bigger, so re-allocate:
+      m_siz_rows = Math.max( m_siz_rows, m_num_rows );
+      m_siz_cols = Math.max( m_siz_cols, m_num_cols );
       m_siz_rows = m_num_rows;
       m_siz_cols = m_num_cols;
 
@@ -218,32 +303,49 @@ class Console extends Canvas
       }
     }
   }
-//void Init_Events()
-//{
-//  setOnKeyPressed ( ke -> { Utils.Log("KeyPressed" ); } );
-//  setOnKeyReleased( ke -> { Utils.Log("KeyReleased"); } );
-//  setOnKeyTyped   ( ke -> { Utils.Log("KeyTyped"   ); } );
-//}
   boolean Resized()
   {
     final int old_num_rows = m_num_rows;
     final int old_num_cols = m_num_cols;
 
-    final double height = m_vis.m_scene.getHeight();
-    final double width  = m_vis.m_scene.getWidth();
+    m_num_rows = getHeight()/m_text_H;
+    m_num_cols = getWidth ()/m_text_W;
 
-    m_num_rows = (int)(height/m_text_H+0.5);
-    m_num_cols = (int)(width /m_text_W+0.5);
-
-    boolean resized = old_num_rows != m_num_rows
-                   || old_num_cols != m_num_cols;
-    if( resized )
-    {
-      setWidth ( width  );
-      setHeight( height );
-    }
-    return resized;
+    return old_num_rows != m_num_rows
+        || old_num_cols != m_num_cols;
   }
+  void Change_Font_Size( final int size_change )
+  {
+    if( 0 != size_change )
+    {
+      int new_font_size = m_font_size + size_change;
+
+      if( new_font_size < MIN_FONT_SIZE ) new_font_size = MIN_FONT_SIZE;
+
+      if( new_font_size != m_font_size )
+      {
+        m_font_size = new_font_size;
+
+        m_font_plain = new Font( GetFontName(), Font.PLAIN, m_font_size );
+        m_font_bold  = new Font( GetFontName(), Font.BOLD , m_font_size );
+        m_g.setFont( m_font_plain );
+
+        Init_FontMetrics();
+      }
+    }
+  }
+
+//int KeysIn()
+//{
+//  if( m_get_from_dot_buf ) return m_dot_buf.length();
+//  if( m_get_from_map_buf ) return m_vis_buf.length();
+//
+//  Utils.Sleep( m_vis.KEY_REPEAT_PERIOD );
+//
+//  Handle_Key_Repeat();
+//
+//  return m_input.size();
+//}
   int KeysIn()
   {
     if( m_get_from_dot_buf )
@@ -270,7 +372,7 @@ class Console extends Canvas
     }
     Utils.Sleep( m_vis.KEY_REPEAT_PERIOD );
 
-  //Handle_Key_Repeat();
+    Handle_Key_Repeat();
 
     return m_input.size();
   }
@@ -321,6 +423,45 @@ class Console extends Canvas
     }
     return false;
   }
+  void Handle_Key_Repeat()
+  {
+    // Only repeat if there is only one key pressed
+    // and there is not pending input:
+    if( m_keys.size()==1 && m_input.size()<1 )
+    {
+      final long elapsed_time = System.currentTimeMillis() - m_key_time;
+
+      if( m_vis.KEY_REPEAT_DELAY < elapsed_time )
+      {
+        m_input.add( m_keys.first() );
+
+        if( m_save_2_map_buf ) m_map_buf.append( m_keys.first() );
+        if( m_save_2_dot_buf ) m_dot_buf.append( m_keys.first() );
+        if( m_save_2_vis_buf ) m_vis_buf.append( m_keys.first() );
+      }
+    }
+  }
+//void Set( final int ROW, final int COL, final char C, final Style S )
+//{
+//  if( m_siz_rows <= ROW )
+//  {
+//  //System.out.println( "Console::Set(): m_siz_rows="+ m_siz_rows +", ROW="+ ROW );
+//  //System.exit( 0 );
+//    throw new Exception( "Console::Set(): m_siz_rows="+ m_siz_rows +", ROW="+ ROW );
+//  }
+//  else if( m_siz_cols <= COL )
+//  {
+//  //System.out.println( "Console::Set(): m_siz_cols="+ m_siz_cols +", COL="+ COL );
+//  //System.exit( 0 );
+//    throw new Exception( "Console::Set(): m_siz_cols="+ m_siz_cols +", COL="+ COL );
+//  }
+//  else {
+//    m_chars__p[ ROW ][ COL ] = C;
+//    m_styles_p[ ROW ][ COL ] = S;
+//    m_min_touched[ ROW ] = Math.min( m_min_touched[ ROW ], COL   );
+//    m_max_touched[ ROW ] = Math.max( m_max_touched[ ROW ], COL+1 );
+//  }
+//}
   void Set( final int ROW, final int COL, final char C, final Style S )
   {
     try {
@@ -359,75 +500,87 @@ class Console extends Canvas
        , m_chars__p[ROW][COL]
        , Style.CURSOR );
   }
+//void Set_Crs_Cell_Empty( final int ROW, final int COL )
+//{
+//  // Set new position to cursor style;
+//  Set( ROW, COL
+//     , m_chars__p[ROW][COL]
+//     , Style.CURSOR_EMPTY );
+//}
+  public void paint( Graphics g )
+  {
+    if( null == m_image ) Init();
+
+    g.drawImage( m_image, 0, 0, null );
+  }
   private
   void PrintC( final int row, final int col, final char C, final Style S )
   {
     if( row < m_num_rows && col < m_num_cols )
     {
       // Draw background rectangle:
-      m_gc.setFill( Style_2_BG( S ) );
+      m_g.setPaint( Style_2_BG( S ) );
 
       final int x_p_b = col*m_text_W; // X point background
       final int y_p_b = row*m_text_H; // Y point background
 
-      m_gc.fillRect( x_p_b, y_p_b, m_text_W, m_text_H );
+      m_g.fillRect( x_p_b, y_p_b, m_text_W, m_text_H );
 
-      if( C != ' ' && C != '\t' && C != '\r' )
-      {
-        // Draw foreground character:
-        m_gc.setFill( Style_2_FG( S ) );
+      // Draw foreground character:
+      m_g.setPaint( Style_2_FG( S ) );
 
-        final int x_p_t = col*m_text_W; // X point text
-        final int y_p_t = row*m_text_H; // Y point text
-      //final int y_p_t = (int)((double)(row*m_text_H)+0.5); // Y point text
+      char data[] = { C };
 
-        m_gc.fillText( m_text_chars[C], x_p_t, y_p_t );
-      }
+      final int x_p_t = col*m_text_W;                           // X point text
+      final int y_p_t = (row+1)*m_text_H - m_text_D - m_text_L; // Y point text
+
+      m_g.drawChars( data, 0, 1, x_p_t, y_p_t );
+
+      repaint( x_p_b, y_p_b, m_text_W, m_text_H );
     }
   }
-
   void Set_Color_Scheme_1()
   {
-    NORMAL_FG       = Color.WHITE  ;  NORMAL_BG       = Color.BLACK  ;
-    STATUS_FG       = Color.WHITE  ;  STATUS_BG       = Color.BLUE   ;
-    BORDER_FG       = Color.WHITE  ;  BORDER_BG       = Color.BLUE   ;
-    BORDER_HI_FG    = Color.WHITE  ;  BORDER_HI_BG    = Color.LIME   ;
-    BANNER_FG       = Color.WHITE  ;  BANNER_BG       = Color.RED    ;
-    STAR_FG         = Color.WHITE  ;  STAR_BG         = Color.RED    ;
-    COMMENT_FG      = m_comment_fg ;  COMMENT_BG      = Color.BLACK  ;
-    DEFINE_FG       = Color.MAGENTA;  DEFINE_BG       = Color.BLACK  ;
-    CONST_FG        = Color.CYAN   ;  CONST_BG        = Color.BLACK  ;
-    CONTROL_FG      = Color.YELLOW ;  CONTROL_BG      = Color.BLACK  ;
-    VARTYPE_FG      = Color.LIME   ;  VARTYPE_BG      = Color.BLACK  ;
-    VISUAL_FG       = Color.WHITE  ;  VISUAL_BG       = Color.RED    ;
-    NONASCII_FG     = Color.RED    ;  NONASCII_BG     = Color.BLUE   ;
-    RV_NORMAL_FG    = Color.BLACK  ;  RV_NORMAL_BG    = Color.WHITE  ;
-    RV_STATUS_FG    = Color.BLUE   ;  RV_STATUS_BG    = Color.BLUE   ;
-    RV_BORDER_FG    = Color.BLUE   ;  RV_BORDER_BG    = Color.WHITE  ;
-    RV_BORDER_HI_FG = Color.LIME   ;  RV_BORDER_HI_BG = Color.WHITE  ;
-    RV_BANNER_FG    = Color.RED    ;  RV_BANNER_BG    = Color.WHITE  ;
-    RV_STAR_FG      = Color.RED    ;  RV_STAR_BG      = Color.WHITE  ;
-    RV_COMMENT_FG   = Color.WHITE  ;  RV_COMMENT_BG   = Color.BLUE   ;
-    RV_DEFINE_FG    = Color.WHITE  ;  RV_DEFINE_BG    = Color.MAGENTA;
-    RV_CONST_FG     = Color.BLACK  ;  RV_CONST_BG     = Color.CYAN   ;
-    RV_CONTROL_FG   = Color.BLACK  ;  RV_CONTROL_BG   = Color.YELLOW ;
-    RV_VARTYPE_FG   = Color.WHITE  ;  RV_VARTYPE_BG   = Color.LIME   ;
-    RV_VISUAL_FG    = Color.RED    ;  RV_VISUAL_BG    = Color.WHITE  ;
-    RV_NONASCII_FG  = Color.BLUE   ;  RV_NONASCII_BG  = Color.RED    ;
-    EMPTY_FG        = Color.RED    ;  EMPTY_BG        = Color.BLACK  ;
-    EOF_FG          = Color.RED    ;  EOF_BG          = Color.GRAY   ;
-    DIFF_DEL_FG     = Color.WHITE  ;  DIFF_DEL_BG     = Color.RED    ;
-    DIFF_NORMAL_FG  = Color.WHITE  ;  DIFF_NORMAL_BG  = Color.BLUE   ;
-    DIFF_STAR_FG    = Color.BLUE   ;  DIFF_STAR_BG    = Color.RED    ;
-    DIFF_COMMENT_FG = Color.WHITE  ;  DIFF_COMMENT_BG = Color.BLUE   ;
-    DIFF_DEFINE_FG  = Color.MAGENTA;  DIFF_DEFINE_BG  = Color.BLUE   ;
-    DIFF_CONST_FG   = Color.CYAN   ;  DIFF_CONST_BG   = Color.BLUE   ;
-    DIFF_CONTROL_FG = Color.YELLOW ;  DIFF_CONTROL_BG = Color.BLUE   ;
-    DIFF_VARTYPE_FG = Color.LIME   ;  DIFF_VARTYPE_BG = Color.BLUE   ;
-    DIFF_VISUAL_FG  = Color.BLUE   ;  DIFF_VISUAL_BG  = Color.RED    ;
-    CURSOR_FG       = Color.BLACK  ;  CURSOR_BG       = Color.PINK   ;
-                                      CURSOR_EMPTY_BG = Color.BLACK  ;
-    m_gc.setFont( m_font_plain );
+    NORMAL_FG       = Color.white  ;  NORMAL_BG       = Color.black  ;
+    STATUS_FG       = Color.white  ;  STATUS_BG       = Color.blue   ;
+    BORDER_FG       = Color.white  ;  BORDER_BG       = Color.blue   ;
+    BORDER_HI_FG    = Color.white  ;  BORDER_HI_BG    = Color.green  ;
+    BANNER_FG       = Color.white  ;  BANNER_BG       = Color.red    ;
+    STAR_FG         = Color.white  ;  STAR_BG         = Color.red    ;
+    COMMENT_FG      = m_comment_fg ;  COMMENT_BG      = Color.black  ;
+    DEFINE_FG       = Color.magenta;  DEFINE_BG       = Color.black  ;
+    CONST_FG        = Color.cyan   ;  CONST_BG        = Color.black  ;
+    CONTROL_FG      = Color.yellow ;  CONTROL_BG      = Color.black  ;
+    VARTYPE_FG      = Color.green  ;  VARTYPE_BG      = Color.black  ;
+    VISUAL_FG       = Color.white  ;  VISUAL_BG       = Color.red    ;
+    NONASCII_FG     = Color.red    ;  NONASCII_BG     = Color.blue   ;
+    RV_NORMAL_FG    = Color.black  ;  RV_NORMAL_BG    = Color.white  ;
+    RV_STATUS_FG    = Color.blue   ;  RV_STATUS_BG    = Color.blue   ;
+    RV_BORDER_FG    = Color.blue   ;  RV_BORDER_BG    = Color.white  ;
+    RV_BORDER_HI_FG = Color.green  ;  RV_BORDER_HI_BG = Color.white  ;
+    RV_BANNER_FG    = Color.red    ;  RV_BANNER_BG    = Color.white  ;
+    RV_STAR_FG      = Color.red    ;  RV_STAR_BG      = Color.white  ;
+    RV_COMMENT_FG   = Color.white  ;  RV_COMMENT_BG   = Color.blue   ;
+    RV_DEFINE_FG    = Color.white  ;  RV_DEFINE_BG    = Color.magenta;
+    RV_CONST_FG     = Color.black  ;  RV_CONST_BG     = Color.cyan   ;
+    RV_CONTROL_FG   = Color.black  ;  RV_CONTROL_BG   = Color.yellow ;
+    RV_VARTYPE_FG   = Color.white  ;  RV_VARTYPE_BG   = Color.green  ;
+    RV_VISUAL_FG    = Color.red    ;  RV_VISUAL_BG    = Color.white  ;
+    RV_NONASCII_FG  = Color.blue   ;  RV_NONASCII_BG  = Color.red    ;
+    EMPTY_FG        = Color.red    ;  EMPTY_BG        = Color.black  ;
+    EOF_FG          = Color.red    ;  EOF_BG          = Color.darkGray;
+    DIFF_DEL_FG     = Color.white  ;  DIFF_DEL_BG     = Color.red    ;
+    DIFF_NORMAL_FG  = Color.white  ;  DIFF_NORMAL_BG  = Color.blue   ;
+    DIFF_STAR_FG    = Color.blue   ;  DIFF_STAR_BG    = Color.red    ;
+    DIFF_COMMENT_FG = Color.white  ;  DIFF_COMMENT_BG = Color.blue   ;
+    DIFF_DEFINE_FG  = Color.magenta;  DIFF_DEFINE_BG  = Color.blue   ;
+    DIFF_CONST_FG   = Color.cyan   ;  DIFF_CONST_BG   = Color.blue   ;
+    DIFF_CONTROL_FG = Color.yellow ;  DIFF_CONTROL_BG = Color.blue   ;
+    DIFF_VARTYPE_FG = Color.green  ;  DIFF_VARTYPE_BG = Color.blue   ;
+    DIFF_VISUAL_FG  = Color.blue   ;  DIFF_VISUAL_BG  = Color.red    ;
+    CURSOR_FG       = Color.black  ;  CURSOR_BG       = Color.pink   ;
+                                      CURSOR_EMPTY_BG = Color.black  ;
+    m_g.setFont( m_font_plain );
 
     Init_Clear();
     m_vis.UpdateViews();
@@ -435,46 +588,46 @@ class Console extends Canvas
   }
   void Set_Color_Scheme_2()
   {
-    NORMAL_FG       = Color.WHITE  ;  NORMAL_BG       = Color.BLACK  ;
-    STATUS_FG       = Color.WHITE  ;  STATUS_BG       = Color.BLUE   ;
-    BORDER_FG       = Color.WHITE  ;  BORDER_BG       = Color.BLUE   ;
-    BORDER_HI_FG    = Color.WHITE  ;  BORDER_HI_BG    = Color.LIME   ;
-    BANNER_FG       = Color.WHITE  ;  BANNER_BG       = Color.RED    ;
-    STAR_FG         = Color.WHITE  ;  STAR_BG         = Color.RED    ;
-    COMMENT_FG      = m_comment_fg ;  COMMENT_BG      = Color.BLACK  ;
-    DEFINE_FG       = Color.MAGENTA;  DEFINE_BG       = Color.BLACK  ;
-    CONST_FG        = Color.CYAN   ;  CONST_BG        = Color.BLACK  ;
-    CONTROL_FG      = Color.YELLOW ;  CONTROL_BG      = Color.BLACK  ;
-    VARTYPE_FG      = Color.LIME   ;  VARTYPE_BG      = Color.BLACK  ;
-    VISUAL_FG       = Color.WHITE  ;  VISUAL_BG       = Color.RED    ;
-    NONASCII_FG     = Color.RED    ;  NONASCII_BG     = Color.BLUE   ;
-    RV_NORMAL_FG    = Color.BLACK  ;  RV_NORMAL_BG    = Color.WHITE  ;
-    RV_STATUS_FG    = Color.BLUE   ;  RV_STATUS_BG    = Color.BLUE   ;
-    RV_BORDER_FG    = Color.BLUE   ;  RV_BORDER_BG    = Color.WHITE  ;
-    RV_BORDER_HI_FG = Color.LIME   ;  RV_BORDER_HI_BG = Color.WHITE  ;
-    RV_BANNER_FG    = Color.RED    ;  RV_BANNER_BG    = Color.WHITE  ;
-    RV_STAR_FG      = Color.RED    ;  RV_STAR_BG      = Color.WHITE  ;
-    RV_COMMENT_FG   = Color.WHITE  ;  RV_COMMENT_BG   = Color.BLUE   ;
-    RV_DEFINE_FG    = Color.WHITE  ;  RV_DEFINE_BG    = Color.MAGENTA;
-    RV_CONST_FG     = Color.BLACK  ;  RV_CONST_BG     = Color.CYAN   ;
-    RV_CONTROL_FG   = Color.BLACK  ;  RV_CONTROL_BG   = Color.YELLOW ;
-    RV_VARTYPE_FG   = Color.WHITE  ;  RV_VARTYPE_BG   = Color.LIME   ;
-    RV_VISUAL_FG    = Color.RED    ;  RV_VISUAL_BG    = Color.WHITE  ;
-    RV_NONASCII_FG  = Color.BLUE   ;  RV_NONASCII_BG  = Color.RED    ;
-    EMPTY_FG        = Color.RED    ;  EMPTY_BG        = Color.GRAY   ;
-    EOF_FG          = Color.RED    ;  EOF_BG          = Color.GRAY   ;
-    DIFF_DEL_FG     = Color.WHITE  ;  DIFF_DEL_BG     = Color.RED    ;
-    DIFF_NORMAL_FG  = Color.WHITE  ;  DIFF_NORMAL_BG  = Color.BLUE   ;
-    DIFF_STAR_FG    = Color.BLUE   ;  DIFF_STAR_BG    = Color.RED    ;
-    DIFF_COMMENT_FG = Color.WHITE  ;  DIFF_COMMENT_BG = Color.BLUE   ;
-    DIFF_DEFINE_FG  = Color.MAGENTA;  DIFF_DEFINE_BG  = Color.BLUE   ;
-    DIFF_CONST_FG   = Color.CYAN   ;  DIFF_CONST_BG   = Color.BLUE   ;
-    DIFF_CONTROL_FG = Color.YELLOW ;  DIFF_CONTROL_BG = Color.BLUE   ;
-    DIFF_VARTYPE_FG = Color.LIME   ;  DIFF_VARTYPE_BG = Color.BLUE   ;
-    DIFF_VISUAL_FG  = Color.BLUE   ;  DIFF_VISUAL_BG  = Color.RED    ;
-    CURSOR_FG       = Color.BLACK  ;  CURSOR_BG       = Color.PINK   ;
-                                      CURSOR_EMPTY_BG = Color.BLACK  ;
-    m_gc.setFont( m_font_plain );
+    NORMAL_FG       = Color.white  ;  NORMAL_BG       = Color.black  ;
+    STATUS_FG       = Color.white  ;  STATUS_BG       = Color.blue   ;
+    BORDER_FG       = Color.white  ;  BORDER_BG       = Color.blue   ;
+    BORDER_HI_FG    = Color.white  ;  BORDER_HI_BG    = Color.green  ;
+    BANNER_FG       = Color.white  ;  BANNER_BG       = Color.red    ;
+    STAR_FG         = Color.white  ;  STAR_BG         = Color.red    ;
+    COMMENT_FG      = m_comment_fg ;  COMMENT_BG      = Color.black  ;
+    DEFINE_FG       = Color.magenta;  DEFINE_BG       = Color.black  ;
+    CONST_FG        = Color.cyan   ;  CONST_BG        = Color.black  ;
+    CONTROL_FG      = Color.yellow ;  CONTROL_BG      = Color.black  ;
+    VARTYPE_FG      = Color.green  ;  VARTYPE_BG      = Color.black  ;
+    VISUAL_FG       = Color.white  ;  VISUAL_BG       = Color.red    ;
+    NONASCII_FG     = Color.red    ;  NONASCII_BG     = Color.blue   ;
+    RV_NORMAL_FG    = Color.black  ;  RV_NORMAL_BG    = Color.white  ;
+    RV_STATUS_FG    = Color.blue   ;  RV_STATUS_BG    = Color.blue   ;
+    RV_BORDER_FG    = Color.blue   ;  RV_BORDER_BG    = Color.white  ;
+    RV_BORDER_HI_FG = Color.green  ;  RV_BORDER_HI_BG = Color.white  ;
+    RV_BANNER_FG    = Color.red    ;  RV_BANNER_BG    = Color.white  ;
+    RV_STAR_FG      = Color.red    ;  RV_STAR_BG      = Color.white  ;
+    RV_COMMENT_FG   = Color.white  ;  RV_COMMENT_BG   = Color.blue   ;
+    RV_DEFINE_FG    = Color.white  ;  RV_DEFINE_BG    = Color.magenta;
+    RV_CONST_FG     = Color.black  ;  RV_CONST_BG     = Color.cyan   ;
+    RV_CONTROL_FG   = Color.black  ;  RV_CONTROL_BG   = Color.yellow ;
+    RV_VARTYPE_FG   = Color.white  ;  RV_VARTYPE_BG   = Color.green  ;
+    RV_VISUAL_FG    = Color.red    ;  RV_VISUAL_BG    = Color.white  ;
+    RV_NONASCII_FG  = Color.blue   ;  RV_NONASCII_BG  = Color.red    ;
+    EMPTY_FG        = Color.red    ;  EMPTY_BG        = Color.darkGray;
+    EOF_FG          = Color.red    ;  EOF_BG          = Color.darkGray;
+    DIFF_DEL_FG     = Color.white  ;  DIFF_DEL_BG     = Color.red    ;
+    DIFF_NORMAL_FG  = Color.white  ;  DIFF_NORMAL_BG  = Color.blue   ;
+    DIFF_STAR_FG    = Color.blue   ;  DIFF_STAR_BG    = Color.red    ;
+    DIFF_COMMENT_FG = Color.white  ;  DIFF_COMMENT_BG = Color.blue   ;
+    DIFF_DEFINE_FG  = Color.magenta;  DIFF_DEFINE_BG  = Color.blue   ;
+    DIFF_CONST_FG   = Color.cyan   ;  DIFF_CONST_BG   = Color.blue   ;
+    DIFF_CONTROL_FG = Color.yellow ;  DIFF_CONTROL_BG = Color.blue   ;
+    DIFF_VARTYPE_FG = Color.green  ;  DIFF_VARTYPE_BG = Color.blue   ;
+    DIFF_VISUAL_FG  = Color.blue   ;  DIFF_VISUAL_BG  = Color.red    ;
+    CURSOR_FG       = Color.black  ;  CURSOR_BG       = Color.pink   ;
+                                      CURSOR_EMPTY_BG = Color.black  ;
+    m_g.setFont( m_font_plain );
 
     Init_Clear();
     m_vis.UpdateViews();
@@ -482,46 +635,46 @@ class Console extends Canvas
   }
   void Set_Color_Scheme_3()
   {
-    NORMAL_FG       = Color.BLACK    ;  NORMAL_BG       = Color.WHITE  ;
-    STATUS_FG       = Color.WHITE    ;  STATUS_BG       = Color.BLUE   ;
-    BORDER_FG       = Color.WHITE    ;  BORDER_BG       = Color.BLUE   ;
-    BORDER_HI_FG    = Color.WHITE    ;  BORDER_HI_BG    = Color.LIME   ;
-    BANNER_FG       = Color.WHITE    ;  BANNER_BG       = Color.RED    ;
-    STAR_FG         = Color.WHITE    ;  STAR_BG         = Color.RED    ;
-    COMMENT_FG      = m_d_blue       ;  COMMENT_BG      = Color.WHITE  ;
-    DEFINE_FG       = m_d_magenta    ;  DEFINE_BG       = Color.WHITE  ;
-    CONST_FG        = m_d_cyan       ;  CONST_BG        = Color.WHITE  ;
-    CONTROL_FG      = m_d_yellow     ;  CONTROL_BG      = Color.WHITE  ;
-    VARTYPE_FG      = m_d_green      ;  VARTYPE_BG      = Color.WHITE  ;
-    VISUAL_FG       = Color.RED      ;  VISUAL_BG       = Color.WHITE  ;
-    NONASCII_FG     = Color.YELLOW   ;  NONASCII_BG     = Color.CYAN   ;
-    RV_NORMAL_FG    = Color.WHITE    ;  RV_NORMAL_BG    = Color.BLACK  ;
-    RV_STATUS_FG    = Color.BLUE     ;  RV_STATUS_BG    = Color.WHITE  ;
-    RV_BORDER_FG    = Color.BLUE     ;  RV_BORDER_BG    = Color.WHITE  ;
-    RV_BORDER_HI_FG = Color.LIME     ;  RV_BORDER_HI_BG = Color.WHITE  ;
-    RV_BANNER_FG    = Color.WHITE    ;  RV_BANNER_BG    = Color.RED    ;
-    RV_STAR_FG      = Color.RED      ;  RV_STAR_BG      = Color.WHITE  ;
-    RV_COMMENT_FG   = Color.WHITE    ;  RV_COMMENT_BG   = Color.BLUE   ;
-    RV_DEFINE_FG    = Color.MAGENTA  ;  RV_DEFINE_BG    = Color.WHITE  ;
-    RV_CONST_FG     = Color.CYAN     ;  RV_CONST_BG     = Color.BLACK  ;
-    RV_CONTROL_FG   = Color.BLACK    ;  RV_CONTROL_BG   = Color.YELLOW ;
-    RV_VARTYPE_FG   = Color.LIME     ;  RV_VARTYPE_BG   = Color.WHITE  ;
-    RV_VISUAL_FG    = Color.WHITE    ;  RV_VISUAL_BG    = Color.RED    ;
-    RV_NONASCII_FG  = Color.CYAN     ;  RV_NONASCII_BG  = Color.YELLOW ;
-    EMPTY_FG        = Color.RED      ;  EMPTY_BG        = Color.WHITE  ;
-    EOF_FG          = Color.RED      ;  EOF_BG          = Color.GRAY   ;
-    DIFF_DEL_FG     = Color.WHITE    ;  DIFF_DEL_BG     = Color.RED    ;
-    DIFF_NORMAL_FG  = Color.WHITE    ;  DIFF_NORMAL_BG  = Color.BLUE   ;
-    DIFF_STAR_FG    = Color.BLUE     ;  DIFF_STAR_BG    = Color.RED    ;
-    DIFF_COMMENT_FG = Color.WHITE    ;  DIFF_COMMENT_BG = Color.BLUE   ;
-    DIFF_DEFINE_FG  = Color.MAGENTA  ;  DIFF_DEFINE_BG  = Color.BLUE   ;
-    DIFF_CONST_FG   = Color.CYAN     ;  DIFF_CONST_BG   = Color.BLUE   ;
-    DIFF_CONTROL_FG = Color.YELLOW   ;  DIFF_CONTROL_BG = Color.BLUE   ;
-    DIFF_VARTYPE_FG = Color.LIME     ;  DIFF_VARTYPE_BG = Color.BLUE   ;
-    DIFF_VISUAL_FG  = Color.BLUE     ;  DIFF_VISUAL_BG  = Color.RED    ;
-    CURSOR_FG       = Color.BLACK    ;  CURSOR_BG       = m_d_pink     ;
-                                        CURSOR_EMPTY_BG = Color.BLACK  ;
-    m_gc.setFont( m_font_bold );
+    NORMAL_FG       = Color.black    ;  NORMAL_BG       = Color.white  ;
+    STATUS_FG       = Color.white    ;  STATUS_BG       = Color.blue   ;
+    BORDER_FG       = Color.white    ;  BORDER_BG       = Color.blue   ;
+    BORDER_HI_FG    = Color.white    ;  BORDER_HI_BG    = Color.green  ;
+    BANNER_FG       = Color.white    ;  BANNER_BG       = Color.red    ;
+    STAR_FG         = Color.white    ;  STAR_BG         = Color.red    ;
+    COMMENT_FG      = m_d_blue       ;  COMMENT_BG      = Color.white  ;
+    DEFINE_FG       = m_d_magenta    ;  DEFINE_BG       = Color.white  ;
+    CONST_FG        = m_d_cyan       ;  CONST_BG        = Color.white  ;
+    CONTROL_FG      = m_d_yellow     ;  CONTROL_BG      = Color.white  ;
+    VARTYPE_FG      = m_d_green      ;  VARTYPE_BG      = Color.white  ;
+    VISUAL_FG       = Color.red      ;  VISUAL_BG       = Color.white  ;
+    NONASCII_FG     = Color.yellow   ;  NONASCII_BG     = Color.cyan   ;
+    RV_NORMAL_FG    = Color.white    ;  RV_NORMAL_BG    = Color.black  ;
+    RV_STATUS_FG    = Color.blue     ;  RV_STATUS_BG    = Color.white  ;
+    RV_BORDER_FG    = Color.blue     ;  RV_BORDER_BG    = Color.white  ;
+    RV_BORDER_HI_FG = Color.green    ;  RV_BORDER_HI_BG = Color.white  ;
+    RV_BANNER_FG    = Color.white    ;  RV_BANNER_BG    = Color.red    ;
+    RV_STAR_FG      = Color.red      ;  RV_STAR_BG      = Color.white  ;
+    RV_COMMENT_FG   = Color.white    ;  RV_COMMENT_BG   = Color.blue   ;
+    RV_DEFINE_FG    = Color.magenta  ;  RV_DEFINE_BG    = Color.white  ;
+    RV_CONST_FG     = Color.cyan     ;  RV_CONST_BG     = Color.black  ;
+    RV_CONTROL_FG   = Color.black    ;  RV_CONTROL_BG   = Color.yellow ;
+    RV_VARTYPE_FG   = Color.green    ;  RV_VARTYPE_BG   = Color.white  ;
+    RV_VISUAL_FG    = Color.white    ;  RV_VISUAL_BG    = Color.red    ;
+    RV_NONASCII_FG  = Color.cyan     ;  RV_NONASCII_BG  = Color.yellow ;
+    EMPTY_FG        = Color.red      ;  EMPTY_BG        = Color.white  ;
+    EOF_FG          = Color.red      ;  EOF_BG          = Color.darkGray;
+    DIFF_DEL_FG     = Color.white    ;  DIFF_DEL_BG     = Color.red    ;
+    DIFF_NORMAL_FG  = Color.white    ;  DIFF_NORMAL_BG  = Color.blue   ;
+    DIFF_STAR_FG    = Color.blue     ;  DIFF_STAR_BG    = Color.red    ;
+    DIFF_COMMENT_FG = Color.white    ;  DIFF_COMMENT_BG = Color.blue   ;
+    DIFF_DEFINE_FG  = Color.magenta  ;  DIFF_DEFINE_BG  = Color.blue   ;
+    DIFF_CONST_FG   = Color.cyan     ;  DIFF_CONST_BG   = Color.blue   ;
+    DIFF_CONTROL_FG = Color.yellow   ;  DIFF_CONTROL_BG = Color.blue   ;
+    DIFF_VARTYPE_FG = Color.green    ;  DIFF_VARTYPE_BG = Color.blue   ;
+    DIFF_VISUAL_FG  = Color.blue     ;  DIFF_VISUAL_BG  = Color.red    ;
+    CURSOR_FG       = Color.black    ;  CURSOR_BG       = m_d_pink     ;
+                                        CURSOR_EMPTY_BG = Color.black  ;
+    m_g.setFont( m_font_bold );
 
     Init_Clear();
     m_vis.UpdateViews();
@@ -529,46 +682,46 @@ class Console extends Canvas
   }
   void Set_Color_Scheme_4()
   {
-    NORMAL_FG       = Color.BLACK    ;  NORMAL_BG       = Color.WHITE  ;
-    STATUS_FG       = Color.WHITE    ;  STATUS_BG       = Color.BLUE   ;
-    BORDER_FG       = Color.WHITE    ;  BORDER_BG       = Color.BLUE   ;
-    BORDER_HI_FG    = Color.WHITE    ;  BORDER_HI_BG    = Color.LIME   ;
-    BANNER_FG       = Color.WHITE    ;  BANNER_BG       = Color.RED    ;
-    STAR_FG         = Color.WHITE    ;  STAR_BG         = Color.RED    ;
-    COMMENT_FG      = m_d_blue       ;  COMMENT_BG      = Color.WHITE  ;
-    DEFINE_FG       = m_d_magenta    ;  DEFINE_BG       = Color.WHITE  ;
-    CONST_FG        = m_d_cyan       ;  CONST_BG        = Color.WHITE  ;
-    CONTROL_FG      = m_d_yellow     ;  CONTROL_BG      = Color.WHITE  ;
-    VARTYPE_FG      = m_d_green      ;  VARTYPE_BG      = Color.WHITE  ;
-    VISUAL_FG       = Color.RED      ;  VISUAL_BG       = Color.WHITE  ;
-    NONASCII_FG     = Color.YELLOW   ;  NONASCII_BG     = Color.CYAN   ;
-    RV_NORMAL_FG    = Color.WHITE    ;  RV_NORMAL_BG    = Color.BLACK  ;
-    RV_STATUS_FG    = Color.BLUE     ;  RV_STATUS_BG    = Color.WHITE  ;
-    RV_BORDER_FG    = Color.BLUE     ;  RV_BORDER_BG    = Color.WHITE  ;
-    RV_BORDER_HI_FG = Color.LIME     ;  RV_BORDER_HI_BG = Color.WHITE  ;
-    RV_BANNER_FG    = Color.WHITE    ;  RV_BANNER_BG    = Color.RED    ;
-    RV_STAR_FG      = Color.RED      ;  RV_STAR_BG      = Color.WHITE  ;
-    RV_COMMENT_FG   = Color.WHITE    ;  RV_COMMENT_BG   = Color.BLUE   ;
-    RV_DEFINE_FG    = Color.MAGENTA  ;  RV_DEFINE_BG    = Color.WHITE  ;
-    RV_CONST_FG     = Color.CYAN     ;  RV_CONST_BG     = Color.BLACK  ;
-    RV_CONTROL_FG   = Color.BLACK    ;  RV_CONTROL_BG   = Color.YELLOW ;
-    RV_VARTYPE_FG   = Color.LIME     ;  RV_VARTYPE_BG   = Color.WHITE  ;
-    RV_VISUAL_FG    = Color.WHITE    ;  RV_VISUAL_BG    = Color.RED    ;
-    RV_NONASCII_FG  = Color.CYAN     ;  RV_NONASCII_BG  = Color.YELLOW ;
-    EMPTY_FG        = Color.RED      ;  EMPTY_BG        = Color.GRAY   ;
-    EOF_FG          = Color.RED      ;  EOF_BG          = Color.GRAY   ;
-    DIFF_DEL_FG     = Color.WHITE    ;  DIFF_DEL_BG     = Color.RED    ;
-    DIFF_NORMAL_FG  = Color.WHITE    ;  DIFF_NORMAL_BG  = Color.BLUE   ;
-    DIFF_STAR_FG    = Color.BLUE     ;  DIFF_STAR_BG    = Color.RED    ;
-    DIFF_COMMENT_FG = Color.WHITE    ;  DIFF_COMMENT_BG = Color.BLUE   ;
-    DIFF_DEFINE_FG  = Color.MAGENTA  ;  DIFF_DEFINE_BG  = Color.BLUE   ;
-    DIFF_CONST_FG   = Color.CYAN     ;  DIFF_CONST_BG   = Color.BLUE   ;
-    DIFF_CONTROL_FG = Color.YELLOW   ;  DIFF_CONTROL_BG = Color.BLUE   ;
-    DIFF_VARTYPE_FG = Color.LIME     ;  DIFF_VARTYPE_BG = Color.BLUE   ;
-    DIFF_VISUAL_FG  = Color.BLUE     ;  DIFF_VISUAL_BG  = Color.RED    ;
-    CURSOR_FG       = Color.BLACK    ;  CURSOR_BG       = m_d_pink     ;
-                                        CURSOR_EMPTY_BG = Color.BLACK  ;
-    m_gc.setFont( m_font_bold );
+    NORMAL_FG       = Color.black    ;  NORMAL_BG       = Color.white  ;
+    STATUS_FG       = Color.white    ;  STATUS_BG       = Color.blue   ;
+    BORDER_FG       = Color.white    ;  BORDER_BG       = Color.blue   ;
+    BORDER_HI_FG    = Color.white    ;  BORDER_HI_BG    = Color.green  ;
+    BANNER_FG       = Color.white    ;  BANNER_BG       = Color.red    ;
+    STAR_FG         = Color.white    ;  STAR_BG         = Color.red    ;
+    COMMENT_FG      = m_d_blue       ;  COMMENT_BG      = Color.white  ;
+    DEFINE_FG       = m_d_magenta    ;  DEFINE_BG       = Color.white  ;
+    CONST_FG        = m_d_cyan       ;  CONST_BG        = Color.white  ;
+    CONTROL_FG      = m_d_yellow     ;  CONTROL_BG      = Color.white  ;
+    VARTYPE_FG      = m_d_green      ;  VARTYPE_BG      = Color.white  ;
+    VISUAL_FG       = Color.red      ;  VISUAL_BG       = Color.white  ;
+    NONASCII_FG     = Color.yellow   ;  NONASCII_BG     = Color.cyan   ;
+    RV_NORMAL_FG    = Color.white    ;  RV_NORMAL_BG    = Color.black  ;
+    RV_STATUS_FG    = Color.blue     ;  RV_STATUS_BG    = Color.white  ;
+    RV_BORDER_FG    = Color.blue     ;  RV_BORDER_BG    = Color.white  ;
+    RV_BORDER_HI_FG = Color.green    ;  RV_BORDER_HI_BG = Color.white  ;
+    RV_BANNER_FG    = Color.white    ;  RV_BANNER_BG    = Color.red    ;
+    RV_STAR_FG      = Color.red      ;  RV_STAR_BG      = Color.white  ;
+    RV_COMMENT_FG   = Color.white    ;  RV_COMMENT_BG   = Color.blue   ;
+    RV_DEFINE_FG    = Color.magenta  ;  RV_DEFINE_BG    = Color.white  ;
+    RV_CONST_FG     = Color.cyan     ;  RV_CONST_BG     = Color.black  ;
+    RV_CONTROL_FG   = Color.black    ;  RV_CONTROL_BG   = Color.yellow ;
+    RV_VARTYPE_FG   = Color.green    ;  RV_VARTYPE_BG   = Color.white  ;
+    RV_VISUAL_FG    = Color.white    ;  RV_VISUAL_BG    = Color.red    ;
+    RV_NONASCII_FG  = Color.cyan     ;  RV_NONASCII_BG  = Color.yellow ;
+    EMPTY_FG        = Color.red      ;  EMPTY_BG        = Color.darkGray;
+    EOF_FG          = Color.red      ;  EOF_BG          = Color.darkGray;
+    DIFF_DEL_FG     = Color.white    ;  DIFF_DEL_BG     = Color.red    ;
+    DIFF_NORMAL_FG  = Color.white    ;  DIFF_NORMAL_BG  = Color.blue   ;
+    DIFF_STAR_FG    = Color.blue     ;  DIFF_STAR_BG    = Color.red    ;
+    DIFF_COMMENT_FG = Color.white    ;  DIFF_COMMENT_BG = Color.blue   ;
+    DIFF_DEFINE_FG  = Color.magenta  ;  DIFF_DEFINE_BG  = Color.blue   ;
+    DIFF_CONST_FG   = Color.cyan     ;  DIFF_CONST_BG   = Color.blue   ;
+    DIFF_CONTROL_FG = Color.yellow   ;  DIFF_CONTROL_BG = Color.blue   ;
+    DIFF_VARTYPE_FG = Color.green    ;  DIFF_VARTYPE_BG = Color.blue   ;
+    DIFF_VISUAL_FG  = Color.blue     ;  DIFF_VISUAL_BG  = Color.red    ;
+    CURSOR_FG       = Color.black    ;  CURSOR_BG       = m_d_pink     ;
+                                        CURSOR_EMPTY_BG = Color.black  ;
+    m_g.setFont( m_font_bold );
 
     Init_Clear();
     m_vis.UpdateViews();
@@ -577,7 +730,7 @@ class Console extends Canvas
 
   private Color Style_2_BG( final Style S )
   {
-    Color C =  Color.BLACK; // Default
+    Color C =  Color.black; // Default
     switch( S )
     {
     case NORMAL      : C = NORMAL_BG      ; break;
@@ -624,7 +777,7 @@ class Console extends Canvas
   }
   private Color Style_2_FG( final Style S )
   {
-    Color C =  Color.WHITE; // Default
+    Color C =  Color.white; // Default
     switch( S )
     {
     case NORMAL      : C = NORMAL_FG      ; break;
@@ -702,95 +855,96 @@ class Console extends Canvas
     }
     return output_something;
   }
-  private Color    m_comment_fg = Color.color( 0.3f, 0.3f, 1.0f );
-  private Color    m_d_blue     = Color.color( 0.0f, 0.0f, 1.0f );
-  private Color    m_d_green    = Color.color( 0.0f, 1.0f, 0.0f );
-  private Color    m_d_yellow   = Color.color( 0.9f, 0.9f, 0.0f );
-  private Color    m_d_magenta  = Color.color( 1.0f, 0.0f, 1.0f );
-  private Color    m_d_cyan     = Color.color( 0.0f, 0.9f, 0.9f );
-  private Color    m_d_white    = Color.color( 0.9f, 0.9f, 0.9f );
-  private Color    m_d_pink     = Color.color( 1.0f, 0.5f, 0.5f );
+  private Color    m_comment_fg = new Color( 0.3f, 0.3f, 1.0f );
+  private Color    m_d_blue     = new Color( 0.0f, 0.0f, 1.0f );
+  private Color    m_d_green    = new Color( 0.0f, 1.0f, 0.0f );
+  private Color    m_d_yellow   = new Color( 0.9f, 0.9f, 0.0f );
+  private Color    m_d_magenta  = new Color( 1.0f, 0.0f, 1.0f );
+  private Color    m_d_cyan     = new Color( 0.0f, 0.9f, 0.9f );
+  private Color    m_d_white    = new Color( 0.9f, 0.9f, 0.9f );
+  private Color    m_d_pink     = new Color( 1.0f, 0.5f, 0.5f );
 
-  private Color NORMAL_FG       = Color.WHITE  ;
-  private Color STATUS_FG       = Color.WHITE  ;
-  private Color BORDER_FG       = Color.WHITE  ;
-  private Color BORDER_HI_FG    = Color.WHITE  ;
-  private Color BANNER_FG       = Color.WHITE  ;
-  private Color STAR_FG         = Color.WHITE  ;
+  private Color NORMAL_FG       = Color.white  ;
+  private Color STATUS_FG       = Color.white  ;
+  private Color BORDER_FG       = Color.white  ;
+  private Color BORDER_HI_FG    = Color.white  ;
+  private Color BANNER_FG       = Color.white  ;
+  private Color STAR_FG         = Color.white  ;
   private Color COMMENT_FG      = m_comment_fg ;
-  private Color DEFINE_FG       = Color.MAGENTA;
-  private Color CONST_FG        = Color.CYAN   ;
-  private Color CONTROL_FG      = Color.YELLOW ;
-  private Color VARTYPE_FG      = Color.LIME   ; // FX call green LIME
-  private Color VISUAL_FG       = Color.WHITE  ;
-  private Color NONASCII_FG     = Color.RED    ;
-  private Color RV_NORMAL_FG    = Color.BLACK  ;
-  private Color RV_STATUS_FG    = Color.BLUE   ;
-  private Color RV_BORDER_FG    = Color.BLUE   ;
-  private Color RV_BORDER_HI_FG = Color.LIME   ;
-  private Color RV_BANNER_FG    = Color.RED    ;
-  private Color RV_STAR_FG      = Color.RED    ;
-  private Color RV_COMMENT_FG   = Color.WHITE  ;
-  private Color RV_DEFINE_FG    = Color.WHITE  ;
-  private Color RV_CONST_FG     = Color.BLACK  ;
-  private Color RV_CONTROL_FG   = Color.BLACK  ;
-  private Color RV_VARTYPE_FG   = Color.WHITE  ;
-  private Color RV_VISUAL_FG    = Color.RED    ;
-  private Color RV_NONASCII_FG  = Color.BLUE   ;
-  private Color EMPTY_FG        = Color.RED    ;
-  private Color EOF_FG          = Color.RED    ;
-  private Color DIFF_DEL_FG     = Color.WHITE  ;
-  private Color DIFF_NORMAL_FG  = Color.WHITE  ;
-  private Color DIFF_STAR_FG    = Color.BLUE   ;
-  private Color DIFF_COMMENT_FG = Color.WHITE  ;
-  private Color DIFF_DEFINE_FG  = Color.MAGENTA;
-  private Color DIFF_CONST_FG   = Color.CYAN   ;
-  private Color DIFF_CONTROL_FG = Color.YELLOW ;
-  private Color DIFF_VARTYPE_FG = Color.LIME   ;
-  private Color DIFF_VISUAL_FG  = Color.BLUE   ;
-  private Color CURSOR_FG       = Color.BLACK  ;
+  private Color DEFINE_FG       = Color.magenta;
+  private Color CONST_FG        = Color.cyan   ;
+  private Color CONTROL_FG      = Color.yellow ;
+  private Color VARTYPE_FG      = Color.green  ;
+  private Color VISUAL_FG       = Color.white  ;
+  private Color NONASCII_FG     = Color.red    ;
+  private Color RV_NORMAL_FG    = Color.black  ;
+  private Color RV_STATUS_FG    = Color.blue   ;
+  private Color RV_BORDER_FG    = Color.blue   ;
+  private Color RV_BORDER_HI_FG = Color.green  ;
+  private Color RV_BANNER_FG    = Color.red    ;
+  private Color RV_STAR_FG      = Color.red    ;
+  private Color RV_COMMENT_FG   = Color.white  ;
+  private Color RV_DEFINE_FG    = Color.white  ;
+  private Color RV_CONST_FG     = Color.black  ;
+  private Color RV_CONTROL_FG   = Color.black  ;
+  private Color RV_VARTYPE_FG   = Color.white  ;
+  private Color RV_VISUAL_FG    = Color.red    ;
+  private Color RV_NONASCII_FG  = Color.blue   ;
+  private Color EMPTY_FG        = Color.red    ;
+  private Color EOF_FG          = Color.red    ;
+  private Color DIFF_DEL_FG     = Color.white  ;
+  private Color DIFF_NORMAL_FG  = Color.white  ;
+  private Color DIFF_STAR_FG    = Color.blue   ;
+  private Color DIFF_COMMENT_FG = Color.white  ;
+  private Color DIFF_DEFINE_FG  = Color.magenta;
+  private Color DIFF_CONST_FG   = Color.cyan   ;
+  private Color DIFF_CONTROL_FG = Color.yellow ;
+  private Color DIFF_VARTYPE_FG = Color.green  ;
+  private Color DIFF_VISUAL_FG  = Color.blue   ;
+  private Color CURSOR_FG       = Color.black  ;
 
-  private Color NORMAL_BG       = Color.BLACK  ; 
-  private Color STATUS_BG       = Color.BLUE   ; 
-  private Color BORDER_BG       = Color.BLUE   ; 
-  private Color BORDER_HI_BG    = Color.LIME   ; 
-  private Color BANNER_BG       = Color.RED    ; 
-  private Color STAR_BG         = Color.RED    ; 
-  private Color COMMENT_BG      = Color.BLACK  ; 
-  private Color DEFINE_BG       = Color.BLACK  ; 
-  private Color CONST_BG        = Color.BLACK  ; 
-  private Color CONTROL_BG      = Color.BLACK  ; 
-  private Color VARTYPE_BG      = Color.BLACK  ; 
-  private Color VISUAL_BG       = Color.RED    ; 
-  private Color NONASCII_BG     = Color.BLUE   ; 
-  private Color RV_NORMAL_BG    = Color.WHITE  ; 
-  private Color RV_STATUS_BG    = Color.BLUE   ; 
-  private Color RV_BORDER_BG    = Color.WHITE  ; 
-  private Color RV_BORDER_HI_BG = Color.WHITE  ; 
-  private Color RV_BANNER_BG    = Color.WHITE  ; 
-  private Color RV_STAR_BG      = Color.WHITE  ; 
-  private Color RV_COMMENT_BG   = Color.BLUE   ; 
-  private Color RV_DEFINE_BG    = Color.MAGENTA; 
-  private Color RV_CONST_BG     = Color.CYAN   ; 
-  private Color RV_CONTROL_BG   = Color.YELLOW ; 
-  private Color RV_VARTYPE_BG   = Color.LIME   ; 
-  private Color RV_VISUAL_BG    = Color.WHITE  ; 
-  private Color RV_NONASCII_BG  = Color.RED    ; 
-  private Color EMPTY_BG        = Color.BLACK  ;
-  private Color EOF_BG          = Color.GRAY   ;
-  private Color DIFF_DEL_BG     = Color.RED    ; 
-  private Color DIFF_NORMAL_BG  = Color.BLUE   ; 
-  private Color DIFF_STAR_BG    = Color.RED    ; 
-  private Color DIFF_COMMENT_BG = Color.BLUE   ; 
-  private Color DIFF_DEFINE_BG  = Color.BLUE   ; 
-  private Color DIFF_CONST_BG   = Color.BLUE   ; 
-  private Color DIFF_CONTROL_BG = Color.BLUE   ; 
-  private Color DIFF_VARTYPE_BG = Color.BLUE   ; 
-  private Color DIFF_VISUAL_BG  = Color.RED    ; 
-  private Color CURSOR_BG       = Color.PINK   ; 
-  private Color CURSOR_EMPTY_BG = Color.BLACK  ; 
+  private Color NORMAL_BG       = Color.black  ; 
+  private Color STATUS_BG       = Color.blue   ; 
+  private Color BORDER_BG       = Color.blue   ; 
+  private Color BORDER_HI_BG    = Color.green  ; 
+  private Color BANNER_BG       = Color.red    ; 
+  private Color STAR_BG         = Color.red    ; 
+  private Color COMMENT_BG      = Color.black  ; 
+  private Color DEFINE_BG       = Color.black  ; 
+  private Color CONST_BG        = Color.black  ; 
+  private Color CONTROL_BG      = Color.black  ; 
+  private Color VARTYPE_BG      = Color.black  ; 
+  private Color VISUAL_BG       = Color.red    ; 
+  private Color NONASCII_BG     = Color.blue   ; 
+  private Color RV_NORMAL_BG    = Color.white  ; 
+  private Color RV_STATUS_BG    = Color.blue   ; 
+  private Color RV_BORDER_BG    = Color.white  ; 
+  private Color RV_BORDER_HI_BG = Color.white  ; 
+  private Color RV_BANNER_BG    = Color.white  ; 
+  private Color RV_STAR_BG      = Color.white  ; 
+  private Color RV_COMMENT_BG   = Color.blue   ; 
+  private Color RV_DEFINE_BG    = Color.magenta; 
+  private Color RV_CONST_BG     = Color.cyan   ; 
+  private Color RV_CONTROL_BG   = Color.yellow ; 
+  private Color RV_VARTYPE_BG   = Color.green  ; 
+  private Color RV_VISUAL_BG    = Color.white  ; 
+  private Color RV_NONASCII_BG  = Color.red    ; 
+  private Color EMPTY_BG        = Color.black  ;
+  private Color EOF_BG          = Color.darkGray;
+  private Color DIFF_DEL_BG     = Color.red    ; 
+  private Color DIFF_NORMAL_BG  = Color.blue   ; 
+  private Color DIFF_STAR_BG    = Color.red    ; 
+  private Color DIFF_COMMENT_BG = Color.blue   ; 
+  private Color DIFF_DEFINE_BG  = Color.blue   ; 
+  private Color DIFF_CONST_BG   = Color.blue   ; 
+  private Color DIFF_CONTROL_BG = Color.blue   ; 
+  private Color DIFF_VARTYPE_BG = Color.blue   ; 
+  private Color DIFF_VISUAL_BG  = Color.red    ; 
+  private Color CURSOR_BG       = Color.pink   ; 
+  private Color CURSOR_EMPTY_BG = Color.black  ; 
 
-  final int FONT_SIZE = 17;
+  final int     FONT_SIZE = 17;
+  final int MIN_FONT_SIZE = 8;
 
   static final char BS  =   8; // Backspace
   static final char ESC =  27; // Escape
@@ -798,11 +952,16 @@ class Console extends Canvas
   static final char CTRL_C = 3;
 
   Vis              m_vis;
-  GraphicsContext  m_gc;
+  Image            m_image;
+  Graphics2D       m_g;
   Font             m_font_plain;
   Font             m_font_bold;
+  int              m_font_size = 17;
   int              m_text_W;
   int              m_text_H;
+  int              m_text_L;
+  int              m_text_A;
+  int              m_text_D;
   int              m_num_rows; // Current num rows
   int              m_num_cols; // Current num rows
   int              m_siz_rows; // Allocated num rows
@@ -814,20 +973,19 @@ class Console extends Canvas
   int[]            m_min_touched;
   int[]            m_max_touched;
 
+  long               m_key_time;
+  TreeSet<Character> m_keys = new TreeSet<>();
+
   boolean          m_save_2_dot_buf;
   boolean          m_save_2_vis_buf;
   boolean          m_save_2_map_buf;
   boolean          m_get_from_dot_buf;
   boolean          m_get_from_map_buf;
-  String[]         m_text_chars;
-  char             m_C;
-  boolean          m_caps_on;
   Queue<Character> m_input   = new ArrayDeque<Character>();
-
   StringBuilder    m_dot_buf = new StringBuilder();
   StringBuilder    m_vis_buf = new StringBuilder();
   StringBuilder    m_map_buf = new StringBuilder();
   private int      m_dot_buf_index;
   private int      m_map_buf_index;
-}
+}                                
 
