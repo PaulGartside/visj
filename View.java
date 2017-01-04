@@ -656,25 +656,26 @@ class View
   void PageDown()
   {
     final int NUM_LINES = m_fb.NumLines();
-    if( NUM_LINES<1 ) return;
-
-    final int newTopLine = m_topLine + WorkingRows() - 1;
-    // Subtracting 1 above leaves one line in common between the 2 pages.
-
-    if( newTopLine < NUM_LINES )
+    if( 0<NUM_LINES )
     {
-      Clear_Console_CrsCell();
-      m_crsCol = 0;
-      m_topLine = newTopLine;
-      // Dont let cursor go past the end of the file:
-      if( NUM_LINES <= m_topLine + m_crsRow )
-      {
-        // This line places the cursor at the top of the screen, which I prefer:
-        m_crsRow = 0;
-      }
-      Set_Console_CrsCell();
+      final int newTopLine = m_topLine + WorkingRows() - 1;
+      // Subtracting 1 above leaves one line in common between the 2 pages.
 
-      Update();
+      if( newTopLine < NUM_LINES )
+      {
+        Clear_Console_CrsCell();
+        m_crsCol = 0;
+        m_topLine = newTopLine;
+        // Dont let cursor go past the end of the file:
+        if( NUM_LINES <= m_topLine + m_crsRow )
+        {
+          // This line places the cursor at the top of the screen, which I prefer:
+          m_crsRow = 0;
+        }
+        Set_Console_CrsCell();
+
+        Update();
+      }
     }
   }
   void PageUp()
@@ -1620,9 +1621,7 @@ class View
     if( 0<m_fb.NumLines() )
     {
       final int OCL = CrsLine();  // Old cursor line
-
-      final int OCP = CrsChar();            // Old cursor position
-      final int OLL = m_fb.LineLen( OCL );  // Old line length
+      final int OCP = CrsChar();  // Old cursor position
 
       if( 0<OCP ) InsertBackspace_RmC ( OCL, OCP );
       else        InsertBackspace_RmNL( OCL );
@@ -1650,7 +1649,8 @@ class View
   {
     m_fb.RemoveChar( OCL, OCP-1 );
 
-    m_crsCol -= 1;
+    if( 0 < m_crsCol ) m_crsCol -= 1;
+    else               m_leftChar -= 1;
 
     m_fb.Update();
   }
@@ -3078,11 +3078,6 @@ class View
     if( m_undo_v )
     {
       m_fb.Update();
-
-    //final int st_line = Math.min( v_st_line, v_fn_line );
-    //final int fn_line = Math.max( v_st_line, v_fn_line );
-    //
-    //UpdateLines( st_line, fn_line );
     }
   }
 

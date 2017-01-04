@@ -126,6 +126,7 @@ class FileBuf
           || Find_File_Type_IDL ()
           || Find_File_Type_Java()
           || Find_File_Type_Make()
+          || Find_File_Type_Python()
           || Find_File_Type_SQL ()
           || Find_File_Type_STL ()
           || Find_File_Type_XML () )
@@ -247,6 +248,18 @@ class FileBuf
     }
     return false;
   }
+  boolean Find_File_Type_Python()
+  {
+    if( m_fname.endsWith(".py"    )
+     || m_fname.endsWith(".py.new")
+     || m_fname.endsWith(".py.old") )
+    {
+      m_file_type = File_Type.PY;
+      m_Hi = new Highlight_Python( this );
+      return true;
+    }
+    return false;
+  }
   boolean Find_File_Type_SQL()
   {
     if( m_fname.endsWith(".sql"    )
@@ -360,6 +373,11 @@ class FileBuf
       {
         m_file_type = File_Type.MAKE;
         m_Hi = new Highlight_Make( this );
+      }
+      else if( syn.equals("py") )
+      {
+        m_file_type = File_Type.PY;
+        m_Hi = new Highlight_Python( this );
       }
       else if( syn.equals("sql") )
       {

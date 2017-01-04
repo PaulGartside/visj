@@ -35,6 +35,7 @@ enum File_Type
   JS,
   MAKE,
   ODB,
+  PY,
   SQL,
   STL,
   SWIFT,

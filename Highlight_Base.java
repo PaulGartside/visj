@@ -27,56 +27,10 @@ abstract class Highlight_Base
   {
     m_fb = fb;
   }
-//abstract void Run();
 
   // Find styles starting on st up to but not including fn line
   abstract void Run_Range( final CrsPos st
                          , final int    fn );
-
-//void Hi_FindKey( HiKeyVal[] HiPairs )
-//{
-//  final int NUM_LINES = m_fb.NumLines();
-//
-//  for( int l=0; l<NUM_LINES; l++ )
-//  {
-//    final Line lr = m_fb.GetLine( l );
-//    final Line sr = m_fb.GetStyle( l );
-//    final int  LL = lr.length();
-//
-//    for( int p=0; p<LL; p++ )
-//    {
-//      boolean key_search = 0==sr.charAt(p) //< No style at p
-//                        && Utils.line_start_or_prev_C_non_ident( lr, p );
-//
-//      for( int h=0; key_search && h<HiPairs.length; h++ )
-//      {
-//        boolean matches = true;
-//        final String         key     = HiPairs[h].m_key;
-//        final Highlight_Type HI_TYPE = HiPairs[h].m_val;
-//        final int            KEY_LEN = key.length();
-//
-//        for( int k=0; matches && (p+k)<LL && k<KEY_LEN; k++ )
-//        {
-//          if( 0!=sr.charAt(p+k) || key.charAt(k) != lr.charAt(p+k) ) matches = false;
-//          else {
-//            if( k+1 == KEY_LEN ) // Found pattern
-//            {
-//              matches = Utils.line_end_or_non_ident( lr, LL, p+k );
-//              if( matches ) {
-//                for( int m=p; m<p+KEY_LEN; m++ ) m_fb.SetSyntaxStyle( l, m, HI_TYPE.val );
-//                // Increment p one less than KEY_LEN, because p
-//                // will be incremented again by the for loop
-//                p += KEY_LEN-1;
-//                // Set key_search to false here to break out of h for loop
-//                key_search = false;
-//              }
-//            }
-//          }
-//        }
-//      }
-//    }
-//  }
-//}
 
   // Find keyes starting on st up to but not including fn line
   //
@@ -129,56 +83,6 @@ abstract class Highlight_Base
       }
     }
   }
-
-  // Case Insensitive version of Hi_FindKey
-  //
-//void Hi_FindKey_CI( HiKeyVal[] HiPairs )
-//{
-//  final int NUM_LINES = m_fb.NumLines();
-//
-//  for( int l=0; l<NUM_LINES; l++ )
-//  {
-//    final Line lr = m_fb.GetLine( l );
-//    final Line sr = m_fb.GetStyle( l );
-//    final int LL = lr.length();
-//
-//    for( int p=0; p<LL; p++ )
-//    {
-//      boolean key_search = 0==sr.charAt(p)
-//                        && Utils.line_start_or_prev_C_non_ident( lr, p );
-//
-//      for( int h=0; key_search && h<HiPairs.length; h++ )
-//      {
-//        boolean matches = true;
-//        final String         key     = HiPairs[h].m_key;
-//        final Highlight_Type HI_TYPE = HiPairs[h].m_val;
-//        final int            KEY_LEN = key.length();
-//
-//        for( int k=0; matches && (p+k)<LL && k<KEY_LEN; k++ )
-//        {
-//          final char  key_char = Character.toLowerCase( key.charAt(k) );
-//          final char line_char = Character.toLowerCase(  lr.charAt(p+k) );
-//
-//          if( 0!=sr.charAt(p+k) || key_char != line_char ) matches = false;
-//          else {
-//            if( k+1 == KEY_LEN ) // Found pattern
-//            {
-//              matches = Utils.line_end_or_non_ident( lr, LL, p+k );
-//              if( matches ) {
-//                for( int m=p; m<p+KEY_LEN; m++ ) m_fb.SetSyntaxStyle( l, m, HI_TYPE.val );
-//                // Increment p one less than KEY_LEN, because p
-//                // will be incremented again by the for loop
-//                p += KEY_LEN-1;
-//                // Set key_search to false here to break out of h for loop
-//                key_search = false;
-//              }
-//            }
-//          }
-//        }
-//      }
-//    }
-//  }
-//}
 
   // Case Insensitive version of Hi_FindKey.
   // Find keyes starting on st up to but not including fn line

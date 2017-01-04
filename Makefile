@@ -63,6 +63,7 @@ source: classes \
         classes/Highlight_IDL.class \
         classes/Highlight_Java.class \
         classes/Highlight_Make.class \
+        classes/Highlight_Python.class \
         classes/Highlight_SQL.class \
         classes/Highlight_STL.class \
         classes/Highlight_Text.class \

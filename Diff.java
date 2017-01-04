@@ -3278,7 +3278,8 @@ class Diff
 
     pfb.RemoveChar( VL, OCP-1 );
 
-    m_crsCol -= 1;
+    if( 0 < m_crsCol ) m_crsCol -= 1;
+    else               m_leftChar -= 1;
 
     Patch_Diff_Info_Changed( pV, DL );
     Update();
