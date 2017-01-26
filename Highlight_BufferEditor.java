@@ -81,9 +81,10 @@ class Highlight_BufferEditor extends Highlight_Base
 
         if( ls.equals( m_fb.m_vis.EDIT_BUF_NAME )
          || ls.equals( m_fb.m_vis.HELP_BUF_NAME )
-         || ls.equals( m_fb.m_vis.SRCH_BUF_NAME )
          || ls.equals( m_fb.m_vis.MSG__BUF_NAME )
-         || ls.equals( m_fb.m_vis.SHEL_BUF_NAME ) )
+         || ls.equals( m_fb.m_vis.SHELL_BUF_NAME )
+         || ls.equals( m_fb.m_vis.COLON_BUF_NAME )
+         || ls.equals( m_fb.m_vis.SLASH_BUF_NAME ) )
         {
           for( int k=0; k<LL; k++ )
           {

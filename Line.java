@@ -210,6 +210,10 @@ class Line
   {
     return m_sb.toString();
   }
+  boolean equals( Line l )
+  {
+    return toString().equals( l.toString() );
+  }
   private StringBuilder m_sb;
   private boolean       m_chksum_valid = false;
   private int           m_chksum;

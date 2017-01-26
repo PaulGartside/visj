@@ -161,10 +161,11 @@ public class Vis implements WindowFocusListener
     }
     InitBufferEditor();
     InitHelpBuffer();
-    InitSearchBuffer();
     InitMsgBuffer();
     InitShellBuffer();
-    boolean run_diff = InitUserFiles() && ((SHELL_FILE+1+2) == m_files.size());
+    InitColonBuffer();
+    InitSlashBuffer();
+    boolean run_diff = InitUserFiles() && ((USER_FILE+2) == m_files.size());
     InitFileHistory();
 
     if( run_diff )
@@ -172,8 +173,8 @@ public class Vis implements WindowFocusListener
       // User supplied: "-d file1 file2", so run diff:
       m_diff_mode = true;
       m_num_wins = 2;
-      m_file_hist[ 0 ].set( 0, 5 );
-      m_file_hist[ 1 ].set( 0, 6 );
+      m_file_hist[ 0 ].set( 0, USER_FILE );
+      m_file_hist[ 1 ].set( 0, USER_FILE+1 );
       GetView_Win( 0 ).SetTilePos( Tile_Pos.LEFT_HALF );
       GetView_Win( 1 ).SetTilePos( Tile_Pos.RITE_HALF );
 
@@ -195,13 +196,6 @@ public class Vis implements WindowFocusListener
 
     Add_FileBuf_2_Lists_Create_Views( fb, HELP_BUF_NAME );
   }
-  void InitSearchBuffer()
-  {
-    // Search editor buffer, 2
-    FileBuf fb = new FileBuf( this, SRCH_BUF_NAME, false );
-
-    Add_FileBuf_2_Lists_Create_Views( fb, SRCH_BUF_NAME );
-  }
   void InitMsgBuffer()
   {
     // Message buffer, 3
@@ -213,7 +207,7 @@ public class Vis implements WindowFocusListener
   void InitShellBuffer()
   {
     // Command buffer, SHELL_FILE(4)
-    FileBuf fb = new FileBuf( this, SHEL_BUF_NAME, false );
+    FileBuf fb = new FileBuf( this, SHELL_BUF_NAME, false );
 
     // Add ######################################
     String divider = "######################################";
@@ -222,7 +216,7 @@ public class Vis implements WindowFocusListener
     // Add an empty line
     fb.PushLine();
 
-    Add_FileBuf_2_Lists_Create_Views( fb, SHEL_BUF_NAME );
+    Add_FileBuf_2_Lists_Create_Views( fb, SHELL_BUF_NAME );
 
     // Put cursor on empty line below # line
     for( int w=0; w<MAX_WINS; w++ )
@@ -230,6 +224,31 @@ public class Vis implements WindowFocusListener
       View pV_shell = m_views[w].get( SHELL_FILE );
       pV_shell.SetCrsRow( 1 );
     }
+  }
+  void InitColonBuffer()
+  {
+    // Search editor buffer, 2
+    m_colon_file = new FileBuf( this, COLON_BUF_NAME, true );
+
+    Add_FileBuf_2_Lists_Create_Views( m_colon_file, COLON_BUF_NAME );
+
+    m_colon_view = new LineView( this, m_colon_file, m_console, ':' );
+
+    m_colon_file.m_line_view = m_colon_view;
+  }
+  void InitSlashBuffer()
+  {
+    // Search editor buffer, 2
+    m_slash_file = new FileBuf( this, SLASH_BUF_NAME, true );
+
+    // Add an empty line
+    m_slash_file.PushLine();
+
+    Add_FileBuf_2_Lists_Create_Views( m_slash_file, SLASH_BUF_NAME );
+
+    m_slash_view = new LineView( this, m_slash_file, m_console, '/' );
+
+    m_slash_file.m_line_view = m_slash_view;
   }
   boolean InitUserFiles()
   {
@@ -267,13 +286,14 @@ public class Vis implements WindowFocusListener
       m_file_hist[w].add( BE_FILE  );
       m_file_hist[w].add( HELP_FILE );
 
-      for( int f=m_views[w].size()-1; 6<=f; f-- )
+      if( USER_FILE < m_views[w].size() )
       {
-        m_file_hist[w].add( f );
-      }
-      if( 5 < m_views[w].size() )
-      {
-        m_file_hist[w].add( 0, 5 );
+        m_file_hist[w].add( 0, USER_FILE );
+
+        for( int f=m_views[w].size()-1; (USER_FILE+1)<=f; f-- )
+        {
+          m_file_hist[w].add( f );
+        }
       }
     }
   }
@@ -445,7 +465,7 @@ public class Vis implements WindowFocusListener
 
       // Console done re-sizing
       m_console.Init();
-      UpdateViewsConsoleSize();
+      UpdateViewsPositions();
       UpdateViews();
       m_console.Update();
 
@@ -453,6 +473,60 @@ public class Vis implements WindowFocusListener
     }
   }
   void Handle_Cmd( final char c1 )
+  {
+    if( m_colon_mode || m_slash_mode )
+    {
+      Handle_Line_Cmd( c1 );
+    }
+    else {
+      Handle_View_Cmd( c1 );
+    }
+  }
+  void Handle_Line_Cmd( final char c1 )
+  {
+    switch( c1 )
+    {
+    case 'a': L_Handle_a();         break;
+    case 'A': L_Handle_A();         break;
+    case 'b': L_Handle_b();         break;
+    case 'c': L_Handle_c();         break;
+    case 'd': L_Handle_d();         break;
+    case 'D': L_Handle_D();         break;
+    case 'e': L_Handle_e();         break;
+    case 'f': L_Handle_f();         break;
+    case 'g': L_Handle_g();         break;
+    case 'G': L_Handle_G();         break;
+    case 'h': L_Handle_h();         break;
+    case 'i': L_Handle_i();         break;
+    case 'j': L_Handle_j();         break;
+    case 'J': L_Handle_J();         break;
+    case 'k': L_Handle_k();         break;
+    case 'l': L_Handle_l();         break;
+    case 'n': L_Handle_n();         break;
+    case 'N': L_Handle_N();         break;
+    case 'o': L_Handle_o();         break;
+    case 'p': L_Handle_p();         break;
+    case 'P': L_Handle_P();         break;
+    case 'R': L_Handle_R();         break;
+    case 's': L_Handle_s();         break;
+  //case 'u': L_Handle_u();         break;
+  //case 'U': L_Handle_U();         break;
+    case 'v': L_Handle_v();         break;
+    case 'w': L_Handle_w();         break;
+    case 'x': L_Handle_x();         break;
+    case 'y': L_Handle_y();         break;
+    case '0': L_Handle_0();         break;
+    case '$': L_Handle_Dollar();    break;
+    case '%': L_Handle_Percent();   break;
+    case '~': L_Handle_Tilda();     break;
+    case ';': L_Handle_SemiColon(); break;
+    case ':': L_Handle_Colon();     break;
+    case '/': L_Handle_Slash();     break;
+    case '\n':L_Handle_Return();    break;
+    case ESC: L_Handle_Escape();    break;
+    }
+  }
+  void Handle_View_Cmd( final char c1 )
   {
     switch( c1 )
     {
@@ -510,6 +584,7 @@ public class Vis implements WindowFocusListener
     case '\n':Handle_Return();    break;
     }
   }
+
   void Handle_j()
   {
     int num = 1;
@@ -521,6 +596,18 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.GoDown( num );
     else                CV().GoDown( num );
   }
+  void L_Handle_j()
+  {
+    int num = 1;
+    while( m_console.FirstKeyIs('j') )
+    {
+      m_console.GetKey();
+      num++;
+    }
+    if     ( m_colon_mode ) m_colon_view.GoDown( num );
+    else if( m_slash_mode ) m_slash_view.GoDown( num );
+  }
+
   void Handle_k()
   {
     int num = 1;
@@ -532,31 +619,97 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.GoUp( num );
     else                CV().GoUp( num );
   }
+  void L_Handle_k()
+  {
+    int num = 1;
+    while( m_console.FirstKeyIs('k') )
+    {
+      m_console.GetKey();
+      num++;
+    }
+    if     ( m_colon_mode ) m_colon_view.GoUp( num );
+    else if( m_slash_mode ) m_slash_view.GoUp( num );
+  }
+
   void Handle_h()
   {
-    if( m_diff_mode ) m_diff.GoLeft();
-    else                CV().GoLeft();
+    int num = 1;
+    while( m_console.FirstKeyIs('h') )
+    {
+      m_console.GetKey();
+      num++;
+    }
+    if( m_diff_mode ) m_diff.GoLeft( num );
+    else                CV().GoLeft( num );
   }
+  void L_Handle_h()
+  {
+    int num = 1;
+    while( m_console.FirstKeyIs('h') )
+    {
+      m_console.GetKey();
+      num++;
+    }
+    if     ( m_colon_mode ) m_colon_view.GoLeft( num );
+    else if( m_slash_mode ) m_slash_view.GoLeft( num );
+  }
+
   void Handle_l()
   {
-    if( m_diff_mode ) m_diff.GoRight();
-    else                CV().GoRight();
+    int num = 1;
+    while( m_console.FirstKeyIs('l') )
+    {
+      m_console.GetKey();
+      num++;
+    }
+    if( m_diff_mode ) m_diff.GoRight(num);
+    else                CV().GoRight(num);
   }
+  void L_Handle_l()
+  {
+    int num = 1;
+    while( m_console.FirstKeyIs('l') )
+    {
+      m_console.GetKey();
+      num++;
+    }
+    if     ( m_colon_mode ) m_colon_view.GoRight(num);
+    else if( m_slash_mode ) m_slash_view.GoRight(num);
+  }
+
   void Handle_0()
   {
     if( m_diff_mode )  m_diff.GoToBegOfLine();
     else                 CV().GoToBegOfLine();
   }
+  void L_Handle_0()
+  {
+    if     ( m_colon_mode ) m_colon_view.GoToBegOfLine();
+    else if( m_slash_mode ) m_slash_view.GoToBegOfLine();
+  }
+
   void Handle_Dollar()
   {
     if( m_diff_mode )  m_diff.GoToEndOfLine();
     else                 CV().GoToEndOfLine();
   }
+  void L_Handle_Dollar()
+  {
+    if     ( m_colon_mode ) m_colon_view.GoToEndOfLine();
+    else if( m_slash_mode ) m_slash_view.GoToEndOfLine();
+  }
+
   void Handle_Percent()
   {
     if( m_diff_mode ) m_diff.GoToOppositeBracket();
     else                CV().GoToOppositeBracket();
   }
+  void L_Handle_Percent()
+  {
+    if     ( m_colon_mode ) m_colon_view.GoToOppositeBracket();
+    else if( m_slash_mode ) m_slash_view.GoToOppositeBracket();
+  }
+
   void Handle_LeftSquigglyBracket()
   {
     if( m_diff_mode ) m_diff.GoToLeftSquigglyBracket();
@@ -569,37 +722,29 @@ public class Vis implements WindowFocusListener
   }
   void Handle_Star()
   {
-    String new_star = m_diff_mode ? m_diff.Do_Star_GetNewPattern()
-                                  :   CV().Do_Star_GetNewPattern();
-
-    if( !m_slash && new_star.equals( m_star ) ) return;
-
-    // Un-highlight old star patterns for windows displayed:
-    if( 0<m_star.length() )
-    { // Since diff_mode does Console::Update(),
-      // no need to print patterns here if in diff_mode
-      if( !m_diff_mode ) Do_Star_PrintPatterns( false );
-    }
-    Do_Star_ClearPatterns();
-
-    m_star = new_star;
-
-    if( 0<m_star.length() )
+    String pattern = m_diff_mode ? m_diff.Do_Star_GetNewPattern()
+                                 :   CV().Do_Star_GetNewPattern();
+    if( ! pattern.equals( m_regex ) )
     {
-      m_slash = false;
-
-      Do_Star_Update_Search_Editor();
-      Do_Star_FindPatterns();
+      m_regex = pattern;
  
-      // Highlight new star patterns for windows displayed:
-      if( !m_diff_mode ) Do_Star_PrintPatterns( true );
-    }
-    if( m_diff_mode ) m_diff.Update();
-    else {
-      // Print out all the changes:
-    //m_console.Update();
-      // Put cursor back where it was
-      CV().PrintCursor();
+      if( 0<m_regex.length() )
+      {
+        Do_Star_Update_Search_Editor();
+      }
+      if( m_diff_mode ) m_diff.Update();
+      else {
+        // Show new star patterns for all windows currently displayed,
+        // but update current window last, so that the cursor ends up
+        // in the current window.
+        for( int w=0; w<m_num_wins; w++ )
+        {
+          View pV = GetView_Win( w );
+ 
+          if( pV != CV() ) pV.Update();
+        }
+        CV().Update();
+      }
     }
   }
   void Do_Star_PrintPatterns( final boolean HIGHLIGHT )
@@ -609,88 +754,62 @@ public class Vis implements WindowFocusListener
       GetView_Win( w ).PrintPatterns( HIGHLIGHT );
     }
   }
-  void Do_Star_ClearPatterns()
-  {
-    // Tell every FileBuf that it needs to clear the old pattern:
-    for( int w=0; w<m_views[ 0 ].size(); w++ )
-    {
-      m_views[ 0 ].get( w ).m_fb.m_need_2_clear_stars = true;
-    }
-    // Remove star patterns from displayed FileBuf's only:
-    for( int w=0; w<m_num_wins; w++ )
-    {
-      GetView_Win( w ).m_fb.ClearStars();
-    }
-  }
-  void Do_Star_FindPatterns()
-  {
-    // Tell every FileBuf that it needs to find the new pattern:
-    for( int w=0; w<m_views[ 0 ].size(); w++ )
-    {
-      m_views[ 0 ].get( w ).m_fb.m_need_2_find_stars = true;
-    }
-    // Only find new pattern now for FileBuf's that are displayed:
-    for( int w=0; w<m_num_wins; w++ )
-    {
-      GetView_Win( w ).m_fb.Find_Stars();
-    }
-  }
 
-  // 1. Search for star pattern in search editor.
-  // 2. If star pattern is found in search editor,
+  // 1. Search for regex pattern in search editor.
+  // 2. If regex pattern is found in search editor,
   //         move pattern to end of search editor
-  //    else add star pattern to end of search editor
-  // 3. Clear buffer editor un-saved change status
-  // 4. If search editor is displayed, update search editor window
+  //    else add regex pattern to end of search editor
+  // 3. If search editor is displayed, update search editor window
   //
   void Do_Star_Update_Search_Editor()
   {
-    final View rseV = m_views[ m_win ].get( SE_FILE );
-    // Determine whether search editor has the star pattern
-    final int NUM_SE_LINES = rseV.m_fb.NumLines(); // Number of search editor lines
+    final FileBuf fb = m_slash_file;
+
+    // Remove last line if it is blank:
+    int NUM_SE_LINES = fb.NumLines(); // Number of search editor lines
+    if( 0<NUM_SE_LINES && 0 == fb.LineLen( NUM_SE_LINES-1 ) )
+    {
+      fb.RemoveLine( NUM_SE_LINES-1 );
+      NUM_SE_LINES = fb.NumLines();
+    }
+    // 1. Search for regex pattern in search editor.
     boolean found_pattern_in_search_editor = false;
     int line_in_search_editor = 0;
 
     for( int ln=0; !found_pattern_in_search_editor && ln<NUM_SE_LINES; ln++ )
     {
-      Line s = rseV.m_fb.GetLine( ln );
-
-      if( s.toStr().equals( m_star ) )
+      if( fb.GetLine( ln ).toString().equals( m_regex ) )
       {
         found_pattern_in_search_editor = true;
         line_in_search_editor = ln;
       }
     }
-    // 2. If star pattern is found in search editor,
+    // 2. If regex pattern is found in search editor,
     //         move pattern to end of search editor
-    //    else add star pattern to end of search editor
+    //    else add regex pattern to end of search editor
     if( found_pattern_in_search_editor )
     {
       // Move pattern to end of search editor, so newest searches are at bottom of file
       if( line_in_search_editor < NUM_SE_LINES-1 )
       {
-        Line p = rseV.m_fb.RemoveLine( line_in_search_editor );
-        rseV.m_fb.InsertLine( NUM_SE_LINES-1, p );
+        Line lp = fb.RemoveLine( line_in_search_editor );
+        fb.PushLine( lp );
       }
     }
-    else
-    {
-      // Push star onto search editor buffer
-      Line line = new Line( m_star );
-      rseV.m_fb.PushLine( line );
+    else {
+      // Push regex onto search editor buffer
+      fb.PushLine( m_regex );
     }
-    // 3. Clear buffer editor un-saved change status
-    rseV.m_fb.ClearChanged();
+    // Push an emtpy line onto slash buffer to leave empty / prompt:
+    fb.PushLine();
 
-    // 4. If search editor is displayed, update search editor window
-    for( int w=0; w<m_num_wins; w++ )
-    {
-      if( SE_FILE == m_file_hist[ w ].get( 0 ) )
-      {
-        m_views[ w ].get( SE_FILE ).Update();
-      }
-    }
+    // 3. If search editor is displayed, update search editor window
+    View cv = CV();
+    m_slash_view.SetContext( cv.WinCols(), cv.X(), cv.Cmd__Line_Row() );
+    m_slash_view.GoToCrsPos_NoWrite( fb.NumLines()-1, 0 );
+    fb.Update();
   }
+
   void Handle_Tilda()
   {
     if( !m_console.m_get_from_dot_buf )
@@ -701,11 +820,18 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.Do_Tilda();
     else                CV().Do_Tilda();
   }
+  void L_Handle_Tilda()
+  {
+    if     ( m_colon_mode ) m_colon_view.Do_Tilda();
+    else if( m_slash_mode ) m_slash_view.Do_Tilda();
+  }
+
   void Handle_H()
   {
     if( m_diff_mode ) m_diff.GoToTopLineInView();
     else                CV().GoToTopLineInView();
   }
+
   void Handle_J()
   {
     if( !m_console.m_get_from_dot_buf )
@@ -716,6 +842,12 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.Do_J();
     else                CV().Do_J();
   }
+  void L_Handle_J()
+  {
+    if     ( m_colon_mode ) m_colon_view.Do_J();
+    else if( m_slash_mode ) m_slash_view.Do_J();
+  }
+
   void Handle_L()
   {
     if( m_diff_mode ) m_diff.GoToBotLineInView();
@@ -738,16 +870,29 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.GoToMidLineInView();
     else                CV().GoToMidLineInView();
   }
+
   void Handle_n()
   {
     if( m_diff_mode ) m_diff.Do_n();
     else                CV().Do_n();
   }
+  void L_Handle_n()
+  {
+    if     ( m_colon_mode ) m_colon_view.Do_n();
+    else if( m_slash_mode ) m_slash_view.Do_n();
+  }
+
   void Handle_N()
   {
     if( m_diff_mode ) m_diff.Do_N();
     else                CV().Do_N();
   }
+  void L_Handle_N()
+  {
+    if     ( m_colon_mode ) m_colon_view.Do_N();
+    else if( m_slash_mode ) m_slash_view.Do_N();
+  }
+
   void Handle_o()
   {
     if( !m_console.m_get_from_dot_buf )
@@ -759,6 +904,15 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.Do_o();
     else                CV().Do_o();
   }
+
+  void L_Handle_o()
+  {
+    m_states.addFirst( m_run_L_Ha_i );
+
+    if     ( m_colon_mode ) m_colon_view.Do_o();
+    else if( m_slash_mode ) m_slash_view.Do_o();
+  }
+
   void Handle_O()
   {
     if( !m_console.m_get_from_dot_buf )
@@ -770,6 +924,7 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.Do_O();
     else                CV().Do_O();
   }
+
   void Handle_p()
   {
     if( !m_console.m_get_from_dot_buf )
@@ -780,6 +935,13 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.Do_p();
     else                CV().Do_p();
   }
+
+  void L_Handle_p()
+  {
+    if     ( m_colon_mode ) m_colon_view.Do_p();
+    else if( m_slash_mode ) m_slash_view.Do_p();
+  }
+
   void Handle_P()
   {
     if( !m_console.m_get_from_dot_buf )
@@ -790,6 +952,12 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.Do_P();
     else                CV().Do_P();
   }
+  void L_Handle_P()
+  {
+    if     ( m_colon_mode ) m_colon_view.Do_P();
+    else if( m_slash_mode ) m_slash_view.Do_P();
+  }
+
   void Handle_Q()
   {
     // run_Q will get run after run_dot is run.
@@ -804,6 +972,7 @@ public class Vis implements WindowFocusListener
 
     m_states.removeFirst();
   }
+
   void Handle_R()
   {
     if( !m_console.m_get_from_dot_buf )
@@ -815,6 +984,14 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.Do_R();
     else                CV().Do_R();
   }
+  void L_Handle_R()
+  {
+    m_states.addFirst( m_run_L_Ha_i );
+
+    if     ( m_colon_mode ) m_colon_view.Do_R();
+    else if( m_slash_mode ) m_slash_view.Do_R();
+  }
+
   void Handle_s()
   {
     if( !m_console.m_get_from_dot_buf )
@@ -826,6 +1003,12 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.Do_s();
     else                CV().Do_s();
   }
+  void L_Handle_s()
+  {
+    if     ( m_colon_mode ) m_colon_view.Do_s();
+    else if( m_slash_mode ) m_slash_view.Do_s();
+  }
+
   void Handle_u()
   {
     if( m_diff_mode ) m_diff.Do_u();
@@ -836,6 +1019,7 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.Do_U();
     else                CV().Do_U();
   }
+
   void Handle_v()
   {
     if( !m_console.m_get_from_dot_buf )
@@ -847,6 +1031,12 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.Do_v();
     else                CV().Do_v();
   }
+  void L_Handle_v()
+  {
+    if     ( m_colon_mode ) m_colon_view.Do_v();
+    else if( m_slash_mode ) m_slash_view.Do_v();
+  }
+
   void Handle_V()
   {
     if( !m_console.m_get_from_dot_buf )
@@ -868,6 +1058,7 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.PageUp();
     else                CV().PageUp();
   }
+
   void Handle_c()
   {
     m_states.addFirst( m_run_c );
@@ -906,6 +1097,40 @@ public class Vis implements WindowFocusListener
       }
     }
   }
+
+  void L_Handle_c()
+  {
+    m_states.addFirst( m_run_L_c );
+  }
+  void run_L_c()
+  {
+    if( 0<m_console.KeysIn() )
+    {
+      m_states.removeFirst();
+
+      final char C = m_console.GetKey();
+
+      if( C == 'w' )
+      {
+        if     ( m_colon_mode ) m_colon_view.Do_cw();
+        else if( m_slash_mode ) m_slash_view.Do_cw();
+      }
+      else if( C == '$' )
+      {
+        if( m_colon_mode )
+        {
+          m_colon_view.Do_D();
+          m_colon_view.Do_a();
+        }
+        else if( m_slash_mode )
+        {
+          m_slash_view.Do_D();
+          m_slash_view.Do_a();
+        }
+      }
+    }
+  }
+
   void Handle_d()
   {
     m_states.addFirst( m_run_d );
@@ -942,6 +1167,32 @@ public class Vis implements WindowFocusListener
       }
     }
   }
+
+  void L_Handle_d()
+  {
+    m_states.addFirst( m_run_L_d );
+  }
+  void run_L_d()
+  {
+    if( 0<m_console.KeysIn() )
+    {
+      m_states.removeFirst();
+
+      final char C = m_console.GetKey();
+
+      if( C == 'd' )
+      {
+        if     ( m_colon_mode ) m_colon_view.Do_dd();
+        else if( m_slash_mode ) m_slash_view.Do_dd();
+      }
+      else if( C == 'w' )
+      {
+        if     ( m_colon_mode ) m_colon_view.Do_dw();
+        else if( m_slash_mode ) m_slash_view.Do_dw();
+      }
+    }
+  }
+
   void Handle_D()
   {
     if( !m_console.m_get_from_dot_buf )
@@ -952,16 +1203,34 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.Do_D();
     else                CV().Do_D();
   }
+  void L_Handle_D()
+  {
+    if     ( m_colon_mode ) m_colon_view.Do_D();
+    else if( m_slash_mode ) m_slash_view.Do_D();
+  }
+
   void Handle_e()
   {
     if( m_diff_mode ) m_diff.GoToEndOfWord();
     else                CV().GoToEndOfWord();
   }
+  void L_Handle_e()
+  {
+    if     ( m_colon_mode ) m_colon_view.GoToEndOfWord();
+    else if( m_slash_mode ) m_slash_view.GoToEndOfWord();
+  }
+
   void Handle_f()
   {
     if( m_diff_mode ) m_diff.Do_f();
     else                CV().Do_f();
   }
+  void L_Handle_f()
+  {
+    if     ( m_colon_mode ) m_colon_view.Do_f();
+    else if( m_slash_mode ) m_slash_view.Do_f();
+  }
+
   void Handle_i()
   {
     if( !m_console.m_get_from_dot_buf )
@@ -973,6 +1242,48 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.Do_i();
     else                CV().Do_i();
   }
+
+  void L_Handle_i()
+  {
+    m_states.addFirst( m_run_L_Ha_i );
+
+    if     ( m_colon_mode ) m_colon_view.Do_i();
+    else if( m_slash_mode ) m_slash_view.Do_i();
+  }
+
+  void run_L_Ha_i()
+  {
+    if( m_colon_mode )
+    {
+      if( m_colon_view.m_i_EOL_delim )
+      {
+        m_colon_mode = false;
+ 
+        Exe_Colon_Cmd();
+      }
+      else {
+        m_states.removeFirst();
+      }
+    }
+    else if( m_slash_mode )
+    {
+      if( m_slash_view.m_i_EOL_delim )
+      {
+        m_slash_mode = false;
+ 
+        Exe_Slash();
+      }
+      else {
+        m_states.removeFirst();
+      }
+    }
+    else {
+      // Should never get here, but remove this state just in case
+      // so we dont get stuck doing nothing
+      m_states.removeFirst();
+    }
+  }
+
   void Handle_a()
   {
     if( !m_console.m_get_from_dot_buf )
@@ -984,6 +1295,15 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.Do_a();
     else                CV().Do_a();
   }
+
+  void L_Handle_a()
+  {
+    m_states.addFirst( m_run_L_Ha_i );
+
+    if     ( m_colon_mode ) m_colon_view.Do_a();
+    else if( m_slash_mode ) m_slash_view.Do_a();
+  }
+
   void Handle_A()
   {
     if( !m_console.m_get_from_dot_buf )
@@ -995,11 +1315,25 @@ public class Vis implements WindowFocusListener
     if( m_diff_mode ) m_diff.Do_A();
     else                CV().Do_A();
   }
+  void L_Handle_A()
+  {
+    m_states.addFirst( m_run_L_Ha_i );
+
+    if     ( m_colon_mode ) m_colon_view.Do_A();
+    else if( m_slash_mode ) m_slash_view.Do_A();
+  }
+
   void Handle_b()
   {
     if( m_diff_mode ) m_diff.GoToPrevWord();
     else                CV().GoToPrevWord();
   }
+  void L_Handle_b()
+  {
+    if     ( m_colon_mode ) m_colon_view.GoToPrevWord();
+    else if( m_slash_mode ) m_slash_view.GoToPrevWord();
+  }
+
   void Handle_g()
   {
     m_states.addFirst( m_run_g );
@@ -1034,11 +1368,48 @@ public class Vis implements WindowFocusListener
       }
     }
   }
+
+  void L_Handle_g()
+  {
+    m_states.addFirst( m_run_L_g );
+  }
+  void run_L_g()
+  {
+    if( 0<m_console.KeysIn() )
+    {
+      m_states.removeFirst();
+
+      final char c2 = m_console.GetKey();
+
+      if( c2 == 'g' )
+      {
+        if     ( m_colon_mode ) m_colon_view.GoToTopOfFile();
+        else if( m_slash_mode ) m_slash_view.GoToTopOfFile();
+      }
+      else if( c2 == '0' )
+      {
+        if     ( m_colon_mode ) m_colon_view.GoToStartOfRow();
+        else if( m_slash_mode ) m_slash_view.GoToStartOfRow();
+      }
+      else if( c2 == '$' )
+      {
+        if     ( m_colon_mode ) m_colon_view.GoToEndOfRow();
+        else if( m_slash_mode ) m_slash_view.GoToEndOfRow();
+      }
+    }
+  }
+
   void Handle_G()
   {
     if( m_diff_mode ) m_diff.GoToEndOfFile();
     else                CV().GoToEndOfFile();
   }
+  void L_Handle_G()
+  {
+    if     ( m_colon_mode ) m_colon_view.GoToEndOfFile();
+    else if( m_slash_mode ) m_slash_view.GoToEndOfFile();
+  }
+
   void Handle_SemiColon()
   {
     if( 0 <= m_fast_char )
@@ -1047,12 +1418,26 @@ public class Vis implements WindowFocusListener
       else                CV().Do_semicolon( m_fast_char );
     }
   }
+  void L_Handle_SemiColon()
+  {
+    if( 0 <= m_fast_char )
+    {
+      if     ( m_colon_mode ) m_colon_view.Do_semicolon( m_fast_char );
+      else if( m_slash_mode ) m_slash_view.Do_semicolon( m_fast_char );
+    }
+  }
 
   void Handle_w()
   {
     if( m_diff_mode ) m_diff.GoToNextWord();
     else                CV().GoToNextWord();
   }
+  void L_Handle_w()
+  {
+    if     ( m_colon_mode ) m_colon_view.GoToNextWord();
+    else if( m_slash_mode ) m_slash_view.GoToNextWord();
+  }
+
   void Handle_W()
   {
     m_states.addFirst( m_run_W );
@@ -1758,10 +2143,14 @@ public class Vis implements WindowFocusListener
     {
       m_console.m_dot_buf.setLength( 0 );
       m_console.m_dot_buf.append( 'x' );
-    //m_console.m_save_2_dot_buf = true;
     }
     if( m_diff_mode ) m_diff.Do_x();
     else                CV().Do_x();
+  }
+  void L_Handle_x()
+  {
+    if     ( m_colon_mode ) m_colon_view.Do_x();
+    else if( m_slash_mode ) m_slash_view.Do_x();
   }
 
   void Handle_y()
@@ -1789,6 +2178,31 @@ public class Vis implements WindowFocusListener
     }
   }
 
+  void L_Handle_y()
+  {
+    m_states.addFirst( m_run_L_y );
+  }
+  void run_L_y()
+  {
+    if( 0<m_console.KeysIn() )
+    {
+      m_states.removeFirst();
+
+      final char c2 = m_console.GetKey();
+
+      if( c2 == 'y' )
+      {
+        if     ( m_colon_mode ) m_colon_view.Do_yy();
+        else if( m_slash_mode ) m_slash_view.Do_yy();
+      }
+      else if( c2 == 'w' )
+      {
+        if     ( m_colon_mode ) m_colon_view.Do_yw();
+        else if( m_slash_mode ) m_slash_view.Do_yw();
+      }
+    }
+  }
+
   void Handle_z()
   {
     if( m_diff_mode ) m_diff.Do_z();
@@ -1797,23 +2211,114 @@ public class Vis implements WindowFocusListener
 
   void Handle_Colon()
   {
-    if( null == m_colon )
+    if( 0 == m_colon_file.NumLines() )
     {
-      m_colon = new Colon( this );
+      m_colon_file.PushLine();
     }
-    m_colon.Run( CV() );
+    View cv = CV();
+    final int NUM_COLS = cv.WinCols();
+    final int X        = cv.X();
+    final int Y        = cv.Cmd__Line_Row();
+
+    cv.Clear_Console_CrsCell();
+ 
+    m_colon_view.SetContext( NUM_COLS, X, Y );
+    m_colon_mode = true;
+ 
+    final int CL = m_colon_view.CrsLine();
+    final int LL = m_colon_file.LineLen( CL );
+ 
+    if( 0<LL )
+    {
+      // Something on current line, so goto command line in escape mode
+      m_colon_view.Update();
+    }
+    else {
+      // Nothing on current line, so goto command line in insert mode
+      L_Handle_i();
+    }
   }
+
+  void L_Handle_Colon()
+  {
+    m_colon_mode = false;
+    m_colon_view.Clear_Console_CrsCell();
+
+    if( m_diff_mode ) m_diff.PrintCursor();
+    else                CV().PrintCursor();
+  }
+
+  void L_Handle_Escape()
+  {
+    if( m_colon_mode )
+    {
+      L_Handle_Colon();
+    }
+    else if( m_slash_mode )
+    {
+      L_Handle_Slash();
+    }
+  }
+
+  void L_Handle_Return()
+  {
+    if( m_colon_mode )
+    {
+      m_colon_mode = false;
+
+      m_colon_view.HandleReturn();
+    //m_colon_view.Clear_Console_CrsCell();
+
+      Exe_Colon_Cmd();
+    }
+    else if( m_slash_mode )
+    {
+      m_slash_mode = false;
+
+      m_slash_view.HandleReturn();
+
+      Handle_Slash_GotPattern( m_sb.toString(), true );
+    }
+  }
+
   void Handle_Slash()
   {
-    if( m_diff_mode ) m_diff.Clear_Console_CrsCell();
-    else                CV().Clear_Console_CrsCell();
+    if( 0 == m_slash_file.NumLines() )
+    {
+      m_slash_file.PushLine();
+    }
+    final View cv = CV();
+    final int NUM_COLS = cv.WinCols();
+    final int X        = cv.X();
+    final int Y        = cv.Cmd__Line_Row();
 
-    CV().GoToCmdLineClear("/");
+    cv.Clear_Console_CrsCell();
+ 
+    m_slash_view.SetContext( NUM_COLS, X, Y );
+    m_slash_mode = true;
 
-    m_states.addFirst( m_run_slash );
+    final int CL = m_slash_view.CrsLine();
+    final int LL = m_slash_file.LineLen( CL );
 
-    m_sb.setLength( 0 );
+    if( 0<LL )
+    {
+      // Something on current line, so goto command line in escape mode
+      m_slash_view.Update();
+    }
+    else {
+      // Nothing on current line, so goto command line in insert mode
+      L_Handle_i();
+    }
   }
+  void L_Handle_Slash()
+  {
+    m_slash_mode = false;
+    m_slash_view.Clear_Console_CrsCell();
+
+    if( m_diff_mode ) m_diff.PrintCursor();
+    else                CV().PrintCursor();
+  }
+
   void Handle_Dot()
   {
     if( 0<m_console.m_dot_buf.length() )
@@ -1880,41 +2385,6 @@ public class Vis implements WindowFocusListener
     }
   }
 
-  void run_slash()
-  {
-    if( 0<m_console.KeysIn() )
-    {
-      final char c = m_console.GetKey();
-
-      if( Utils.IsEndOfLineDelim( c ) )
-      {
-        m_states.removeFirst();
-        Exe_Slash();
-      }
-      else {
-        final int ROW = CV().Cmd__Line_Row();
-
-        if( Console.BS != c && Console.DEL != c )
-        {
-          m_sb.append( c );
-          m_console.Set( ROW, CV().Col_Win_2_GL( m_sb.length()   ), c  , Style.NORMAL );
-          m_console.Set( ROW, CV().Col_Win_2_GL( m_sb.length()+1 ), ' ', Style.CURSOR );
-        }
-        else {  // Backspace or Delete key
-          if( 0<m_sb.length() )
-          {
-            // Replace last typed char with space:
-            m_console.Set( ROW, CV().Col_Win_2_GL( m_sb.length()+1 ), ' ', Style.NORMAL );
-            // Move back onto new space:
-            m_console.Set( ROW, CV().Col_Win_2_GL( m_sb.length() ), ' ', Style.CURSOR );
-            m_sb.deleteCharAt( m_sb.length()-1 );
-          }
-        }
-        m_console.Update();
-      }
-    }
-  }
-
   void Exe_Colon_Cmd()
   {
     Exe_Colon_Begin();
@@ -1962,7 +2432,7 @@ public class Vis implements WindowFocusListener
   }
   void Exe_Colon_Begin()
   {
-    m_states.removeFirst(); //< Drop out of m_run_colon
+    if( 1<m_states.size() ) m_states.removeFirst(); //< Drop out of m_run_colon
     // Copy m_sb into m_sb2
     m_sb2.ensureCapacity( m_sb.length() );
     m_sb2.setLength( 0 );
@@ -1986,57 +2456,35 @@ public class Vis implements WindowFocusListener
   {
     Handle_Slash_GotPattern( m_sb.toString(), true );
   }
-  void Handle_Slash_GotPattern( final String pattern
+  void Handle_Slash_GotPattern( final String  pattern
                               , final boolean MOVE_TO_FIRST_PATTERN )
   {
-    if( m_slash && pattern.equals( m_star ) )
+    m_regex = pattern;
+
+    if( 0<m_regex.length() )
     {
-      CV().PrintCursor();
-      return;
-    }
-    // Un-highlight old star patterns for windows displayed:
-    if( 0<m_star.length()  )
-    { // Since diff_mode does Console::Update(),
-      // no need to print patterns here if in diff_mode
-      if( !m_diff_mode ) Do_Star_PrintPatterns( false );
-    }
-    Do_Star_ClearPatterns();
-
-    m_star = pattern;
-
-    final int ROW = CV().Cmd__Line_Row();
-
-    if( m_star.length()<=0 )
-    {
-      final int COL = CV().Col_Win_2_GL( 1 );
-      // Remove cursor from command line row:
-      m_console.Set( ROW, COL, ' ', Style.NORMAL );
-      // Put cursor back in window:
-      CV().PrintCursor();
-    }
-    else {
-      m_slash = true;
-
       Do_Star_Update_Search_Editor();
-      Do_Star_FindPatterns();
-
-      // Highlight new star patterns for windows displayed:
-      if( m_diff_mode )
+    }
+    if( MOVE_TO_FIRST_PATTERN )
+    {
+      if( m_diff_mode ) m_diff.Do_n();
+      else                CV().Do_n();
+    }
+    if( m_diff_mode ) m_diff.Update();
+    else {
+      // Show new slash patterns for all windows currently displayed,
+      // but update current window last, so that the cursor ends up
+      // in the current window.
+      for( int w=0; w<m_num_wins; w++ )
       {
-        if( MOVE_TO_FIRST_PATTERN ) m_diff.Do_n(); // Move to first pattern
-        m_diff.Update();
-      }
-      else {
-        final int COL = CV().Col_Win_2_GL( m_star.length()+1 );
-        // Remove cursor from command line row:
-        m_console.Set( ROW, COL, ' ', Style.NORMAL );
+        final View pV = GetView_Win( 0 );
 
-        Do_Star_PrintPatterns( true );
-        if( MOVE_TO_FIRST_PATTERN ) CV().Do_n(); // Move to first pattern
-        else                        m_console.Update();
+        if( pV != CV() ) pV.Update();
       }
+      CV().Update();
     }
   }
+
   void Exe_Colon_q()
   {
     final Tile_Pos TP = CV().m_tile_pos;
@@ -2812,7 +3260,7 @@ public class Vis implements WindowFocusListener
         m_console.Set( ROW, ST+offset+k, 'R', Style.NORMAL ); offset++;
         m_console.Set( ROW, ST+offset+k, '>', Style.NORMAL );
       }
-      else if( C == m_console.ESC )
+      else if( C == ESC )
       {
         m_console.Set( ROW, ST+offset+k, '<', Style.NORMAL ); offset++;
         m_console.Set( ROW, ST+offset+k, 'E', Style.NORMAL ); offset++;
@@ -2835,39 +3283,13 @@ public class Vis implements WindowFocusListener
 
   void Exe_Colon_CoverKey()
   {
-    m_colon.Run_GetCoverKey( CV() );
+    m_colon_view.CoverKey();
   }
   void Exe_Colon_Cover()
   {
     Exe_Colon_NoDiff();
 
-    View V = CV();
-    FileBuf fb = V.m_fb;
-
-    if( fb.m_isDir )
-    {
-      V.PrintCursor();
-    }
-    else {
-      final int seed = fb.GetSize() % 256;
-
-      Cover.Cover_Array( fb, m_cover_buf, seed, m_cover_key );
-
-      // Fill in m_cover_buf from old file data:
-      // Clear old file:
-      fb.ClearLines();
-
-      // Read in covered file:
-      fb.ReadArray( m_cover_buf );
-
-      // Make sure all windows have proper change status in borders
-      Update_Change_Statuses();
-
-      // Reset view position:
-      V.Clear_Context();
-
-      V.Update();
-    }
+    m_colon_view.Do_Cover();
   }
 
   void Exe_Colon_Full()
@@ -3158,18 +3580,13 @@ public class Vis implements WindowFocusListener
   }
   void Exe_Colon_se()
   {
-    GoToBuffer( SE_FILE );
+    GoToBuffer( SLASH_FILE );
   }
   void Exe_Colon_shell()
   {
     GoToBuffer( SHELL_FILE );
   }
-//void GoToFile()
-//{
-//  String fname = CV().GetFileName_UnderCursor();
-//
-//  if( null != fname ) GoToBuffer_Fname( fname );
-//}
+
   // Return true if went to buffer indicated by fname, else false
   boolean GoToBuffer_Fname( String fname )
   {
@@ -3309,7 +3726,7 @@ public class Vis implements WindowFocusListener
 
     if( CVI == BE_FILE
      || CVI == HELP_FILE
-     || CVI == SE_FILE )  
+     || CVI == SLASH_FILE )  
     {
       Exe_Colon_NoDiff();
 
@@ -3439,7 +3856,7 @@ public class Vis implements WindowFocusListener
     else                CV().GoToLine( line_num );
   }
 
-  void UpdateViewsConsoleSize()
+  void UpdateViewsPositions()
   {
     for( int w=0; w<MAX_WINS; w++ )
     {
@@ -3447,8 +3864,6 @@ public class Vis implements WindowFocusListener
       {
         View v = m_views[w].get( f );
  
-      //v.m_num_rows = m_console.Num_Rows();
-      //v.m_num_cols = m_console.Num_Cols();
         v.SetViewPos();
       }
     }
@@ -3528,7 +3943,6 @@ public class Vis implements WindowFocusListener
     View v = m_views[0].get( MSG_FILE );
     FileBuf fb = v.m_fb;
 
-  //fb.Clear();
     fb.ClearLines();
     fb.m_views.clear();
 
@@ -3557,44 +3971,51 @@ public class Vis implements WindowFocusListener
   {
     return m_views[w].get( m_file_hist[w].get( prev ) );
   }
+  static final char ESC =  27; // Escape
   static final int KEY_REPEAT_PERIOD =  10; // ms between key repeats
   static final int KEY_REPEAT_DELAY  = 250; // ms to wait for first key repeat
-  static final int BE_FILE    = 0;    // Buffer editor view
-  static final int HELP_FILE  = 1;    // Help          view
-  static final int SE_FILE    = 2;    // Search editor view
-  static final int MSG_FILE   = 3;    // Message       view
-  static final int SHELL_FILE = 4;    // Command Shell view
+  static final int BE_FILE    = 0;    // Buffer editor file
+  static final int HELP_FILE  = 1;    // Help          file
+  static final int MSG_FILE   = 2;    // Message       file
+  static final int SHELL_FILE = 3;    // Command Shell file
+  static final int COLON_FILE = 4;    // Colon command file
+  static final int SLASH_FILE = 5;    // Slash command file
+  static final int USER_FILE  = 6;    // First user file 
   static final int MAX_WINS   = 8;    // Maximum number of sub-windows
-  static final String EDIT_BUF_NAME = "BUFFER_EDITOR";
-  static final String HELP_BUF_NAME = "VIS_HELP";
-  static final String SRCH_BUF_NAME = "SEARCH_EDITOR";
-  static final String MSG__BUF_NAME = "MESSAGE_BUFFER";
-  static final String SHEL_BUF_NAME = "SHELL_BUFFER";
+
+  static final String  EDIT_BUF_NAME = "BUFFER_EDITOR";
+  static final String  HELP_BUF_NAME = "VIS_HELP";
+  static final String  MSG__BUF_NAME = "MESSAGE_BUFFER";
+  static final String SHELL_BUF_NAME = "SHELL_BUFFER";
+  static final String COLON_BUF_NAME = "COLON_BUFFER";
+  static final String SLASH_BUF_NAME = "SLASH_BUFFER";
+
   String[]           m_args;
   Deque<Thread>      m_states     = new ArrayDeque<Thread>();
   Thread             m_run_init   = new Thread() { public void run() { run_init  (); } };
   Thread             m_run_focus  = new Thread() { public void run() { run_focus (); } };
   Thread             m_run_idle   = new Thread() { public void run() { run_idle  (); } };
   Thread             m_run_resize = new Thread() { public void run() { run_resize(); } };
-  Thread             m_run_slash  = new Thread() { public void run() { run_slash (); } };
   Thread             m_run_c      = new Thread() { public void run() { run_c     (); } };
+  Thread             m_run_L_c    = new Thread() { public void run() { run_L_c   (); } };
   Thread             m_run_d      = new Thread() { public void run() { run_d     (); } };
+  Thread             m_run_L_d    = new Thread() { public void run() { run_L_d   (); } };
   Thread             m_run_g      = new Thread() { public void run() { run_g     (); } };
+  Thread             m_run_L_g    = new Thread() { public void run() { run_L_g   (); } };
   Thread             m_run_W      = new Thread() { public void run() { run_W     (); } };
   Thread             m_run_y      = new Thread() { public void run() { run_y     (); } };
+  Thread             m_run_L_y    = new Thread() { public void run() { run_L_y   (); } };
   Thread             m_run_dot    = new Thread() { public void run() { run_dot   (); } };
   Thread             m_run_map    = new Thread() { public void run() { run_map   (); } };
   Thread             m_run_Q      = new Thread() { public void run() { run_Q     (); } };
+  Thread             m_run_L_Ha_i = new Thread() { public void run() { run_L_Ha_i(); } };
   int                m_win;
   int                m_num_wins = 1; // Number of sub-windows currently on screen
   JFrame             m_frame;
   Console            m_console;
-  Colon              m_colon;
   Cursor             m_blank_cursor;
   boolean            m_initialized;
   boolean            m_received_focus;
-//int                m_screen_width;
-//int                m_screen_height;
   Toolkit            m_def_tk    = Toolkit.getDefaultToolkit();
   final Dimension    m_screen_sz = m_def_tk.getScreenSize();
   Point              m_old_loc; // Old screen location
@@ -3608,13 +4029,16 @@ public class Vis implements WindowFocusListener
   ArrayList<FileBuf> m_files     = new ArrayList<>();
    IntList[]         m_file_hist = new  IntList[ MAX_WINS ];
   ViewList[]         m_views     = new ViewList[ MAX_WINS ];
-  String             m_star      = new String();
-  boolean            m_slash;
+  FileBuf            m_colon_file;  // Buffer for colon commands
+  LineView           m_colon_view;  // View   of  colon commands
+  FileBuf            m_slash_file;  // Buffer for slash commands
+  LineView           m_slash_view;  // View   of  slash commands
+  String             m_regex     = new String();
+  boolean            m_colon_mode;
+  boolean            m_slash_mode;
   ArrayList<Line>    m_reg = new ArrayList<>();
   Paste_Mode         m_paste_mode;
   String             m_cwd = Utils.GetCWD();
-  String             m_cover_key = new String();
-  ArrayList<Byte>    m_cover_buf = new ArrayList<>();
   Shell              m_shell;
 }
 
@@ -3626,7 +4050,6 @@ public class Vis implements WindowFocusListener
 //Thread             m_run_focus  = new Thread( ()->run_focus () );
 //Thread             m_run_idle   = new Thread( ()->run_idle  () );
 //Thread             m_run_resize = new Thread( ()->run_resize() );
-//Thread             m_run_slash  = new Thread( ()->run_slash () );
 //Thread             m_run_c      = new Thread( ()->run_c     () );
 //Thread             m_run_d      = new Thread( ()->run_d     () );
 //Thread             m_run_g      = new Thread( ()->run_g     () );

@@ -42,7 +42,6 @@ classes:
 source: classes \
         classes/ChangeHist.class \
         classes/ChangeType.class \
-        classes/Colon.class \
         classes/Console.class \
         classes/Cover.class \
         classes/CrsPos.class \
@@ -71,6 +70,7 @@ source: classes \
         classes/Highlight_XML.class \
         classes/IntList.class \
         classes/Line.class \
+        classes/LineView.class \
         classes/LineChange.class \
         classes/LineInfo.class \
         classes/LineUpdate.class \

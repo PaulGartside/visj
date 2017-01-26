@@ -36,6 +36,8 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 class FileBuf
 {
@@ -91,14 +93,16 @@ class FileBuf
     final int FB_NUM_LINES   = fb.m_lines.size();
     final int FB_NUM_OFFSETS = fb.m_lineOffsets.size(); //< Should be the same as FB_NUM_LINES
 
-    m_lines      .ensureCapacity( FB_NUM_LINES );
-    m_styles     .ensureCapacity( FB_NUM_LINES );
-    m_lineOffsets.ensureCapacity( FB_NUM_OFFSETS );
+    m_lines          .ensureCapacity( FB_NUM_LINES );
+    m_styles         .ensureCapacity( FB_NUM_LINES );
+    m_lineRegexsValid.ensureCapacity( FB_NUM_LINES );
+    m_lineOffsets    .ensureCapacity( FB_NUM_OFFSETS );
 
     for( int k=0; k<FB_NUM_LINES; k++ )
     {
       m_lines .add( new Line( fb.m_lines .get( k ) ) );
       m_styles.add( new Line( fb.m_styles.get( k ) ) );
+      m_lineRegexsValid.add( new Boolean( false ) );
     }
     for( int k=0; k<FB_NUM_OFFSETS; k++ )
     {
@@ -702,10 +706,11 @@ class FileBuf
 
   void ClearLines()
   {
-    m_lines      .clear();
-    m_styles     .clear();
-    m_lineOffsets.clear();
-    m_history    .Clear();
+    m_lines          .clear();
+    m_styles         .clear();
+    m_lineRegexsValid.clear();
+    m_lineOffsets    .clear();
+    m_history        .Clear();
     m_hi_touched_line = 0;
   }
 
@@ -846,22 +851,29 @@ class FileBuf
   // Find styles up to but not including up_to_line number
   void Find_Styles( final int up_to_line )
   {
-    if( m_hi_touched_line < up_to_line )
+    final int NUM_LINES = NumLines();
+
+    if( 0<NUM_LINES )
     {
-      // Find styles for some EXTRA_LINES beyond where we need to find
-      // styles for the moment, so that when the user is scrolling down
-      // through an area of a file that has not yet been syntax highlighed,
-      // Find_Styles() does not need to be called every time the user
-      // scrolls down another line.  Find_Styles() will only be called
-      // once for every EXTRA_LINES scrolled down.
-      final int EXTRA_LINES = 10;
+      m_hi_touched_line = Math.min( m_hi_touched_line, NUM_LINES-1 );
 
-      CrsPos st = Update_Styles_Find_St( m_hi_touched_line );
-      int    fn = Math.min( up_to_line+EXTRA_LINES, NumLines() );
-
-      Find_Styles_In_Range( st, fn );
-
-      m_hi_touched_line = fn;
+      if( m_hi_touched_line < up_to_line )
+      {
+        // Find styles for some EXTRA_LINES beyond where we need to find
+        // styles for the moment, so that when the user is scrolling down
+        // through an area of a file that has not yet been syntax highlighed,
+        // Find_Styles() does not need to be called every time the user
+        // scrolls down another line.  Find_Styles() will only be called
+        // once for every EXTRA_LINES scrolled down.
+        final int EXTRA_LINES = 10;
+ 
+        CrsPos st = Update_Styles_Find_St( m_hi_touched_line );
+        int    fn = Math.min( up_to_line+EXTRA_LINES, NumLines() );
+ 
+        Find_Styles_In_Range( st, fn );
+ 
+        m_hi_touched_line = fn;
+      }
     }
   }
 
@@ -896,47 +908,97 @@ class FileBuf
       m_Hi = new Highlight_Text( this );
     }
     m_Hi.Run_Range( st, fn );
-
-    ClearStars_In_Range( st, fn );
-    Find_Stars_In_Range( st, fn );
   }
 
-  // Find stars starting on st up to but not including fn line
-  void Find_Stars_In_Range( final CrsPos st, final int fn )
+//// Find stars starting on st up to but not including fn line
+//void Find_Stars_In_Range( final CrsPos st, final int fn )
+//{
+//  final String  star_str  = m_vis.m_star;
+//  final int     STAR_LEN  = m_vis.m_star.length();
+//  final boolean SLASH     = m_vis.m_slash;
+//  final int     NUM_LINES = NumLines();
+//
+//  for( int l=st.crsLine; 0<STAR_LEN && l<NUM_LINES && l<fn; l++ )
+//  {
+//    Line lp = m_lines.get( l );
+//    final int LL = lp.length();
+//    if( LL<STAR_LEN ) continue;
+//
+//    final int st_pos = st.crsLine==l ? st.crsChar : 0;
+//
+//    for( int p=st_pos; p<LL; p++ )
+//    {
+//      boolean matches = SLASH || Utils.line_start_or_prev_C_non_ident( lp, p );
+//      for( int k=0; matches && (p+k)<LL && k<STAR_LEN; k++ )
+//      {
+//        if( star_str.charAt(k) != lp.charAt(p+k) ) matches = false;
+//        else {
+//          if( k+1 == STAR_LEN ) // Found pattern
+//          {
+//            matches = SLASH || Utils.line_end_or_non_ident( lp, LL, p+k );
+//            if( matches ) {
+//              for( int m=p; m<p+STAR_LEN; m++ ) SetStarStyle( l, m );
+//              // Increment p one less than STAR_LEN, because p
+//              // will be incremented again by the for loop
+//              p += STAR_LEN-1;
+//            }
+//          }
+//        }
+//      }
+//    }
+//  }
+//}
+
+  void Find_Regexs( final int start_line
+                  , final int num_lines )
   {
-    final String  star_str  = m_vis.m_star;
-    final int     STAR_LEN  = m_vis.m_star.length();
-    final boolean SLASH     = m_vis.m_slash;
-    final int     NUM_LINES = NumLines();
+    Check_4_New_Regex();
 
-    for( int l=st.crsLine; 0<STAR_LEN && l<NUM_LINES && l<fn; l++ )
+    final int up_to_line = Math.min( start_line+num_lines, NumLines() );
+
+    for( int k=start_line; k<up_to_line; k++ )
     {
-      Line lp = m_lines.get( l );
-      final int LL = lp.length();
-      if( LL<STAR_LEN ) continue;
+      Find_Regexs_4_Line( k );
+    }
+  }
 
-      final int st_pos = st.crsLine==l ? st.crsChar : 0;
-
-      for( int p=st_pos; p<LL; p++ )
+  void Check_4_New_Regex()
+  {
+    if( m_regex != m_vis.m_regex )
+    {
+      // Invalidate all regexes
+      for( int k=0; k<m_lineRegexsValid.size(); k++ )
       {
-        boolean matches = SLASH || Utils.line_start_or_prev_C_non_ident( lp, p );
-        for( int k=0; matches && (p+k)<LL && k<STAR_LEN; k++ )
+        m_lineRegexsValid.set(k, false);
+      }
+      m_regex = m_vis.m_regex;
+      m_pattern = Pattern.compile( m_regex );
+    }
+  }
+
+  // Uses java regex:
+  void Find_Regexs_4_Line( final int line_num )
+  {
+    if( line_num < m_lineRegexsValid.size() && !m_lineRegexsValid.get(line_num) )
+    {
+      Line lr = m_lines.get( line_num );
+      final int LL = lr.length();
+
+      // Clear the patterns for the line:
+      for( int pos=0; pos<LL; pos++ )
+      {
+        ClearStarStyle( line_num, pos );
+      }
+      Matcher matcher = m_pattern.matcher( lr.toString() );
+
+      while( matcher.find() )
+      {
+        for( int pos=matcher.start(); pos<matcher.end(); pos++ )
         {
-          if( star_str.charAt(k) != lp.charAt(p+k) ) matches = false;
-          else {
-            if( k+1 == STAR_LEN ) // Found pattern
-            {
-              matches = SLASH || Utils.line_end_or_non_ident( lp, LL, p+k );
-              if( matches ) {
-                for( int m=p; m<p+STAR_LEN; m++ ) SetStarStyle( l, m );
-                // Increment p one less than STAR_LEN, because p
-                // will be incremented again by the for loop
-                p += STAR_LEN-1;
-              }
-            }
-          }
+          SetStarStyle( line_num, pos );
         }
       }
+      m_lineRegexsValid.set(line_num, true);
     }
   }
 
@@ -1046,7 +1108,7 @@ class FileBuf
 
   void BufferEditor_Sort()
   {
-    final int NUM_BUILT_IN_FILES = 5;
+    final int NUM_BUILT_IN_FILES = m_vis.USER_FILE;
     final int FNAME_START_CHAR   = 0;
  
     // Sort lines (file names), least to greatest:
@@ -1098,12 +1160,8 @@ class FileBuf
     ChangedLineLen( Math.min( l_num_1, l_num_2 ) );
   }
 
-  void Update()
+  void UpdateWinViews()
   {
-    if( m_vis.m_console.m_get_from_dot_buf ) return;
-
-    m_vis.Update_Change_Statuses();
-
     for( int w=0; w<Vis.MAX_WINS; w++ )
     {
       View rV = m_views.get( w );
@@ -1117,8 +1175,36 @@ class FileBuf
         }
       }
     }
+  }
+  void Update()
+  {
+    if( m_vis.m_console.m_get_from_dot_buf ) return;
+
+    m_vis.Update_Change_Statuses();
+
+    UpdateWinViews();
+
     // Put cursor back into current window
     m_vis.CV().PrintCursor();
+  }
+  void UpdateCmd()
+  {
+    if( m_vis.m_console.m_get_from_dot_buf ) return;
+
+    m_vis.Update_Change_Statuses();
+
+    UpdateWinViews();
+
+    if( null != m_line_view )
+    {
+      final LineView pV = m_line_view;
+
+      pV.RepositionView();
+      pV.PrintWorkingView();
+
+      // Put cursor back into current window
+      pV.PrintCursor();
+    }
   }
 
   // Remove from FileBuf and return the char at line l_num and position c_num
@@ -1172,7 +1258,8 @@ class FileBuf
   Line RemoveLine( final int l_num )
   {
     Line lr = m_lines.remove( l_num );
-    Line sr = m_styles.remove( l_num );
+              m_styles.remove( l_num );
+              m_lineRegexsValid.remove( l_num );
 
     ChangedLineLen( l_num );
 
@@ -1193,6 +1280,7 @@ class FileBuf
 
     m_lines.add( l_num, lr );
     m_styles.add( l_num, sr );
+    m_lineRegexsValid.add( l_num, false );
 
     ChangedLineLen( l_num );
 
@@ -1210,6 +1298,7 @@ class FileBuf
 
     m_lines.add( l_num, lr );
     m_styles.add( l_num, sp );
+    m_lineRegexsValid.add( l_num, false );
 
     ChangedLineLen( l_num );
 
@@ -1230,6 +1319,7 @@ class FileBuf
 
     lr.insert( c_num, C );
     sr.insert( c_num, '\u0000' );
+    m_lineRegexsValid.set( l_num, false );
 
     ChangedLineLen( l_num );
 
@@ -1244,6 +1334,8 @@ class FileBuf
     Line sr = m_styles.get( l_num );
 
     lr.append_l( line );
+
+    m_lineRegexsValid.set( l_num, false );
 
     // Simply need to increase sr's length to match lr's new length:
     sr.setLength( lr.length() );
@@ -1292,6 +1384,7 @@ class FileBuf
 
     lr.append_c( C );
     sr.append_c( (char)0 );
+    m_lineRegexsValid.set( l_num, false );
 
     ChangedLineLen( l_num );
 
@@ -1317,7 +1410,9 @@ class FileBuf
     Line sr = new Line( lr.length() );
     sr.setLength( lr.length() );
 
-    boolean ok = m_lines.add( lr ) && m_styles.add( sr );
+    boolean ok = m_lines.add( lr )
+              && m_styles.add( sr )
+              && m_lineRegexsValid.add( false );
 
     if( SavingHist() ) m_history.Save_InsertLine( m_lines.size()-1 );
   }
@@ -1329,7 +1424,9 @@ class FileBuf
     Line lr = new Line();
     Line sr = new Line();
 
-    boolean ok = m_lines.add( lr ) && m_styles.add( sr );
+    boolean ok = m_lines.add( lr )
+              && m_styles.add( sr )
+              && m_lineRegexsValid.add( false );
 
     if( SavingHist() ) m_history.Save_InsertLine( m_lines.size()-1 );
   }
@@ -1350,85 +1447,6 @@ class FileBuf
 
     m_save_history = true;
   }
-  void ClearStars()
-  {
-    if( m_need_2_clear_stars )
-    {
-      final int NUM_LINES = m_styles.size();
-
-      for( int l=0; l<NUM_LINES; l++ )
-      {
-        Line s_line = m_styles.get( l );
-        final int LL = s_line.length();
-
-        for( int p=0; p<LL; p++ )
-        {
-          char s = s_line.charAt( p );
-          s &= ~Highlight_Type.STAR.val;
-          s_line.setCharAt( p, s );
-        }
-      }
-      m_need_2_clear_stars = false;
-    }
-  }
-  // Clear stars starting on st up to but not including fn line
-  void ClearStars_In_Range( final CrsPos st, final int fn )
-  {
-    final int NUM_LINES = m_styles.size();
-
-    for( int l=st.crsLine; l<NUM_LINES && l<fn; l++ )
-    {
-      Line s_line = m_styles.get( l );
-      final int LL = s_line.length();
-      final int st_pos = st.crsLine==l ? st.crsChar : 0;
-
-      for( int p=st_pos; p<LL; p++ )
-      {
-        char s = s_line.charAt( p );
-        s &= ~Highlight_Type.STAR.val;
-        s_line.setCharAt( p, s );
-      }
-    }
-  }
-
-  void Find_Stars()
-  {
-    if( !m_need_2_find_stars ) return;
-
-    final String  star_str  = m_vis.m_star;
-    final int     STAR_LEN  = m_vis.m_star.length();
-    final boolean SLASH     = m_vis.m_slash;
-    final int     NUM_LINES = NumLines();
-
-    for( int l=0; 0<STAR_LEN && l<NUM_LINES; l++ )
-    {
-      Line lr = m_lines.get( l );
-      final int LL = lr.length();
-      if( LL<STAR_LEN ) continue;
-
-      for( int p=0; p<LL; p++ )
-      {
-        boolean matches = SLASH || Utils.line_start_or_prev_C_non_ident( lr, p );
-        for( int k=0; matches && (p+k)<LL && k<STAR_LEN; k++ )
-        {
-          if( star_str.charAt(k) != lr.charAt(p+k) ) matches = false;
-          else {
-            if( k+1 == STAR_LEN ) // Found pattern
-            {
-              matches = SLASH || Utils.line_end_or_non_ident( lr, LL, p+k );
-              if( matches ) {
-                for( int m=p; m<p+STAR_LEN; m++ ) SetStarStyle( l, m );
-                // Increment p one less than STAR_LEN, because p
-                // will be incremented again by the for loop
-                p += STAR_LEN-1;
-              }
-            }
-          }
-        }
-      }
-    }
-    m_need_2_find_stars = false;
-  }
   Vis                   m_vis;   // Not sure if we need this or should use m_views
   final String          m_fname; // Full path and filename head = m_pname + m_hname
   final String          m_pname; // Full path     = m_fname - m_hname, (for directories this is the same a m_fname)
@@ -1440,6 +1458,7 @@ class FileBuf
   ArrayList<Line>       m_styles       = new ArrayList<>();
   ArrayList<Integer>    m_lineOffsets  = new ArrayList<>();
   ArrayList<View>       m_views        = new ArrayList<>(); // MAX_WINS views
+  LineView              m_line_view;
   ChangeHist            m_history      = new ChangeHist( this );
   boolean               m_LF_at_EOF    = true;
   File_Type             m_file_type    = File_Type.UNKNOWN;
@@ -1452,5 +1471,8 @@ class FileBuf
   private boolean       m_save_history       = false;
   private long          m_mod_check_time     = 0;
   int                   m_hi_touched_line; // Line before which highlighting is valid
+  String                m_regex;
+  Pattern               m_pattern; // Will hold compiled regex pattern
+  ArrayList<Boolean>    m_lineRegexsValid = new ArrayList<>();
 }
 

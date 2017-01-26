@@ -151,8 +151,7 @@ class Diff
 
     // Update long view:
     m_fL.Find_Styles( ViewLine( m_vL, m_topLine ) + WorkingRows( m_vL ) );
-    m_fL.ClearStars();
-    m_fL.Find_Stars();
+    m_fL.Find_Regexs( ViewLine( m_vL, m_topLine ), WorkingRows( m_vL ) );
 
     RepositionViews();
  
@@ -165,8 +164,7 @@ class Diff
  
     // Update short view:
     m_fS.Find_Styles( ViewLine( m_vS, m_topLine ) + WorkingRows( m_vS ) );
-    m_fS.ClearStars();
-    m_fS.Find_Stars();
+    m_fS.Find_Regexs( ViewLine( m_vS, m_topLine ), WorkingRows( m_vS ) );
  
   //m_vS.RepositionView();
     m_vS.Print_Borders();
@@ -216,8 +214,8 @@ class Diff
   int GetCrsRow  () { return m_crsRow;  }
   int GetCrsCol  () { return m_crsCol;  }
 
-  int WorkingRows( View pV ) { return pV.m_num_rows - 5; }
-  int WorkingCols( View pV ) { return pV.m_num_cols - 2; }
+  int WorkingRows( View pV ) { return pV.WorkingRows(); }
+  int WorkingCols( View pV ) { return pV.WorkingCols(); }
   int CrsLine  () { return m_topLine  + m_crsRow; }
   int CrsChar  () { return m_leftChar + m_crsCol; }
   int BotLine  ( View pV ) { return m_topLine  + WorkingRows( pV )-1; }
@@ -225,19 +223,19 @@ class Diff
 
   int Row_Win_2_GL( View pV, final int win_row )
   {
-    return pV.m_y + 1 + win_row;
+    return pV.Y() + 1 + win_row;
   }
   int Col_Win_2_GL( View pV, final int win_col )
   {
-    return pV.m_x + 1 + win_col;
+    return pV.X() + 1 + win_col;
   }
   int Line_2_GL( View pV, final int file_line )
   {
-    return pV.m_y + 1 + file_line - m_topLine;
+    return pV.Y() + 1 + file_line - m_topLine;
   }
   int Char_2_GL( View pV, final int line_char )
   {
-    return pV.m_x + 1 + line_char - m_leftChar;
+    return pV.X() + 1 + line_char - m_leftChar;
   }
 
   int NumLines()
@@ -1849,14 +1847,13 @@ class Diff
   {
     final int NUM_LINES = NumLines();
     final int OCL       = CrsLine(); // Old cursor line
-    final int NCL       = OCL+num;   // New cursor line
 
-    if( 0<NUM_LINES && NCL < NUM_LINES )
+    if( 0<NUM_LINES && OCL<NUM_LINES-1 )
     {
+      final int NCL = Math.min( NUM_LINES-1, OCL+num ); // New cursor line
       final int OCP = CrsChar(); // Old cursor position
-            int NCP = OCP;
 
-      GoToCrsPos_Write( NCL, NCP );
+      GoToCrsPos_Write( NCL, OCP );
     }
   }
 
@@ -1864,38 +1861,42 @@ class Diff
   {
     final int NUM_LINES = NumLines();
     final int OCL       = CrsLine(); // Old cursor line
-    final int NCL       = OCL-num;   // New cursor line
 
-    if( 0<NUM_LINES && 0<=NCL )
+    if( 0<NUM_LINES && 0<OCL )
     {
+      final int NCL = Math.max( 0, OCL-num ); // New cursor line
       final int OCP = CrsChar(); // Old cursor position
-            int NCP = OCP;
 
-      GoToCrsPos_Write( NCL, NCP );
+      GoToCrsPos_Write( NCL, OCP );
     }
   }
 
-  void GoLeft()
+  void GoLeft( final int num )
   {
-    final int CP = CrsChar(); // Cursor position
+    final int OCP = CrsChar(); // Old cursor position
 
-    if( 0<NumLines() && 0<CP )
+    if( 0<NumLines() && 0<OCP )
     {
-      final int CL = CrsLine(); // Cursor line
+      final int NCP = Math.max( 0, OCP-num ); // New cursor position
+      final int CL  = CrsLine(); // Cursor line
 
-      GoToCrsPos_Write( CL, CP-1 );
+      GoToCrsPos_Write( CL, NCP );
     }
   }
-  void GoRight()
+  void GoRight( final int num )
   {
-    final int LL = LineLen();
-    final int CP = CrsChar(); // Cursor position
-
-    if( 0<NumLines() && 0<LL && CP<LL-1 )
+    if( 0<NumLines() )
     {
-      final int CL = CrsLine(); // Cursor line
+      final int CL  = CrsLine(); // Cursor line
+      final int LL  = LineLen();
+      final int OCP = CrsChar(); // Old cursor position
 
-      GoToCrsPos_Write( CL, CP+1 );
+      if( 0<LL && OCP<LL-1 )
+      {
+        final int NCP = Math.min( LL-1, OCP+num ); // New cursor position
+
+        GoToCrsPos_Write( CL, NCP );
+      }
     }
   }
 
@@ -2462,8 +2463,8 @@ class Diff
 
   void Do_n()
   {
-    if( 0 < m_vis.m_star.length() ) Do_n_Pattern();
-    else                            Do_n_Diff();
+    if( 0 < m_vis.m_regex.length() ) Do_n_Pattern();
+    else                             Do_n_Diff();
   }
 
   void Do_n_Pattern()
@@ -2489,7 +2490,7 @@ class Diff
     FileBuf pfb = pV.m_fb;
   
     final int NUM_LINES = pfb.NumLines();
-    final int STAR_LEN  = m_vis.m_star.length();
+    final int STAR_LEN  = m_vis.m_regex.length();
   
     final int OCL = CrsLine(); // Diff line
     final int OCC = CrsChar();
@@ -2678,8 +2679,8 @@ class Diff
 
   void Do_N()
   {
-    if( 0 < m_vis.m_star.length() ) Do_N_Pattern();
-    else                            Do_N_Diff();
+    if( 0 < m_vis.m_regex.length() ) Do_N_Pattern();
+    else                             Do_N_Diff();
   }
 
   void Do_N_Pattern()
@@ -2706,7 +2707,7 @@ class Diff
     FileBuf pfb = pV.m_fb;
 
     final int NUM_LINES = pfb.NumLines();
-    final int STAR_LEN  = m_vis.m_star.length();
+    final int STAR_LEN  = m_vis.m_regex.length();
 
     final int OCL = CrsLine();
     final int OCC = CrsChar();
@@ -4720,8 +4721,8 @@ class Diff
     {
       final char C = m_console.GetKey();
 
-      if     ( C == 'l' ) GoRight();
-      else if( C == 'h' ) GoLeft();
+      if     ( C == 'l' ) GoRight(1);
+      else if( C == 'h' ) GoLeft(1);
       else if( C == 'j' ) GoDown(1);
       else if( C == 'k' ) GoUp(1);
       else if( C == 'H' ) GoToTopLineInView();
