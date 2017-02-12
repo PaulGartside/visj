@@ -27,7 +27,7 @@ import java.nio.file.Path;
 
 class View
 {
-  View( Vis vis, FileBuf fb, Console console )
+  View( VisIF vis, FileBuf fb, ConsoleIF console )
   {
     m_vis      = vis;
     m_fb       = fb;
@@ -187,7 +187,7 @@ class View
 
   void Update()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.get_from_dot_buf() )
     {
       m_fb.Find_Styles( m_topLine + WorkingRows() );
       m_fb.Find_Regexs( m_topLine, WorkingRows() );
@@ -204,7 +204,7 @@ class View
   }
   void Update_DoNot_PrintCursor()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.get_from_dot_buf() )
     {
       m_fb.Find_Styles( m_topLine + WorkingRows() );
       m_fb.Find_Regexs( m_topLine, WorkingRows() );
@@ -241,7 +241,7 @@ class View
   }
   void Print_Borders()
   {
-    final boolean HIGHLIGHT = 1 < m_vis.m_num_wins && this == m_vis.CV();
+    final boolean HIGHLIGHT = 1 < m_vis.get_num_wins() && this == m_vis.CV();
 
     final Style S = HIGHLIGHT ? Style.BORDER_HI
                               : Style.BORDER;
@@ -417,7 +417,7 @@ class View
       col=11; // Strlen of "--REPLACE--"
       m_console.SetS( Cmd__Line_Row(), Col_Win_2_GL( 0 ), "--REPLACE--", Style.BANNER );
     }
-    else if( m_vis.m_run_mode && m_vis.CV() == this )
+    else if( m_vis.get_run_mode() && m_vis.CV() == this )
     {
       col=11; // Strlen of "--RUNNING--"
       m_console.SetS( Cmd__Line_Row(), Col_Win_2_GL( 0 ), "--RUNNING--", Style.BANNER );
@@ -672,7 +672,7 @@ class View
 
   void DisplayBanner()
   {
-    if( m_console.m_get_from_dot_buf ) return;
+    if( m_console.get_from_dot_buf() ) return;
 
     // Command line row in window:
     final int WIN_ROW = WorkingRows() + 2;
@@ -697,7 +697,7 @@ class View
   }
   void Remove_Banner()
   {
-    if( m_console.m_get_from_dot_buf ) return;
+    if( m_console.get_from_dot_buf() ) return;
 
     final int WC = WorkingCols();
     final int N = Math.min( WC, 11 );
@@ -718,7 +718,7 @@ class View
 
   void DisplayMapping()
   {
-    if( m_console.m_get_from_dot_buf ) return;
+    if( m_console.get_from_dot_buf() ) return;
 
     final String mapping = "--MAPPING--";
     final int    mapping_len = mapping.length();
@@ -1377,9 +1377,9 @@ class View
 
   void Do_i()
   {
-    m_vis.m_states.addFirst( m_run_i_end );
-    m_vis.m_states.addFirst( m_run_i_mid );
-    m_vis.m_states.addFirst( m_run_i_beg );
+    m_vis.get_states().addFirst( m_run_i_end );
+    m_vis.get_states().addFirst( m_run_i_mid );
+    m_vis.get_states().addFirst( m_run_i_beg );
   }
   void run_i_beg()
   {
@@ -1397,7 +1397,7 @@ class View
     }
     m_i_count = 0;
 
-    m_vis.m_states.removeFirst();
+    m_vis.get_states().removeFirst();
   }
   void run_i_mid()
   {
@@ -1407,7 +1407,7 @@ class View
 
       if( C == ESC )
       {
-        m_vis.m_states.removeFirst(); // Done
+        m_vis.get_states().removeFirst(); // Done
       }
       else if( BS == C || DEL == C )
       {
@@ -1440,13 +1440,13 @@ class View
       Set_crsCol( m_crsCol-1 );
       m_fb.Update();
     }
-    m_vis.m_states.removeFirst();
+    m_vis.get_states().removeFirst();
   }
   void Do_R()
   {
-    m_vis.m_states.addFirst( m_run_R_end );
-    m_vis.m_states.addFirst( m_run_R_mid );
-    m_vis.m_states.addFirst( m_run_R_beg );
+    m_vis.get_states().addFirst( m_run_R_end );
+    m_vis.get_states().addFirst( m_run_R_mid );
+    m_vis.get_states().addFirst( m_run_R_beg );
   }
   void run_R_beg()
   {
@@ -1455,7 +1455,7 @@ class View
 
     if( 0 == m_fb.NumLines() ) m_fb.PushLine();
 
-    m_vis.m_states.removeFirst();
+    m_vis.get_states().removeFirst();
   }
   void run_R_mid()
   {
@@ -1465,7 +1465,7 @@ class View
 
       if( C == ESC )
       {
-        m_vis.m_states.removeFirst();
+        m_vis.get_states().removeFirst();
       }
       else if( BS == C || DEL == C )
       {
@@ -1492,7 +1492,7 @@ class View
     }
     m_fb.Update();
 
-    m_vis.m_states.removeFirst();
+    m_vis.get_states().removeFirst();
   }
   void ReplaceAddReturn()
   {
@@ -1655,9 +1655,9 @@ class View
         // Put char x'ed into register:
         Line nlr = new Line();
         nlr.append_c( C );
-        m_vis.m_reg.clear();
-        m_vis.m_reg.add( nlr );
-        m_vis.m_paste_mode = Paste_Mode.ST_FN;
+        m_vis.get_reg().clear();
+        m_vis.get_reg().add( nlr );
+        m_vis.set_paste_mode( Paste_Mode.ST_FN );
 
         final int NLL = m_fb.LineLen( CL ); // New line length
 
@@ -1929,7 +1929,8 @@ class View
     // If there is nothing to 'dd', just return:
     if( 1 < ONL )
     {
-      if( m_fb == m_vis.m_views[0].get( m_vis.BE_FILE ).m_fb )
+    //if( m_fb == m_vis.m_views[0].get( m_vis.BE_FILE ).m_fb )
+      if( m_vis.Is_BE_FILE( m_fb ) )
       {
         Do_dd_BufferEditor( ONL );
       }
@@ -1974,9 +1975,9 @@ class View
     Line lr = m_fb.RemoveLine( OCL );
 
     // m_vis.m_reg will own lp
-    m_vis.m_reg.clear();
-    m_vis.m_reg.add( lr );
-    m_vis.m_paste_mode = Paste_Mode.LINE;
+    m_vis.get_reg().clear();
+    m_vis.get_reg().add( lr );
+    m_vis.set_paste_mode( Paste_Mode.LINE );
 
     GoToCrsPos_NoWrite( NCL, NCP );
 
@@ -2077,12 +2078,12 @@ class View
         Utils.Swap( p_st_char, p_fn_char );
       }
     }
-    m_vis.m_reg.clear();
+    m_vis.get_reg().clear();
   }
   void Do_x_range_post( final int st_line, final int st_char )
   {
-    if( m_inVisualBlock ) m_vis.m_paste_mode = Paste_Mode.BLOCK;
-    else                  m_vis.m_paste_mode = Paste_Mode.ST_FN;
+    if( m_inVisualBlock ) m_vis.set_paste_mode( Paste_Mode.BLOCK );
+    else                  m_vis.set_paste_mode( Paste_Mode.ST_FN );
 
     // Try to put cursor at (st_line, st_char), but
     // make sure the cursor is in bounds after the deletion:
@@ -2122,7 +2123,7 @@ class View
 
         LL = m_fb.LineLen( L ); // Removed a char, so re-set LL
       }
-      m_vis.m_reg.add( nlr );
+      m_vis.get_reg().add( nlr );
     }
   }
   void Do_x_range_multiple( final int st_line
@@ -2164,7 +2165,7 @@ class View
       }
       else L++;
 
-      m_vis.m_reg.add( nlr );
+      m_vis.get_reg().add( nlr );
     }
     if( started_in_middle && ended___in_middle )
     {
@@ -2189,9 +2190,9 @@ class View
         char C = m_fb.RemoveChar( OCL, OCP );
         lrd.append_c( C );
       }
-      m_vis.m_reg.clear();
-      m_vis.m_reg.add( lrd );
-      m_vis.m_paste_mode = Paste_Mode.ST_FN;
+      m_vis.get_reg().clear();
+      m_vis.get_reg().add( lrd );
+      m_vis.set_paste_mode( Paste_Mode.ST_FN );
 
       // If cursor is not at beginning of line, move it back one space.
       if( 0<m_crsCol ) m_crsCol--;
@@ -2219,24 +2220,28 @@ class View
   }
   void Do_p()
   {
-    if     ( Paste_Mode.ST_FN == m_vis.m_paste_mode ) Do_p_or_P_st_fn( Paste_Pos.After );
-    else if( Paste_Mode.BLOCK == m_vis.m_paste_mode ) Do_p_block();
-    else /*( Paste_Mode.LINE  == m_vis.m_paste_mode*/ Do_p_line();
+    final Paste_Mode PM = m_vis.get_paste_mode();
+
+    if     ( Paste_Mode.ST_FN == PM ) Do_p_or_P_st_fn( Paste_Pos.After );
+    else if( Paste_Mode.BLOCK == PM ) Do_p_block();
+    else /*( Paste_Mode.LINE  == PM*/ Do_p_line();
   }
   void Do_P()
   {
-    if     ( Paste_Mode.ST_FN == m_vis.m_paste_mode ) Do_p_or_P_st_fn( Paste_Pos.Before );
-    else if( Paste_Mode.BLOCK == m_vis.m_paste_mode ) Do_P_block();
-    else /*( Paste_Mode.LINE  == m_vis.m_paste_mode*/ Do_P_line();
+    final Paste_Mode PM = m_vis.get_paste_mode();
+
+    if     ( Paste_Mode.ST_FN == PM ) Do_p_or_P_st_fn( Paste_Pos.Before );
+    else if( Paste_Mode.BLOCK == PM ) Do_P_block();
+    else /*( Paste_Mode.LINE  == PM*/ Do_P_line();
   }
   void Do_p_or_P_st_fn( Paste_Pos paste_pos )
   {
-    final int N_REG_LINES = m_vis.m_reg.size();
+    final int N_REG_LINES = m_vis.get_reg().size();
 
     for( int k=0; k<N_REG_LINES; k++ )
     {
-      final int NLL = m_vis.m_reg.get(k).length();  // New line length
-      final int OCL = CrsLine();               // Old cursor line
+      final int NLL = m_vis.get_reg().get(k).length();  // New line length
+      final int OCL = CrsLine();                        // Old cursor line
   
       if( 0 == k ) // Add to current line
       {
@@ -2249,7 +2254,7 @@ class View
   
         for( int i=0; i<NLL; i++ )
         {
-          char C = m_vis.m_reg.get(k).charAt(i);
+          char C = m_vis.get_reg().get(k).charAt(i);
   
           m_fb.InsertChar( OCL, OCP+i+forward, C );
         }
@@ -2270,14 +2275,14 @@ class View
   
         for( int i=0; i<NLL; i++ )
         {
-          char C = m_vis.m_reg.get(k).charAt(i);
+          char C = m_vis.get_reg().get(k).charAt(i);
   
           m_fb.InsertChar( OCL+k, i, C );
         }
       }
       else {
         // Put m_reg on line below:
-        m_fb.InsertLine( OCL+k, new Line( m_vis.m_reg.get(k) ) );
+        m_fb.InsertLine( OCL+k, new Line( m_vis.get_reg().get(k) ) );
       }
     }
     // Update current view after other views, so that the cursor will be put back in place
@@ -2292,7 +2297,7 @@ class View
                   : ( 0<OLL ? 1:0 );     // If at beginning of line,
                                          // and LL is zero insert at 0,
                                          // else insert at 1
-    final int N_REG_LINES = m_vis.m_reg.size();
+    final int N_REG_LINES = m_vis.get_reg().size();
   
     for( int k=0; k<N_REG_LINES; k++ )
     {
@@ -2310,7 +2315,7 @@ class View
           m_fb.InsertChar( OCL+k, NLL, ' ' );
         }
       }
-      Line reg_line = m_vis.m_reg.get(k);
+      Line reg_line = m_vis.get_reg().get(k);
       final int RLL = reg_line.length();
 
       for( int i=0; i<RLL; i++ )
@@ -2326,12 +2331,12 @@ class View
   {
     final int OCL = CrsLine();  // Old cursor line
   
-    final int NUM_LINES = m_vis.m_reg.size();
+    final int NUM_LINES = m_vis.get_reg().size();
   
     for( int k=0; k<NUM_LINES; k++ )
     {
       // Put m_reg on line below:
-      m_fb.InsertLine( OCL+k+1, new Line( m_vis.m_reg.get(k) ) );
+      m_fb.InsertLine( OCL+k+1, new Line( m_vis.get_reg().get(k) ) );
     }
     // Update current view after other views,
     // so that the cursor will be put back in place
@@ -2342,7 +2347,7 @@ class View
     final int OCL = CrsLine();  // Old cursor line
     final int OCP = CrsChar();  // Old cursor position
 
-    final int N_REG_LINES = m_vis.m_reg.size();
+    final int N_REG_LINES = m_vis.get_reg().size();
 
     for( int k=0; k<N_REG_LINES; k++ )
     {
@@ -2355,7 +2360,7 @@ class View
         // Fill in line with white space up to OCP:
         for( int i=0; i<(OCP-LL); i++ ) m_fb.InsertChar( OCL+k, LL, ' ' );
       }
-      Line reg_line = m_vis.m_reg.get(k);
+      Line reg_line = m_vis.get_reg().get(k);
       final int RLL = reg_line.length();
 
       for( int i=0; i<RLL; i++ )
@@ -2371,12 +2376,12 @@ class View
   {
     final int OCL = CrsLine();  // Old cursor line
 
-    final int NUM_LINES = m_vis.m_reg.size();
+    final int NUM_LINES = m_vis.get_reg().size();
 
     for( int k=0; k<NUM_LINES; k++ )
     {
       // Put m_reg on line above:
-      m_fb.InsertLine( OCL+k, new Line( m_vis.m_reg.get(k) ) );
+      m_fb.InsertLine( OCL+k, new Line( m_vis.get_reg().get(k) ) );
     }
     m_fb.Update();
   }
@@ -2414,10 +2419,10 @@ class View
       // Get a copy of CrsLine() line:
       Line l = new Line( m_fb.GetLine( CrsLine() ) );
 
-      m_vis.m_reg.clear();
-      m_vis.m_reg.add( l );
+      m_vis.get_reg().clear();
+      m_vis.get_reg().add( l );
 
-      m_vis.m_paste_mode = Paste_Mode.LINE;
+      m_vis.set_paste_mode( Paste_Mode.LINE );
     }
   }
 
@@ -2434,7 +2439,7 @@ class View
 
       if( null != ncp )
       {
-        m_vis.m_reg.clear();
+        m_vis.get_reg().clear();
         Line l = new Line();
 
         // st_line and fn_line should be the same
@@ -2442,8 +2447,8 @@ class View
         {
           l.append_c( m_fb.Get( st_line, k ) );
         }
-        m_vis.m_reg.add( l );
-        m_vis.m_paste_mode = Paste_Mode.ST_FN;
+        m_vis.get_reg().add( l );
+        m_vis.set_paste_mode( Paste_Mode.ST_FN );
       }
     }
   }
@@ -2916,18 +2921,18 @@ class View
     m_inVisualBlock = false;
     m_copy_vis_buf_2_dot_buf = false;
 
-    m_vis.m_states.addFirst( m_run_v_end );
-    m_vis.m_states.addFirst( m_run_v_mid );
-    m_vis.m_states.addFirst( m_run_v_beg );
+    m_vis.get_states().addFirst( m_run_v_end );
+    m_vis.get_states().addFirst( m_run_v_mid );
+    m_vis.get_states().addFirst( m_run_v_beg );
   }
   void Do_V()
   {
     m_inVisualBlock = true;
     m_copy_vis_buf_2_dot_buf = false;
 
-    m_vis.m_states.addFirst( m_run_v_end );
-    m_vis.m_states.addFirst( m_run_v_mid );
-    m_vis.m_states.addFirst( m_run_v_beg );
+    m_vis.get_states().addFirst( m_run_v_end );
+    m_vis.get_states().addFirst( m_run_v_mid );
+    m_vis.get_states().addFirst( m_run_v_beg );
   }
   void run_v_beg()
   {
@@ -2939,7 +2944,7 @@ class View
     v_st_line = CrsLine();  v_fn_line = v_st_line;
     v_st_char = CrsChar();  v_fn_char = v_st_char;
 
-    m_vis.m_states.removeFirst();
+    m_vis.get_states().removeFirst();
   }
   void run_v_mid()
   {
@@ -2979,24 +2984,23 @@ class View
       else if( C == '~' ) { Do_Tilda_v(); m_copy_vis_buf_2_dot_buf = true; }
       else if( C == ESC ) { m_inVisualMode = false; }
     }
-    if( !m_inVisualMode ) m_vis.m_states.removeFirst();
+    if( !m_inVisualMode ) m_vis.get_states().removeFirst();
   }
   void run_v_end()
   {
     Remove_Banner();
     Undo_v();
 
-    m_vis.m_states.removeFirst();
+    m_vis.get_states().removeFirst();
 
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.get_from_dot_buf() )
     {
-      m_console.m_save_2_vis_buf = false;
+      m_console.set_save_2_vis_buf( false );
 
       if( m_copy_vis_buf_2_dot_buf )
       {
         // setLength( 0 ) followed by append() accomplishes copy:
-        m_console.m_dot_buf.setLength( 0 );
-        m_console.m_dot_buf.append( m_console.m_vis_buf );
+        m_console.copy_vis_buf_2_dot_buf();
       }
     }
   }
@@ -3010,7 +3014,7 @@ class View
 
   void Do_v_Handle_g()
   {
-    m_vis.m_states.addFirst( m_run_g_v );
+    m_vis.get_states().addFirst( m_run_g_v );
   }
   void run_g_v()
   {
@@ -3024,7 +3028,7 @@ class View
       else if( c2 == 'f' ) Do_v_Handle_gf();
       else if( c2 == 'p' ) Do_v_Handle_gp();
 
-      m_vis.m_states.removeFirst();
+      m_vis.get_states().removeFirst();
     }
   }
   void Do_v_Handle_gf()
@@ -3106,7 +3110,7 @@ class View
   }
   void Do_y_v()
   {
-    m_vis.m_reg.clear();
+    m_vis.get_reg().clear();
 
     if( m_inVisualBlock ) Do_y_v_block();
     else                  Do_y_v_st_fn();
@@ -3130,9 +3134,9 @@ class View
       {
         nlr.append_c( m_fb.Get( L, P ) );
       }
-      m_vis.m_reg.add( nlr );
+      m_vis.get_reg().add( nlr );
     }
-    m_vis.m_paste_mode = Paste_Mode.BLOCK;
+    m_vis.set_paste_mode( Paste_Mode.BLOCK );
 
     // Try to put cursor at (old_v_st_line, old_v_st_char), but
     // make sure the cursor is in bounds after the deletion:
@@ -3147,7 +3151,7 @@ class View
   }
   void Do_Y_v()
   {
-    m_vis.m_reg.clear();
+    m_vis.get_reg().clear();
 
     if( m_inVisualBlock ) Do_y_v_block();
     else                  Do_Y_v_st_fn();
@@ -3227,13 +3231,13 @@ class View
           nlr.append_c( m_fb.Get( L, P ) );
         }
       }
-      m_vis.m_reg.add( nlr );
+      m_vis.get_reg().add( nlr );
     }
-    m_vis.m_paste_mode = Paste_Mode.ST_FN;
+    m_vis.set_paste_mode( Paste_Mode.ST_FN );
   }
   void Do_Y_v_st_fn()
   {
-    m_vis.m_reg.clear();
+    m_vis.get_reg().clear();
 
     if( v_fn_line < v_st_line )
     {
@@ -3253,9 +3257,9 @@ class View
           nlr.append_c( m_fb.Get( L, P ) );
         }
       }
-      m_vis.m_reg.add( nlr );
+      m_vis.get_reg().add( nlr );
     }
-    m_vis.m_paste_mode = Paste_Mode.LINE;
+    m_vis.set_paste_mode( Paste_Mode.LINE );
   }
   void Do_x_range_block( int st_line, int st_char
                        , int fn_line, int fn_char )
@@ -3277,7 +3281,7 @@ class View
       {
         nlr.append_c( m_fb.RemoveChar( L, p_st_char.val ) );
       }
-      m_vis.m_reg.add( nlr );
+      m_vis.get_reg().add( nlr );
     }
     Do_x_range_post( p_st_line.val, p_st_char.val );
   }
@@ -3288,7 +3292,7 @@ class View
       int T = v_st_line; v_st_line = v_fn_line; v_fn_line = T;
           T = v_st_char; v_st_char = v_fn_char; v_fn_char = T;
     }
-    m_vis.m_reg.clear();
+    m_vis.get_reg().clear();
   
     boolean removed_line = false;
     // 1. If v_st_line==0, fn_line will go negative in the loop below,
@@ -3298,11 +3302,11 @@ class View
     for( int L = v_st_line; 1 < m_fb.NumLines() && L<=fn_line; fn_line-- )
     {
       Line lr = m_fb.RemoveLine( L );
-      m_vis.m_reg.add( lr );
+      m_vis.get_reg().add( lr );
   
       removed_line = true;
     }
-    m_vis.m_paste_mode = Paste_Mode.LINE;
+    m_vis.set_paste_mode( Paste_Mode.LINE );
   
     m_inVisualMode = false;
   //Remove_Banner();
@@ -3355,9 +3359,9 @@ class View
   }
   void Do_i_vb()
   {
-    m_vis.m_states.addFirst( m_run_i_vb_end );
-    m_vis.m_states.addFirst( m_run_i_vb_mid );
-    m_vis.m_states.addFirst( m_run_i_vb_beg );
+    m_vis.get_states().addFirst( m_run_i_vb_end );
+    m_vis.get_states().addFirst( m_run_i_vb_mid );
+    m_vis.get_states().addFirst( m_run_i_vb_beg );
   }
   void run_i_vb_beg()
   {
@@ -3366,7 +3370,7 @@ class View
 
     m_i_count = 0;
 
-    m_vis.m_states.removeFirst();
+    m_vis.get_states().removeFirst();
   }
   void run_i_vb_mid()
   {
@@ -3376,7 +3380,7 @@ class View
 
       if( C == ESC )
       {
-        m_vis.m_states.removeFirst(); // Done
+        m_vis.get_states().removeFirst(); // Done
       }
       else if( Utils.IsEndOfLineDelim( C ) )
       {
@@ -3403,7 +3407,7 @@ class View
     Remove_Banner();
     m_inInsertMode = false;
 
-    m_vis.m_states.removeFirst();
+    m_vis.get_states().removeFirst();
   }
 
   void Do_Tilda_v()
@@ -3461,7 +3465,7 @@ class View
 
     if( 0<OCP )
     {
-      final int N_REG_LINES = m_vis.m_reg.size();
+      final int N_REG_LINES = m_vis.get_reg().size();
 
       for( int k=0; k<N_REG_LINES; k++ )
       {
@@ -3475,7 +3479,7 @@ class View
     final int OCL = CrsLine();  // Old cursor line
     final int OCP = CrsChar();  // Old cursor position
 
-    final int N_REG_LINES = m_vis.m_reg.size();
+    final int N_REG_LINES = m_vis.get_reg().size();
 
     for( int k=0; k<N_REG_LINES; k++ )
     {
@@ -3497,7 +3501,7 @@ class View
   }
   void Do_z()
   {
-    m_vis.m_states.addFirst( m_run_z );
+    m_vis.get_states().addFirst( m_run_z );
   }
   void run_z()
   {
@@ -3517,22 +3521,22 @@ class View
       {
         MoveCurrLineToBottom();
       }
-      m_vis.m_states.removeFirst();
+      m_vis.get_states().removeFirst();
     }
   }
   void Do_f()
   {
-    m_vis.m_states.addFirst( m_run_f );
+    m_vis.get_states().addFirst( m_run_f );
   }
   void run_f()
   {
     if( 0<m_console.KeysIn() )
     {
-      m_vis.m_fast_char = m_console.GetKey();
+      m_vis.set_fast_char( m_console.GetKey() );
 
-      Do_semicolon( m_vis.m_fast_char );
+      Do_semicolon( m_vis.get_fast_char() );
 
-      m_vis.m_states.removeFirst();
+      m_vis.get_states().removeFirst();
     }
   }
   void Do_semicolon( final char FAST_CHAR )
@@ -3661,9 +3665,9 @@ class View
   static final char ESC =  27; // Escape
   static final char DEL = 127; // Delete
 
-  Vis      m_vis;
-  FileBuf  m_fb;
-  Console  m_console;
+  VisIF     m_vis;
+  FileBuf   m_fb;
+  ConsoleIF m_console;
   private int m_x;        // Top left x-position of buffer view in parent window
   private int m_y;        // Top left y-position of buffer view in parent window
   private int m_topLine;  // top  of buffer view line number.
@@ -3688,21 +3692,21 @@ class View
   private int m_num_rows; // number of columns in buffer view
   private int m_i_count;
 
-  Thread   m_run_i_beg    = new Thread() { public void run() { run_i_beg(); } };
-  Thread   m_run_i_mid    = new Thread() { public void run() { run_i_mid(); } };
-  Thread   m_run_i_end    = new Thread() { public void run() { run_i_end(); } };
-  Thread   m_run_R_beg    = new Thread() { public void run() { run_R_beg(); } };
-  Thread   m_run_R_mid    = new Thread() { public void run() { run_R_mid(); } };
-  Thread   m_run_R_end    = new Thread() { public void run() { run_R_end(); } };
-  Thread   m_run_v_beg    = new Thread() { public void run() { run_v_beg(); } };
-  Thread   m_run_v_mid    = new Thread() { public void run() { run_v_mid(); } };
-  Thread   m_run_v_end    = new Thread() { public void run() { run_v_end(); } };
-  Thread   m_run_i_vb_beg = new Thread() { public void run() { run_i_vb_beg(); } };
-  Thread   m_run_i_vb_mid = new Thread() { public void run() { run_i_vb_mid(); } };
-  Thread   m_run_i_vb_end = new Thread() { public void run() { run_i_vb_end(); } };
-  Thread   m_run_g_v      = new Thread() { public void run() { run_g_v(); } };
-  Thread   m_run_z        = new Thread() { public void run() { run_z(); } };
-  Thread   m_run_f        = new Thread() { public void run() { run_f(); } };
+  Thread m_run_i_beg    = new Thread() { public void run() { run_i_beg   (); m_vis.Give(); } };
+  Thread m_run_i_mid    = new Thread() { public void run() { run_i_mid   (); m_vis.Give(); } };
+  Thread m_run_i_end    = new Thread() { public void run() { run_i_end   (); m_vis.Give(); } };
+  Thread m_run_R_beg    = new Thread() { public void run() { run_R_beg   (); m_vis.Give(); } };
+  Thread m_run_R_mid    = new Thread() { public void run() { run_R_mid   (); m_vis.Give(); } };
+  Thread m_run_R_end    = new Thread() { public void run() { run_R_end   (); m_vis.Give(); } };
+  Thread m_run_v_beg    = new Thread() { public void run() { run_v_beg   (); m_vis.Give(); } };
+  Thread m_run_v_mid    = new Thread() { public void run() { run_v_mid   (); m_vis.Give(); } };
+  Thread m_run_v_end    = new Thread() { public void run() { run_v_end   (); m_vis.Give(); } };
+  Thread m_run_i_vb_beg = new Thread() { public void run() { run_i_vb_beg(); m_vis.Give(); } };
+  Thread m_run_i_vb_mid = new Thread() { public void run() { run_i_vb_mid(); m_vis.Give(); } };
+  Thread m_run_i_vb_end = new Thread() { public void run() { run_i_vb_end(); m_vis.Give(); } };
+  Thread m_run_g_v      = new Thread() { public void run() { run_g_v     (); m_vis.Give(); } };
+  Thread m_run_z        = new Thread() { public void run() { run_z       (); m_vis.Give(); } };
+  Thread m_run_f        = new Thread() { public void run() { run_f       (); m_vis.Give(); } };
 }
 
 // Run threads using lambdas.

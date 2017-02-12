@@ -42,15 +42,31 @@ class Utils
   {
     return 0 < LL ? LL-1 : 0;
   }
+//public static
+//OS_Type Get_OS_Type()
+//{
+//  if( !m_determined_os )
+//  {
+//    String os = System.getenv("OS");
+//
+//    if( null != os )
+//    {
+//      if( os.equals("Windows_NT") ) m_os_type = OS_Type.Windows;
+//    }
+//  }
+//  return m_os_type;
+//}
   public static
   OS_Type Get_OS_Type()
   {
     if( !m_determined_os )
     {
-      String os = System.getenv("OS");
+      String os = System.getProperty("os.name");
+//Log("os='"+os+"'");
 
       if( null != os )
       {
+        if( os.equals("Mac OS X"  ) ) m_os_type = OS_Type.OSX;
         if( os.equals("Windows_NT") ) m_os_type = OS_Type.Windows;
       }
     }

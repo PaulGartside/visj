@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // VI-Simplified (vis) Java Implementation                                    //
-// Copyright (c) 07 Sep 2015 Paul J. Gartside                                 //
+// Copyright (c) 11 Feb 2017 Paul J. Gartside                                 //
 ////////////////////////////////////////////////////////////////////////////////
 // Permission is hereby granted, free of charge, to any person obtaining a    //
 // copy of this software and associated documentation files (the "Software"), //
@@ -39,10 +39,11 @@ import java.util.Queue;
 import java.util.ArrayDeque;
 import java.util.TreeSet;
 
-class Console extends JComponent
-              implements ComponentListener
-                       , MouseMotionListener
-                       , KeyListener
+class ConsoleSw extends JComponent
+             implements ConsoleIF
+                      , ComponentListener
+                      , MouseMotionListener
+                      , KeyListener
 {
   // ComponentListener interface:
   public void componentResized( ComponentEvent e ) {}
@@ -105,7 +106,7 @@ class Console extends JComponent
   {
   }
 
-  Console( Vis vis )
+  ConsoleSw( VisSw vis )
   {
     m_vis      = vis;
 
@@ -180,43 +181,24 @@ class Console extends JComponent
     return C;
   }
 
-  // 
-  // -------------------------------------------------
-  // | Name        | OSX   | Win32 | Linux | Solaris |
-  // -------------------------------------------------
-  // | Monospaced  | Yes   | Yes   | No    | No      |
-  // -------------------------------------------------
-  // | Monospaced  | No    | Yes   | No    | No      |
-  // -------------------------------------------------
-  // | Courier     | Yes   | Yes   | Yes   | Yes     |
-  // -------------------------------------------------
-  // | Courier New | Yes   | Yes   | No    | Yes     |
-  // -------------------------------------------------
-  // | CourierStd  | No    | Yes   | ???   | ???     |
-  // -------------------------------------------------
-  // | Consolas    | No    | Yes * | ???   | ???     |
-  // -------------------------------------------------
-  // | AndaleMono  | Yes * | No    | ???   | ???     |
-  // -------------------------------------------------
-  // 
   String GetFontName()
   {
     String font_name = "Courier";
+  //String font_name = "Courier New";
 
-  //String os = System.getenv("OS");
-  //
-  //if( null != os )
-  //{
-  //  if( os.equals("Windows_NT") ) font_name = "Consolas";
-  //}
     if( Utils.Get_OS_Type() == OS_Type.Windows )
     {
-      font_name = "Courier New";
+      font_name = "Lucida Console";
+    }
+    else if( Utils.Get_OS_Type() == OS_Type.OSX )
+    {
+      font_name = "Menlo";  // Very Nice
+    //font_name = "Monaco"; // Very Nice
     }
     return font_name;
   }
-  int Num_Rows() { return m_num_rows; }
-  int Num_Cols() { return m_num_cols; }
+  public int Num_Rows() { return m_num_rows; }
+  public int Num_Cols() { return m_num_cols; }
 
   void Init()
   {
@@ -335,18 +317,7 @@ class Console extends JComponent
     }
   }
 
-//int KeysIn()
-//{
-//  if( m_get_from_dot_buf ) return m_dot_buf.length();
-//  if( m_get_from_map_buf ) return m_vis_buf.length();
-//
-//  Utils.Sleep( m_vis.KEY_REPEAT_PERIOD );
-//
-//  Handle_Key_Repeat();
-//
-//  return m_input.size();
-//}
-  int KeysIn()
+  public int KeysIn()
   {
     if( m_get_from_dot_buf )
     {
@@ -376,7 +347,7 @@ class Console extends JComponent
 
     return m_input.size();
   }
-  char GetKey()
+  public char GetKey()
   {
     char C = 0;
     if     ( m_get_from_dot_buf ) C = In_DotBuf();
@@ -431,7 +402,7 @@ class Console extends JComponent
     {
       final long elapsed_time = System.currentTimeMillis() - m_key_time;
 
-      if( m_vis.KEY_REPEAT_DELAY < elapsed_time )
+      if( KEY_REPEAT_DELAY < elapsed_time )
       {
         m_input.add( m_keys.first() );
 
@@ -462,16 +433,16 @@ class Console extends JComponent
 //    m_max_touched[ ROW ] = Math.max( m_max_touched[ ROW ], COL+1 );
 //  }
 //}
-  void Set( final int ROW, final int COL, final char C, final Style S )
+  public void Set( final int ROW, final int COL, final char C, final Style S )
   {
     try {
       if( m_num_rows <= ROW )
       {
-        throw new Exception( "Console::Set(): m_num_rows="+ m_num_rows +", ROW="+ ROW );
+        throw new Exception( "ConsoleSw::Set(): m_num_rows="+ m_num_rows +", ROW="+ ROW );
       }
       else if( m_num_cols <= COL )
       {
-        throw new Exception( "Console::Set(): m_num_cols="+ m_num_cols +", COL="+ COL );
+        throw new Exception( "ConsoleSw::Set(): m_num_cols="+ m_num_cols +", COL="+ COL );
       }
       else {
         m_chars__p[ ROW ][ COL ] = C;
@@ -486,14 +457,14 @@ class Console extends JComponent
       System.exit( 0 );
     }
   }
-  void SetS( final int ROW, final int COL, final String str, final Style S )
+  public void SetS( final int ROW, final int COL, final String str, final Style S )
   {
     for( int k=0; k<str.length(); k++ )
     {
       Set( ROW, COL+k, str.charAt(k), S );
     }
   }
-  void Set_Crs_Cell( final int ROW, final int COL )
+  public void Set_Crs_Cell( final int ROW, final int COL )
   {
     // Set new position to cursor style;
     Set( ROW, COL
@@ -821,7 +792,7 @@ class Console extends JComponent
     }
     return C;
   }
-  boolean Update()
+  public boolean Update()
   {
     boolean output_something = false;
 
@@ -854,6 +825,24 @@ class Console extends JComponent
       }
     }
     return output_something;
+  }
+  public void set_save_2_vis_buf( final boolean save )
+  {
+    m_save_2_vis_buf = save;
+  }
+  public StringBuilder get_dot_buf()
+  {
+    return m_dot_buf;
+  }
+  public boolean get_from_dot_buf()
+  {
+    return m_get_from_dot_buf;
+  }
+  public void copy_vis_buf_2_dot_buf()
+  {
+    // setLength( 0 ) followed by append() accomplishes copy:
+    m_dot_buf.setLength( 0 );
+    m_dot_buf.append( m_vis_buf );
   }
   private Color    m_comment_fg = new Color( 0.3f, 0.3f, 1.0f );
   private Color    m_d_blue     = new Color( 0.0f, 0.0f, 1.0f );
@@ -943,20 +932,14 @@ class Console extends JComponent
   private Color CURSOR_BG       = Color.pink   ; 
   private Color CURSOR_EMPTY_BG = Color.black  ; 
 
-  final int     FONT_SIZE = 17;
-  final int MIN_FONT_SIZE = 8;
+  static final int KEY_REPEAT_DELAY  = 250; // ms to wait for first key repeat
 
-  static final char BS  =   8; // Backspace
-  static final char ESC =  27; // Escape
-  static final char DEL = 127; // Delete
-  static final char CTRL_C = 3;
-
-  Vis              m_vis;
+  VisSw            m_vis;
   Image            m_image;
   Graphics2D       m_g;
   Font             m_font_plain;
   Font             m_font_bold;
-  int              m_font_size = 17;
+  int              m_font_size = FONT_SIZE;
   int              m_text_W;
   int              m_text_H;
   int              m_text_L;
@@ -988,4 +971,3 @@ class Console extends JComponent
   private int      m_dot_buf_index;
   private int      m_map_buf_index;
 }                                
-

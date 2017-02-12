@@ -27,7 +27,7 @@ import java.util.ArrayDeque;
 
 class Diff
 {
-  Diff( Vis vis, Console console )
+  Diff( VisIF vis, ConsoleIF console )
   {
     m_vis     = vis;
     m_console = console;
@@ -145,7 +145,7 @@ class Diff
 
   void Update()
   {
-    if( m_vis.m_console.m_get_from_dot_buf ) return;
+    if( m_vis.get_Console().get_from_dot_buf() ) return;
 
     m_vis.Update_Change_Statuses();
 
@@ -722,7 +722,7 @@ class Diff
 
   void DisplayMapping()
   {
-    if( m_console.m_get_from_dot_buf ) return;
+    if( m_console.get_from_dot_buf() ) return;
 
     View pV = m_vis.CV();
 
@@ -2463,8 +2463,8 @@ class Diff
 
   void Do_n()
   {
-    if( 0 < m_vis.m_regex.length() ) Do_n_Pattern();
-    else                             Do_n_Diff();
+    if( 0 < m_vis.get_regex().length() ) Do_n_Pattern();
+    else                                 Do_n_Diff();
   }
 
   void Do_n_Pattern()
@@ -2490,8 +2490,7 @@ class Diff
     FileBuf pfb = pV.m_fb;
   
     final int NUM_LINES = pfb.NumLines();
-    final int STAR_LEN  = m_vis.m_regex.length();
-  
+
     final int OCL = CrsLine(); // Diff line
     final int OCC = CrsChar();
 
@@ -2505,6 +2504,8 @@ class Diff
     // Move past current star:
     final int LL = pfb.LineLen( OCLv );
   
+    pfb.Check_4_New_Regex();
+    pfb.Find_Regexs_4_Line( OCL );
     for( ; st_c<LL && pV.InStar(OCLv,st_c); st_c++ ) ;
   
     // Go down to next line
@@ -2513,11 +2514,11 @@ class Diff
     // Search for first star position past current position
     for( int l=st_l; !found_next_star && l<NUM_LINES; l++ )
     {
+      pfb.Find_Regexs_4_Line( l );
+
       final int LL2 = pfb.LineLen( l );
   
-      for( int p=st_c
-         ; !found_next_star && p<LL2
-         ; p++ )
+      for( int p=st_c ; !found_next_star && p<LL2 ; p++ )
       {
         if( pV.InStar(l,p) )
         {
@@ -2536,6 +2537,8 @@ class Diff
     {
       for( int l=0; !found_next_star && l<=OCLv; l++ )
       {
+        pfb.Find_Regexs_4_Line( l );
+
         final int LL3 = pfb.LineLen( l );
         final int END_C = (OCLv==l) ? Math.min( OCC, LL3 ) : LL3;
   
@@ -2679,8 +2682,8 @@ class Diff
 
   void Do_N()
   {
-    if( 0 < m_vis.m_regex.length() ) Do_N_Pattern();
-    else                             Do_N_Diff();
+    if( 0 < m_vis.get_regex().length() ) Do_N_Pattern();
+    else                                 Do_N_Diff();
   }
 
   void Do_N_Pattern()
@@ -2707,18 +2710,21 @@ class Diff
     FileBuf pfb = pV.m_fb;
 
     final int NUM_LINES = pfb.NumLines();
-    final int STAR_LEN  = m_vis.m_regex.length();
 
     final int OCL = CrsLine();
     final int OCC = CrsChar();
-  
+
     final int OCLv = ViewLine( pV, OCL ); // View line
-  
+
+    pfb.Check_4_New_Regex();
+
     boolean found_prev_star = false;
   
     // Search for first star position before current position
     for( int l=OCLv; !found_prev_star && 0<=l; l-- )
     {
+      pfb.Find_Regexs_4_Line( l );
+
       final int LL = pfb.LineLen( l );
   
       int p=LL-1;
@@ -2741,11 +2747,13 @@ class Diff
     {
       for( int l=NUM_LINES-1; !found_prev_star && OCLv<l; l-- )
       {
+        pfb.Find_Regexs_4_Line( l );
+
         final int LL = pfb.LineLen( l );
-  
+
         int p=LL-1;
         if( OCLv==l ) p = 0<OCC ? OCC-1 : 0;
-  
+
         for( ; 0<p && !found_prev_star; p-- )
         {
           for( ; 0<=p && pV.InStar(l,p); p-- )
@@ -2886,17 +2894,17 @@ class Diff
 
   void Do_f()
   {
-    m_vis.m_states.addFirst( m_run_f );
+    m_vis.get_states().addFirst( m_run_f );
   }
   void run_f()
   {
     if( 0<m_console.KeysIn() )
     {
-      m_vis.m_fast_char = m_console.GetKey();
+      m_vis.set_fast_char( m_console.GetKey() );
 
-      Do_semicolon( m_vis.m_fast_char );
+      Do_semicolon( m_vis.get_fast_char() );
 
-      m_vis.m_states.removeFirst();
+      m_vis.get_states().removeFirst();
     }
   }
   void Do_semicolon( final char FAST_CHAR )
@@ -2955,7 +2963,7 @@ class Diff
 
   void Do_z()
   {
-    m_vis.m_states.addFirst( m_run_z );
+    m_vis.get_states().addFirst( m_run_z );
   }
   void run_z()
   {
@@ -2975,7 +2983,7 @@ class Diff
       {
         MoveCurrLineToBottom();
       }
-      m_vis.m_states.removeFirst();
+      m_vis.get_states().removeFirst();
     }
   }
   void MoveCurrLineToTop()
@@ -3103,9 +3111,9 @@ class Diff
 
   void Do_i()
   {
-    m_vis.m_states.addFirst( m_run_i_end );
-    m_vis.m_states.addFirst( m_run_i_mid );
-    m_vis.m_states.addFirst( m_run_i_beg );
+    m_vis.get_states().addFirst( m_run_i_end );
+    m_vis.get_states().addFirst( m_run_i_mid );
+    m_vis.get_states().addFirst( m_run_i_beg );
   }
   void run_i_beg()
   {
@@ -3129,7 +3137,7 @@ class Diff
     }
     m_i_count = 0;
 
-    m_vis.m_states.removeFirst();
+    m_vis.get_states().removeFirst();
   }
   void run_i_mid()
   {
@@ -3139,7 +3147,7 @@ class Diff
 
       if( c == ESC )
       {
-        m_vis.m_states.removeFirst(); // Done
+        m_vis.get_states().removeFirst(); // Done
       }
       else if( BS == c || DEL == c )
       {
@@ -3174,7 +3182,7 @@ class Diff
       Set_crsCol( m_crsCol-1 );
       Update();
     }
-    m_vis.m_states.removeFirst();
+    m_vis.get_states().removeFirst();
   }
 
   void InsertAddChar( final char c )
@@ -3440,9 +3448,9 @@ class Diff
         // Put char x'ed into register:
         Line nlr = new Line();
         nlr.append_c( C );
-        m_vis.m_reg.clear();
-        m_vis.m_reg.add( nlr );
-        m_vis.m_paste_mode = Paste_Mode.ST_FN;
+        m_vis.get_reg().clear();
+        m_vis.get_reg().add( nlr );
+        m_vis.set_paste_mode( Paste_Mode.ST_FN );
 
         final int NLL = pfb.LineLen( VL ); // New line length
 
@@ -3503,9 +3511,9 @@ class Diff
         char c = pfb.RemoveChar( VL, CP );
         lrd.append_c( c );
       }
-      m_vis.m_reg.clear();
-      m_vis.m_reg.add( lrd );
-      m_vis.m_paste_mode = Paste_Mode.ST_FN;
+      m_vis.get_reg().clear();
+      m_vis.get_reg().add( lrd );
+      m_vis.set_paste_mode( Paste_Mode.ST_FN );
 
       // If cursor is not at beginning of line, move it back one space.
       if( 0<m_crsCol ) m_crsCol--;
@@ -3534,9 +3542,9 @@ class Diff
         Line lp = pV.m_fb.RemoveLine( VL );
 
         // m_vis.m_reg will own lp
-        m_vis.m_reg.clear();
-        m_vis.m_reg.add( lp );
-        m_vis.m_paste_mode = Paste_Mode.LINE;
+        m_vis.get_reg().clear();
+        m_vis.get_reg().add( lp );
+        m_vis.set_paste_mode( Paste_Mode.LINE );
 
         Patch_Diff_Info_Deleted( pV, DL );
 
@@ -3692,10 +3700,10 @@ class Diff
         // Get a copy of CrsLine() line:
         Line l = new Line( pV.m_fb.GetLine( VL ) );
 
-        m_vis.m_reg.clear();
-        m_vis.m_reg.add( l );
+        m_vis.get_reg().clear();
+        m_vis.get_reg().add( l );
 
-        m_vis.m_paste_mode = Paste_Mode.LINE;
+        m_vis.set_paste_mode( Paste_Mode.LINE );
       }
     }
   }
@@ -3726,23 +3734,23 @@ class Diff
           final int fn_char   = ncp.crsChar;
 
           Line nlr = new Line();
-          m_vis.m_reg.clear();
-          m_vis.m_reg.add( nlr );
+          m_vis.get_reg().clear();
+          m_vis.get_reg().add( nlr );
 
           // DL and fn_line_d should be the same
           for( int k=st_char; k<=fn_char; k++ )
           {
-          //m_vis.m_reg.get(0).append_c( pfb.Get( st_line_v, k ) );
+          //m_vis.get_reg().get(0).append_c( pfb.Get( st_line_v, k ) );
             nlr.append_c( pfb.Get( st_line_v, k ) );
           }
-          m_vis.m_paste_mode = Paste_Mode.ST_FN;
+          m_vis.set_paste_mode( Paste_Mode.ST_FN );
         }
       }
     }
   }
   void Do_y_v()
   {
-    m_vis.m_reg.clear();
+    m_vis.get_reg().clear();
 
     if( m_inVisualBlock ) Do_y_v_block();
     else                  Do_y_v_st_fn();
@@ -3767,9 +3775,9 @@ class Diff
       {
         nlr.append_c( pfb.Get( VL, P ) );
       }
-      m_vis.m_reg.add( nlr );
+      m_vis.get_reg().add( nlr );
     }
-    m_vis.m_paste_mode = Paste_Mode.BLOCK;
+    m_vis.set_paste_mode( Paste_Mode.BLOCK );
 
     // Try to put cursor at (v_st_line, v_st_char), but
     // make sure the cursor is in bounds after the deletion:
@@ -3811,14 +3819,14 @@ class Diff
           }
         }
         // m_vis.reg will delete nlp
-        m_vis.m_reg.add( nlp );
+        m_vis.get_reg().add( nlp );
       }
     }
-    m_vis.m_paste_mode = Paste_Mode.ST_FN;
+    m_vis.set_paste_mode( Paste_Mode.ST_FN );
   }
   void Do_Y_v()
   {
-    m_vis.m_reg.clear();
+    m_vis.get_reg().clear();
 
     if( m_inVisualBlock ) Do_y_v_block();
     else                  Do_Y_v_st_fn();
@@ -3851,17 +3859,17 @@ class Diff
           }
         }
         // m_vis.m_reg will delete nlp
-        m_vis.m_reg.add( nlp );
+        m_vis.get_reg().add( nlp );
       }
     }
-    m_vis.m_paste_mode = Paste_Mode.LINE;
+    m_vis.set_paste_mode( Paste_Mode.LINE );
   }
   void Do_D_v()
   {
     View    pV  = m_vis.CV();
     FileBuf pfb = pV.m_fb;
 
-    m_vis.m_reg.clear();
+    m_vis.get_reg().clear();
     Swap_Visual_St_Fn_If_Needed();
 
     boolean removed_line = false;
@@ -3880,7 +3888,7 @@ class Diff
        || cDT == Diff_Type.INSERTED )
       {
         Line lp = pfb.RemoveLine( VL );
-        m_vis.m_reg.add( lp ); // m_vis.m_reg will delete lp
+        m_vis.get_reg().add( lp ); // m_vis.m_reg will delete lp
 
         Patch_Diff_Info_Deleted( pV, DL );
 
@@ -3891,7 +3899,7 @@ class Diff
         if( oDT == Diff_Type.DELETED ) { DL--; v_fn_line--; }
       }
     }
-    m_vis.m_paste_mode = Paste_Mode.LINE;
+    m_vis.set_paste_mode( Paste_Mode.LINE );
 
     // Deleted lines will be removed, so no need to Undo_v()
     m_inVisualMode = false;
@@ -3932,7 +3940,7 @@ class Diff
 
     if( 0<CP )
     {
-      final int N_REG_LINES = m_vis.m_reg.size();
+      final int N_REG_LINES = m_vis.get_reg().size();
 
       for( int k=0; k<N_REG_LINES; k++ )
       {
@@ -3953,7 +3961,7 @@ class Diff
     final int VL = ViewLine( pV, DL ); // View line number
     final int CP = CrsChar();          // Cursor position
 
-    final int N_REG_LINES = m_vis.m_reg.size();
+    final int N_REG_LINES = m_vis.get_reg().size();
 
     for( int k=0; k<N_REG_LINES; k++ )
     {
@@ -3978,9 +3986,9 @@ class Diff
 
   void Do_i_vb()
   {
-    m_vis.m_states.addFirst( m_run_i_vb_end );
-    m_vis.m_states.addFirst( m_run_i_vb_mid );
-    m_vis.m_states.addFirst( m_run_i_vb_beg );
+    m_vis.get_states().addFirst( m_run_i_vb_end );
+    m_vis.get_states().addFirst( m_run_i_vb_mid );
+    m_vis.get_states().addFirst( m_run_i_vb_beg );
   }
   void run_i_vb_end()
   {
@@ -3991,7 +3999,7 @@ class Diff
 
     m_i_count = 0;
 
-    m_vis.m_states.removeFirst();
+    m_vis.get_states().removeFirst();
   }
   void run_i_vb_mid()
   {
@@ -4001,7 +4009,7 @@ class Diff
 
       if( c == ESC )
       {
-        m_vis.m_states.removeFirst(); // Done
+        m_vis.get_states().removeFirst(); // Done
       }
       else if( BS == c || DEL == c )
       {
@@ -4030,7 +4038,7 @@ class Diff
     Remove_Banner();
     pV.m_inInsertMode = false;
 
-    m_vis.m_states.removeFirst();
+    m_vis.get_states().removeFirst();
   }
 
   void Do_a_vb()
@@ -4202,12 +4210,12 @@ class Diff
   {
     Swap_Visual_St_Fn_If_Needed();
 
-    m_vis.m_reg.clear();
+    m_vis.get_reg().clear();
   }
   void Do_x_range_post( final int st_line, final int st_char )
   {
-    if( m_inVisualBlock ) m_vis.m_paste_mode = Paste_Mode.BLOCK;
-    else                  m_vis.m_paste_mode = Paste_Mode.ST_FN;
+    if( m_inVisualBlock ) m_vis.set_paste_mode( Paste_Mode.BLOCK );
+    else                  m_vis.set_paste_mode( Paste_Mode.ST_FN );
  
     View pV = m_vis.CV();
  
@@ -4253,7 +4261,7 @@ class Diff
     }
     if( removed_char ) Patch_Diff_Info_Changed( pV, DL );
 
-    m_vis.m_reg.add( nlp );
+    m_vis.get_reg().add( nlp );
   }
   void Do_x_range_multiple( final int st_line
                           , final int st_char
@@ -4311,7 +4319,7 @@ class Diff
       else {
         if( removed_char ) Patch_Diff_Info_Changed( pV, DL );
       }
-      m_vis.m_reg.add( nlp );
+      m_vis.get_reg().add( nlp );
     }
     if( started_in_middle && ended___in_middle )
     {
@@ -4344,16 +4352,18 @@ class Diff
       {
         nlr.append_c( pfb.RemoveChar( VL, v_st_char ) );
       }
-      m_vis.m_reg.add( nlr );
+      m_vis.get_reg().add( nlr );
     }
     Do_x_range_post( v_st_line, v_st_char );
   }
 
   void Do_p()
   {
-    if     ( Paste_Mode.ST_FN == m_vis.m_paste_mode ) Do_p_or_P_st_fn( Paste_Pos.After );
-    else if( Paste_Mode.BLOCK == m_vis.m_paste_mode ) Do_p_block();
-    else /*( Paste_Mode.LINE  == m_vis.m_paste_mode*/ Do_p_line();
+    final Paste_Mode PM = m_vis.get_paste_mode();
+
+    if     ( Paste_Mode.ST_FN == PM ) Do_p_or_P_st_fn( Paste_Pos.After );
+    else if( Paste_Mode.BLOCK == PM ) Do_p_block();
+    else /*( Paste_Mode.LINE  == PM*/ Do_p_line();
   }
   // New:
   void Do_p_line()
@@ -4364,7 +4374,7 @@ class Diff
     final int DL = CrsLine();          // Diff line
     final int VL = ViewLine( pV, DL ); // View line
 
-    final int NUM_LINES_TO_INSERT = m_vis.m_reg.size();
+    final int NUM_LINES_TO_INSERT = m_vis.get_reg().size();
 
     ArrayList<Diff_Info> cDI_List = (pV == m_vS) ? m_DI_List_S : m_DI_List_L; // Current
     Diff_Info cDI = cDI_List.get( DL );
@@ -4379,7 +4389,7 @@ class Diff
     for( int k=0; k<NUM_LINES_TO_INSERT; k++ )
     {
       // In FileBuf: Put reg on line below:
-      Line nl = new Line( m_vis.m_reg.get(k) );
+      Line nl = new Line( m_vis.get_reg().get(k) );
       pfb.InsertLine( VL_START+k, nl );
 
       Patch_Diff_Info_Inserted( pV, DL_START+k, ODVL0 );
@@ -4392,7 +4402,7 @@ class Diff
     View    pV  = m_vis.CV();
     FileBuf pfb = pV.m_fb;
 
-    final int NUM_LINES = m_vis.m_reg.size();
+    final int NUM_LINES = m_vis.get_reg().size();
     final int ODL       = CrsLine();           // Original Diff line
     final int OVL       = ViewLine( pV, ODL ); // Original View line
 
@@ -4427,9 +4437,9 @@ class Diff
     View    pV  = m_vis.CV();
     FileBuf pfb = pV.m_fb;
 
-    final int NUM_LINES = m_vis.m_reg.size();
+    final int NUM_LINES = m_vis.get_reg().size();
 
-    final int NLL = m_vis.m_reg.get( k ).length();  // New line length
+    final int NLL = m_vis.get_reg().get( k ).length();  // New line length
     final int VL  = ViewLine( pV, ODL+k ); // View line
 
     if( ON_DELETED )
@@ -4437,7 +4447,7 @@ class Diff
       final boolean ODVL0 = On_Deleted_View_Line_Zero( ODL );
 
       // In FileBuf: Put reg on line below:
-      pfb.InsertLine( ODVL0 ? VL : VL+1, new Line( m_vis.m_reg.get(0) ) );
+      pfb.InsertLine( ODVL0 ? VL : VL+1, new Line( m_vis.get_reg().get(0) ) );
 
       Patch_Diff_Info_Inserted( pV, ODL+k, ODVL0 );
     }
@@ -4451,7 +4461,7 @@ class Diff
 
       for( int i=0; i<NLL; i++ )
       {
-        char C = m_vis.m_reg.get(k).charAt(i);
+        char C = m_vis.get_reg().get(k).charAt(i);
 
         pfb.InsertChar( VL, CP+i+forward, C );
       }
@@ -4479,17 +4489,17 @@ class Diff
     FileBuf pfb = pV.m_fb;
 
     final int VL  = ViewLine( pV, ODL+k ); // View line
-    final int NLL = m_vis.m_reg.get( k ).length();  // New line length
+    final int NLL = m_vis.get_reg().get( k ).length();  // New line length
 
     if( ON_DELETED )
     {
-      pfb.InsertLine( VL+1, new Line( m_vis.m_reg.get(k) ) );
+      pfb.InsertLine( VL+1, new Line( m_vis.get_reg().get(k) ) );
       Patch_Diff_Info_Inserted( pV, ODL+k, false );
     }
     else {
       for( int i=0; i<NLL; i++ )
       {
-        char C = m_vis.m_reg.get(k).charAt(i);
+        char C = m_vis.get_reg().get(k).charAt(i);
         pfb.InsertChar( VL, i, C );
       }
       Patch_Diff_Info_Changed( pV, ODL+k );
@@ -4503,15 +4513,15 @@ class Diff
     View    pV  = m_vis.CV();
     FileBuf pfb = pV.m_fb;
 
-    final int NUM_LINES = m_vis.m_reg.size();
+    final int NUM_LINES = m_vis.get_reg().size();
 
-    final int NLL = m_vis.m_reg.get( k ).length();  // New line length
+    final int NLL = m_vis.get_reg().get( k ).length();  // New line length
     final int VL  = ViewLine( pV, ODL+k ); // View line
 
     if( ON_DELETED )
     {
       // In FileBuf: Put reg on line below:
-      pfb.InsertLine( VL+1, new Line( m_vis.m_reg.get(k) ) );
+      pfb.InsertLine( VL+1, new Line( m_vis.get_reg().get(k) ) );
 
       Patch_Diff_Info_Inserted( pV, ODL+k, false );
     }
@@ -4521,7 +4531,7 @@ class Diff
 
       for( int i=0; i<NLL; i++ )
       {
-        char C = m_vis.m_reg.get(k).charAt(i);
+        char C = m_vis.get_reg().get(k).charAt(i);
 
         pfb.InsertChar( VL, i, C );
       }
@@ -4555,7 +4565,7 @@ class Diff
                   : ( 0<LL ? 1:0 );    // If at beginning of line,
                                        // and LL is zero insert at 0,
                                        // else insert at 1
-    final int N_REG_LINES = m_vis.m_reg.size();
+    final int N_REG_LINES = m_vis.get_reg().size();
 
     for( int k=0; k<N_REG_LINES; k++ )
     {
@@ -4592,7 +4602,7 @@ class Diff
         pfb.InsertChar( VL+k, NLL, ' ' );
       }
     }
-    Line reg_line = m_vis.m_reg.get(k);
+    Line reg_line = m_vis.get_reg().get(k);
     final int RLL = reg_line.length();
 
     for( int i=0; i<RLL; i++ )
@@ -4625,7 +4635,7 @@ class Diff
         pfb.InsertChar( VL+k, NLL, ' ' );
       }
     }
-    Line reg_line = m_vis.m_reg.get(k);
+    Line reg_line = m_vis.get_reg().get(k);
     final int RLL = reg_line.length();
 
     for( int i=0; i<RLL; i++ )
@@ -4639,9 +4649,11 @@ class Diff
 
   void Do_P()
   {
-    if     ( Paste_Mode.ST_FN == m_vis.m_paste_mode ) Do_p_or_P_st_fn( Paste_Pos.After );
-    else if( Paste_Mode.BLOCK == m_vis.m_paste_mode ) Do_P_block();
-    else /*( Paste_Mode.LINE  == m_vis.m_paste_mode*/ Do_P_line();
+    final Paste_Mode PM = m_vis.get_paste_mode();
+
+    if     ( Paste_Mode.ST_FN == PM ) Do_p_or_P_st_fn( Paste_Pos.After );
+    else if( Paste_Mode.BLOCK == PM ) Do_P_block();
+    else /*( Paste_Mode.LINE  == PM*/ Do_P_line();
   }
   void Do_P_line()
   {
@@ -4665,7 +4677,7 @@ class Diff
     final int LL = ON_DELETED ? 0 : pfb.LineLen( VL ); // Line length
     final int ISP = 0<CP ? CP : 0;     // Insert position
 
-    final int N_REG_LINES = m_vis.m_reg.size();
+    final int N_REG_LINES = m_vis.get_reg().size();
 
     for( int k=0; k<N_REG_LINES; k++ )
     {
@@ -4686,18 +4698,18 @@ class Diff
     m_inVisualBlock = false;
     m_copy_vis_buf_2_dot_buf = false;
 
-    m_vis.m_states.addFirst( m_run_v_end );
-    m_vis.m_states.addFirst( m_run_v_mid );
-    m_vis.m_states.addFirst( m_run_v_beg );
+    m_vis.get_states().addFirst( m_run_v_end );
+    m_vis.get_states().addFirst( m_run_v_mid );
+    m_vis.get_states().addFirst( m_run_v_beg );
   }
   void Do_V()
   {
     m_inVisualBlock = true;
     m_copy_vis_buf_2_dot_buf = false;
 
-    m_vis.m_states.addFirst( m_run_v_end );
-    m_vis.m_states.addFirst( m_run_v_mid );
-    m_vis.m_states.addFirst( m_run_v_beg );
+    m_vis.get_states().addFirst( m_run_v_end );
+    m_vis.get_states().addFirst( m_run_v_mid );
+    m_vis.get_states().addFirst( m_run_v_beg );
   }
   void run_v_beg()
   {
@@ -4712,7 +4724,7 @@ class Diff
     // Write current byte in visual:
     Replace_Crs_Char( Style.VISUAL );
 
-    m_vis.m_states.removeFirst();
+    m_vis.get_states().removeFirst();
   }
   void run_v_mid()
   {
@@ -4752,24 +4764,22 @@ class Diff
       else if( C == '~' ) { Do_Tilda_v(); m_copy_vis_buf_2_dot_buf = true; }
       else if( C == ESC ) { m_inVisualMode = false; }
     }
-    if( !m_inVisualMode ) m_vis.m_states.removeFirst();
+    if( !m_inVisualMode ) m_vis.get_states().removeFirst();
   }
   void run_v_end()
   {
     Undo_v();
     Remove_Banner();
 
-    m_vis.m_states.removeFirst();
+    m_vis.get_states().removeFirst();
 
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.get_from_dot_buf() )
     {
-      m_console.m_save_2_vis_buf = false;
+      m_console.set_save_2_vis_buf( false );
 
       if( m_copy_vis_buf_2_dot_buf )
       {
-        // setLength( 0 ) followed by append() accomplishes copy:
-        m_console.m_dot_buf.setLength( 0 );
-        m_console.m_dot_buf.append( m_console.m_vis_buf );
+        m_console.copy_vis_buf_2_dot_buf();
       }
     }
   }
@@ -4801,7 +4811,7 @@ class Diff
 
   void Do_v_Handle_g()
   {
-    m_vis.m_states.addFirst( m_run_g_v );
+    m_vis.get_states().addFirst( m_run_g_v );
   }
   void run_g_v()
   {
@@ -4815,7 +4825,7 @@ class Diff
       else if( c2 == 'f' ) Do_v_Handle_gf();
       else if( c2 == 'p' ) Do_v_Handle_gp();
 
-      m_vis.m_states.removeFirst();
+      m_vis.get_states().removeFirst();
     }
   }
   void Do_v_Handle_gf()
@@ -4906,9 +4916,9 @@ class Diff
 
   void Do_R()
   {
-    m_vis.m_states.addFirst( m_run_R_end );
-    m_vis.m_states.addFirst( m_run_R_mid );
-    m_vis.m_states.addFirst( m_run_R_beg );
+    m_vis.get_states().addFirst( m_run_R_end );
+    m_vis.get_states().addFirst( m_run_R_mid );
+    m_vis.get_states().addFirst( m_run_R_beg );
   }
   void run_R_beg()
   {
@@ -4923,7 +4933,7 @@ class Diff
 
     m_i_count = 0; // Re-use m_i_count form m_R_count
 
-    m_vis.m_states.removeFirst();
+    m_vis.get_states().removeFirst();
   }
   void run_R_mid()
   {
@@ -4936,7 +4946,7 @@ class Diff
 
       if( C == ESC )
       {
-        m_vis.m_states.removeFirst(); // Done
+        m_vis.get_states().removeFirst(); // Done
       }
       else if( BS == C || DEL == C )
       {
@@ -4969,7 +4979,7 @@ class Diff
     }
     Update();
 
-    m_vis.m_states.removeFirst();
+    m_vis.get_states().removeFirst();
   }
   void ReplaceAddReturn()
   {
@@ -5348,8 +5358,8 @@ class Diff
   static final char ESC =  27; // Escape
   static final char DEL = 127; // Delete
 
-  Vis     m_vis;
-  Console m_console;
+  VisIF     m_vis;
+  ConsoleIF m_console;
   StringBuilder m_sb = new StringBuilder();
 
   private int m_topLine;  // top  of buffer view line number.
@@ -5388,21 +5398,21 @@ class Diff
   boolean m_printed_diff_ms;
   int     m_i_count;
 
-  Thread m_run_i_beg = new Thread() { public void run() { run_i_beg(); } };
-  Thread m_run_i_mid = new Thread() { public void run() { run_i_mid(); } };
-  Thread m_run_i_end = new Thread() { public void run() { run_i_end(); } };
-  Thread m_run_R_beg = new Thread() { public void run() { run_R_beg(); } };
-  Thread m_run_R_mid = new Thread() { public void run() { run_R_mid(); } };
-  Thread m_run_R_end = new Thread() { public void run() { run_R_end(); } };
-  Thread m_run_v_beg = new Thread() { public void run() { run_v_beg(); } };
-  Thread m_run_v_mid = new Thread() { public void run() { run_v_mid(); } };
-  Thread m_run_v_end = new Thread() { public void run() { run_v_end(); } };
-  Thread m_run_g_v   = new Thread() { public void run() { run_g_v  (); } };
-  Thread m_run_z     = new Thread() { public void run() { run_z    (); } };
-  Thread m_run_f     = new Thread() { public void run() { run_f    (); } };
-  Thread m_run_i_vb_beg = new Thread() { public void run() { run_i_vb_beg(); } };
-  Thread m_run_i_vb_mid = new Thread() { public void run() { run_i_vb_mid(); } };
-  Thread m_run_i_vb_end = new Thread() { public void run() { run_i_vb_end(); } };
+  Thread m_run_i_beg = new Thread() { public void run() { run_i_beg(); m_vis.Give(); } };
+  Thread m_run_i_mid = new Thread() { public void run() { run_i_mid(); m_vis.Give(); } };
+  Thread m_run_i_end = new Thread() { public void run() { run_i_end(); m_vis.Give(); } };
+  Thread m_run_R_beg = new Thread() { public void run() { run_R_beg(); m_vis.Give(); } };
+  Thread m_run_R_mid = new Thread() { public void run() { run_R_mid(); m_vis.Give(); } };
+  Thread m_run_R_end = new Thread() { public void run() { run_R_end(); m_vis.Give(); } };
+  Thread m_run_v_beg = new Thread() { public void run() { run_v_beg(); m_vis.Give(); } };
+  Thread m_run_v_mid = new Thread() { public void run() { run_v_mid(); m_vis.Give(); } };
+  Thread m_run_v_end = new Thread() { public void run() { run_v_end(); m_vis.Give(); } };
+  Thread m_run_g_v   = new Thread() { public void run() { run_g_v  (); m_vis.Give(); } };
+  Thread m_run_z     = new Thread() { public void run() { run_z    (); m_vis.Give(); } };
+  Thread m_run_f     = new Thread() { public void run() { run_f    (); m_vis.Give(); } };
+  Thread m_run_i_vb_beg = new Thread() { public void run() { run_i_vb_beg(); m_vis.Give(); } };
+  Thread m_run_i_vb_mid = new Thread() { public void run() { run_i_vb_mid(); m_vis.Give(); } };
+  Thread m_run_i_vb_end = new Thread() { public void run() { run_i_vb_end(); m_vis.Give(); } };
 }
 
 // Run threads using lambdas.

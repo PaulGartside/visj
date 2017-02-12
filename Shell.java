@@ -31,12 +31,12 @@ import java.util.ArrayList;
 //
 class Shell
 {
-  Shell( Vis vis, Console console )
+  Shell( VisIF vis, ConsoleIF console, StringBuilder sb )
   {
     m_vis     = vis;
     m_console = console;
     m_sh_fb   = m_vis.CV().m_fb;
-    m_sb      = m_vis.m_sb;
+    m_sb      = sb;
   }
 
   void Run()
@@ -135,7 +135,7 @@ class Shell
 
     m_sh_cmd_list = Get_Shell_Cmd_List( m_sh_cmd );
 
-    m_vis.m_run_mode = true;
+    m_vis.set_run_mode( true );
 
     // Move cursor to bottom of file
     final int NUM_LINES = m_sh_fb.NumLines();
@@ -144,7 +144,7 @@ class Shell
     m_sh_fb.Update();
 
     // Start m_sh_cmd running:
-    m_vis.m_states.addFirst( m_run_sh_st );
+    m_vis.get_states().addFirst( m_run_sh_st );
   }
 
   ArrayList<String> Get_Shell_Cmd_List( String cmd )
@@ -206,18 +206,18 @@ class Shell
 
   void run_sh_st()
   {
-    m_vis.m_states.removeFirst(); //< Pop m_run_sh_st() off state stack
+    m_vis.get_states().removeFirst(); //< Pop m_run_sh_st() off state stack
 
     ProcessBuilder pb = new ProcessBuilder( m_sh_cmd_list );
     pb.redirectErrorStream( true ); //< Redirect process stderr to stdout
-    pb.directory( new File( m_vis.m_cwd ) ); //< Set Process directory to m_cwd
+    pb.directory( new File( m_vis.get_cwd() ) ); //< Set Process directory to m_cwd
     try {
       m_sh_proc = pb.start();
     }
     catch( Exception e )
     {
       m_vis.CmdLineMessage("Could not run: "+ m_sh_cmd );
-      m_vis.m_run_mode = false;
+      m_vis.set_run_mode( false );
       m_sh_view.PrintCursor();
       return;
     }
@@ -225,12 +225,12 @@ class Shell
     if( null == is ) {
       m_vis.CmdLineMessage("Could not get input stream for: "+ m_sh_cmd );
       if( m_sh_proc.isAlive() ) m_sh_proc.destroy();
-      m_vis.m_run_mode = false;
+      m_vis.set_run_mode( false );
       m_sh_view.PrintCursor();
     }
     else { // Success, keep going:
       m_sh_is = new BufferedInputStream( is, 512 );
-      m_vis.m_states.addFirst( m_run_sh_wait ); //< Go into wait state
+      m_vis.get_states().addFirst( m_run_sh_wait ); //< Go into wait state
       m_sh_fb.PushLine();
       m_sh_T1 = System.currentTimeMillis();
     }
@@ -275,8 +275,8 @@ class Shell
     catch( IOException e ) { done = true; }
 
     if( done ) {
-      m_vis.m_states.removeFirst(); //< Pop m_run_sh_wait() off state stack
-      m_vis.m_states.addFirst( m_run_sh_done ); //< Go into done state
+      m_vis.get_states().removeFirst(); //< Pop m_run_sh_wait() off state stack
+      m_vis.get_states().addFirst( m_run_sh_done ); //< Go into done state
     }
   }
 
@@ -285,7 +285,7 @@ class Shell
     // Get m_sh_cmd exit status:
     if( ! m_sh_proc.isAlive() )
     {
-      m_vis.m_states.removeFirst(); //< Pop m_run_sh_done() off state stack
+      m_vis.get_states().removeFirst(); //< Pop m_run_sh_done() off state stack
 
       final int exit_val = m_sh_proc.exitValue();
 
@@ -296,7 +296,7 @@ class Shell
       else {
         m_sh_fb.AppendLineToLine( m_sh_fb.NumLines()-1, exit_str );
       }
-      m_vis.m_run_mode = false;
+      m_vis.set_run_mode( false );
 
       String divider = "######################################";
       m_sh_fb.PushLine( divider );
@@ -309,8 +309,8 @@ class Shell
       m_sh_fb.Update();
     }
   }
-  Vis               m_vis;
-  Console           m_console;
+  VisIF             m_vis;
+  ConsoleIF         m_console;
   View              m_sh_view;
   FileBuf           m_sh_fb;
   StringBuilder     m_sb;
@@ -319,8 +319,8 @@ class Shell
   Process           m_sh_proc;
   InputStream       m_sh_is;
   Long              m_sh_T1;
-  Thread            m_run_sh_st  = new Thread() { public void run() { run_sh_st (); } };
-  Thread            m_run_sh_wait= new Thread() { public void run() { run_sh_wait();} };
-  Thread            m_run_sh_done= new Thread() { public void run() { run_sh_done();} };
+  Thread            m_run_sh_st  = new Thread() { public void run() { run_sh_st  (); m_vis.Give(); } };
+  Thread            m_run_sh_wait= new Thread() { public void run() { run_sh_wait(); m_vis.Give(); } };
+  Thread            m_run_sh_done= new Thread() { public void run() { run_sh_done(); m_vis.Give(); } };
 }
 

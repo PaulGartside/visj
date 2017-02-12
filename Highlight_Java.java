@@ -71,6 +71,7 @@ class Highlight_Java extends Highlight_Code
     new HiKeyVal( "instanceof"         , Highlight_Type.VARTYPE ),
     new HiKeyVal( "int"                , Highlight_Type.VARTYPE ),
     new HiKeyVal( "Integer"            , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "interface"          , Highlight_Type.VARTYPE ),
     new HiKeyVal( "Iterator"           , Highlight_Type.VARTYPE ),
     new HiKeyVal( "long"               , Highlight_Type.VARTYPE ),
     new HiKeyVal( "Long"               , Highlight_Type.VARTYPE ),

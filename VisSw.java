@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // VI-Simplified (vis) Java Implementation                                    //
-// Copyright (c) 07 Sep 2015 Paul J. Gartside                                 //
+// Copyright (c) 11 Feb 2017 Paul J. Gartside                                 //
 ////////////////////////////////////////////////////////////////////////////////
 // Permission is hereby granted, free of charge, to any person obtaining a    //
 // copy of this software and associated documentation files (the "Software"), //
@@ -43,7 +43,8 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.ArrayDeque;
 
-public class Vis implements WindowFocusListener
+public class VisSw implements VisIF
+                            , WindowFocusListener
 {
   // WindowFocusListener implementation:
   public void windowGainedFocus( WindowEvent we )
@@ -58,7 +59,7 @@ public class Vis implements WindowFocusListener
   public static void main( String[] args )
   {
     try {
-      Vis vis = new Vis( args );
+      VisSw vis = new VisSw( args );
 
       vis.Run();
     }
@@ -77,7 +78,7 @@ public class Vis implements WindowFocusListener
       System.out.format("%s=%s%n", env_name, env.get(env_name) );
     }
   }
-  public Vis( String[] args )
+  public VisSw( String[] args )
   {
     m_args = args;
 
@@ -109,10 +110,14 @@ public class Vis implements WindowFocusListener
       SwingUtilities.invokeAndWait( m_states.peekFirst() );
     }
   }
+  public void Give()
+  {
+    // Not needed for VisSw
+  }
   void run_init()
   {
     m_frame   = new JFrame("Vis");
-    m_console = new Console( this );
+    m_console = new ConsoleSw( this );
     m_diff    = new Diff( this, m_console );
 
     Container c = m_frame.getContentPane();
@@ -297,6 +302,7 @@ public class Vis implements WindowFocusListener
       }
     }
   }
+  public
   void Add_FileBuf_2_Lists_Create_Views( FileBuf fb, String fname )
   {
     // 1. Add fb to m_files
@@ -341,6 +347,7 @@ public class Vis implements WindowFocusListener
       }
     }
   }
+  public
   boolean HaveFile( String file_name, Ptr_Int file_index )
   {
     boolean already_have_file = false;
@@ -367,6 +374,7 @@ public class Vis implements WindowFocusListener
     }
     return -1;
   }
+  public
   boolean File_Is_Displayed( String full_fname )
   {
     final int file_num = FName_2_FNum( full_fname );
@@ -388,6 +396,7 @@ public class Vis implements WindowFocusListener
     }
     return false;
   }
+  public
   void ReleaseFileName( String full_fname )
   {
     final int file_num = FName_2_FNum( full_fname );
@@ -1410,7 +1419,7 @@ public class Vis implements WindowFocusListener
     else if( m_slash_mode ) m_slash_view.GoToEndOfFile();
   }
 
-  void Handle_SemiColon()
+  public void Handle_SemiColon()
   {
     if( 0 <= m_fast_char )
     {
@@ -2456,6 +2465,7 @@ public class Vis implements WindowFocusListener
   {
     Handle_Slash_GotPattern( m_sb.toString(), true );
   }
+  public
   void Handle_Slash_GotPattern( final String  pattern
                               , final boolean MOVE_TO_FIRST_PATTERN )
   {
@@ -3177,7 +3187,7 @@ public class Vis implements WindowFocusListener
     {
       if( null == m_shell )
       {
-        m_shell = new Shell( this, m_console );
+        m_shell = new Shell( this, m_console, m_sb );
       }
       m_shell.Run();
     }
@@ -3588,6 +3598,7 @@ public class Vis implements WindowFocusListener
   }
 
   // Return true if went to buffer indicated by fname, else false
+  public
   boolean GoToBuffer_Fname( String fname )
   {
     // 1. Search for fname in buffer list, and if found, go to that buffer:
@@ -3885,7 +3896,7 @@ public class Vis implements WindowFocusListener
   // This ensures that proper change status is displayed around each window:
   // '+++' for unsaved changes, and
   // '   ' for no unsaved changes
-  boolean Update_Change_Statuses()
+  public boolean Update_Change_Statuses()
   {
     // Update buffer changed status around windows:
     boolean updated_change_sts = false;
@@ -3910,7 +3921,7 @@ public class Vis implements WindowFocusListener
   // Print a command line message.
   // Put cursor back in edit window.
   //
-  void CmdLineMessage( String msg )
+  public void CmdLineMessage( String msg )
   {
     final int MSG_LEN = msg.length();
 
@@ -3938,7 +3949,7 @@ public class Vis implements WindowFocusListener
     else                   v.PrintCursor();
   }
 
-  void Window_Message( String msg )
+  public void Window_Message( String msg )
   {
     View v = m_views[0].get( MSG_FILE );
     FileBuf fb = v.m_fb;
@@ -3953,16 +3964,20 @@ public class Vis implements WindowFocusListener
     GoToBuffer( MSG_FILE );
   }
 
-  View CV()
+  public View CV()
   {
     return GetView_WinPrev( m_win, 0 );
   }
-  View PV()
+  public View PV()
   {
     return GetView_WinPrev( m_win, 1 );
   }
+  public int Curr_FileNum()
+  {
+    return m_file_hist[ m_win ].get( 0 );
+  }
   // Get view of window w, currently displayed file
-  View GetView_Win( final int w )
+  public View GetView_Win( final int w )
   {
     return m_views[w].get( m_file_hist[w].get( 0 ) );
   }
@@ -3971,24 +3986,75 @@ public class Vis implements WindowFocusListener
   {
     return m_views[w].get( m_file_hist[w].get( prev ) );
   }
-  static final char ESC =  27; // Escape
-  static final int KEY_REPEAT_PERIOD =  10; // ms between key repeats
-  static final int KEY_REPEAT_DELAY  = 250; // ms to wait for first key repeat
-  static final int BE_FILE    = 0;    // Buffer editor file
-  static final int HELP_FILE  = 1;    // Help          file
-  static final int MSG_FILE   = 2;    // Message       file
-  static final int SHELL_FILE = 3;    // Command Shell file
-  static final int COLON_FILE = 4;    // Colon command file
-  static final int SLASH_FILE = 5;    // Slash command file
-  static final int USER_FILE  = 6;    // First user file 
-  static final int MAX_WINS   = 8;    // Maximum number of sub-windows
-
-  static final String  EDIT_BUF_NAME = "BUFFER_EDITOR";
-  static final String  HELP_BUF_NAME = "VIS_HELP";
-  static final String  MSG__BUF_NAME = "MESSAGE_BUFFER";
-  static final String SHELL_BUF_NAME = "SHELL_BUFFER";
-  static final String COLON_BUF_NAME = "COLON_BUFFER";
-  static final String SLASH_BUF_NAME = "SLASH_BUFFER";
+  public ConsoleIF get_Console()
+  {
+    return m_console;
+  }
+  public FileBuf get_FileBuf( final int file_num )
+  {
+    return m_files.get( file_num );
+  }
+  public String get_regex()
+  {
+    return m_regex;
+  }
+  public Deque<Thread> get_states()
+  {
+    return m_states;
+  }
+  public char get_fast_char()
+  {
+    return m_fast_char;
+  }
+  public void set_fast_char( final char C )
+  {
+    m_fast_char = C;
+  }
+  public ArrayList<Line> get_reg()
+  {
+    return m_reg;
+  }
+  public Paste_Mode get_paste_mode()
+  {
+    return m_paste_mode;
+  }
+  public void set_paste_mode( final Paste_Mode paste_mode )
+  {
+    m_paste_mode = paste_mode;
+  }
+  public int get_num_wins()
+  {
+    return m_num_wins;
+  }
+  public boolean get_run_mode()
+  {
+    return m_run_mode;
+  }
+  public void set_run_mode( final boolean mode )
+  {
+    m_run_mode = mode;
+  }
+  public boolean Is_BE_FILE( final FileBuf fb )
+  {
+    return fb == m_views[0].get( BE_FILE ).m_fb;
+  }
+  public String get_cwd()
+  {
+    return m_cwd;
+  }
+  public void set_cmd( String cmd )
+  {
+    m_sb.setLength( 0 );
+    m_sb.append( cmd );
+  }
+  public boolean get_diff_mode()
+  {
+    return m_diff_mode;
+  } 
+  public Diff get_diff()
+  {
+    return m_diff;
+  }
 
   String[]           m_args;
   Deque<Thread>      m_states     = new ArrayDeque<Thread>();
@@ -4012,7 +4078,7 @@ public class Vis implements WindowFocusListener
   int                m_win;
   int                m_num_wins = 1; // Number of sub-windows currently on screen
   JFrame             m_frame;
-  Console            m_console;
+  ConsoleSw          m_console;
   Cursor             m_blank_cursor;
   boolean            m_initialized;
   boolean            m_received_focus;

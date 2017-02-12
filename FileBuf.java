@@ -42,7 +42,7 @@ import java.util.regex.Matcher;
 class FileBuf
 {
   // fname should contain full path and filename
-  FileBuf( Vis vis, String fname, final boolean mutable )
+  FileBuf( VisIF vis, String fname, final boolean mutable )
   {
     m_vis       = vis;
     m_path      = FileSystems.getDefault().getPath( fname );
@@ -65,7 +65,7 @@ class FileBuf
     Find_File_Type_Suffix();
   }
   // fname should contain full path and filename
-  FileBuf( Vis vis, String fname, FileBuf fb )
+  FileBuf( VisIF vis, String fname, FileBuf fb )
   {
     m_vis       = vis;
     m_path      = FileSystems.getDefault().getPath( fname );
@@ -299,9 +299,9 @@ class FileBuf
      || m_fname.endsWith(".cmake"    )
      || m_fname.endsWith(".cmake.new")
      || m_fname.endsWith(".cmake.old")
-     || m_fname.equals("CMakeLists.txt")
-     || m_fname.equals("CMakeLists.txt.old")
-     || m_fname.equals("CMakeLists.txt.new") )
+     || m_fname.endsWith("CMakeLists.txt")
+     || m_fname.endsWith("CMakeLists.txt.old")
+     || m_fname.endsWith("CMakeLists.txt.new") )
     {
       m_file_type = File_Type.CMAKE;
       m_Hi = new Highlight_CMAKE( this );
@@ -488,7 +488,7 @@ class FileBuf
     boolean ok = ReadFile();
 
     // To be safe, put cursor at top,left of each view of this file:
-    for( int w=0; ok && w<Vis.MAX_WINS; w++ )
+    for( int w=0; ok && w<VisIF.MAX_WINS; w++ )
     {
       View v = m_views.get( w );
 
@@ -718,7 +718,7 @@ class FileBuf
   {
     return m_history.Has_Changes();
   }
-  void ChangedLineLen( final int line_num )
+  void ChangedLine( final int line_num )
   {
     if( line_num<=0 )
     {
@@ -964,15 +964,23 @@ class FileBuf
 
   void Check_4_New_Regex()
   {
-    if( m_regex != m_vis.m_regex )
+    if( m_regex != m_vis.get_regex() )
     {
       // Invalidate all regexes
       for( int k=0; k<m_lineRegexsValid.size(); k++ )
       {
         m_lineRegexsValid.set(k, false);
       }
-      m_regex = m_vis.m_regex;
-      m_pattern = Pattern.compile( m_regex );
+      m_regex = m_vis.get_regex();
+
+      try {
+        m_pattern = Pattern.compile( m_regex );
+      }
+      catch( Exception e )
+      {
+        m_pattern = null;
+        m_vis.Window_Message( e.getMessage() );
+      }
     }
   }
 
@@ -989,16 +997,19 @@ class FileBuf
       {
         ClearStarStyle( line_num, pos );
       }
-      Matcher matcher = m_pattern.matcher( lr.toString() );
-
-      while( matcher.find() )
+      if( null != m_pattern )
       {
-        for( int pos=matcher.start(); pos<matcher.end(); pos++ )
+        Matcher matcher = m_pattern.matcher( lr.toString() );
+
+        while( matcher.find() )
         {
-          SetStarStyle( line_num, pos );
+          for( int pos=matcher.start(); pos<matcher.end(); pos++ )
+          {
+            SetStarStyle( line_num, pos );
+          }
         }
+        m_lineRegexsValid.set(line_num, true);
       }
-      m_lineRegexsValid.set(line_num, true);
     }
   }
 
@@ -1157,16 +1168,16 @@ class FileBuf
 
     if( SavingHist() ) m_history.Save_SwapLines( l_num_1, l_num_2 );
 
-    ChangedLineLen( Math.min( l_num_1, l_num_2 ) );
+    ChangedLine( Math.min( l_num_1, l_num_2 ) );
   }
 
   void UpdateWinViews()
   {
-    for( int w=0; w<Vis.MAX_WINS; w++ )
+    for( int w=0; w<VisIF.MAX_WINS; w++ )
     {
       View rV = m_views.get( w );
 
-      for( int w2=0; w2<m_vis.m_num_wins; w2++ )
+      for( int w2=0; w2<m_vis.get_num_wins(); w2++ )
       {
         if( rV == m_vis.GetView_Win( w2 ) )
         {
@@ -1178,7 +1189,7 @@ class FileBuf
   }
   void Update()
   {
-    if( m_vis.m_console.m_get_from_dot_buf ) return;
+    if( m_vis.get_Console().get_from_dot_buf() ) return;
 
     m_vis.Update_Change_Statuses();
 
@@ -1189,7 +1200,7 @@ class FileBuf
   }
   void UpdateCmd()
   {
-    if( m_vis.m_console.m_get_from_dot_buf ) return;
+    if( m_vis.get_Console().get_from_dot_buf() ) return;
 
     m_vis.Update_Change_Statuses();
 
@@ -1218,7 +1229,8 @@ class FileBuf
                               lr.deleteCharAt( c_num );
     if( c_num < sr.length() ) sr.deleteCharAt( c_num ); // m_styles not in sync with m_lines for some reason
 
-    ChangedLineLen( l_num );
+    ChangedLine( l_num );
+    m_lineRegexsValid.set( l_num, false );
 
     if( SavingHist() ) m_history.Save_RemoveChar( l_num, c_num, C );
 
@@ -1248,8 +1260,9 @@ class FileBuf
       {
         m_history.Save_Set( l_num, c_num, old_C, continue_last_update );
       }
-      // Did not call ChangedLineLen(), so need to set m_hi_touched_line here:
+      // Did not call ChangedLine(), so need to set m_hi_touched_line here:
       m_hi_touched_line = Math.min( m_hi_touched_line, l_num );
+      m_lineRegexsValid.set( l_num, false );
     }
   }
   // Remove a line from FileBuf without deleting it and return pointer to it.
@@ -1261,7 +1274,7 @@ class FileBuf
               m_styles.remove( l_num );
               m_lineRegexsValid.remove( l_num );
 
-    ChangedLineLen( l_num );
+    ChangedLine( l_num );
 
     if( SavingHist() ) m_history.Save_RemoveLine( l_num, lr );
 
@@ -1282,7 +1295,7 @@ class FileBuf
     m_styles.add( l_num, sr );
     m_lineRegexsValid.add( l_num, false );
 
-    ChangedLineLen( l_num );
+    ChangedLine( l_num );
 
     if( SavingHist() ) m_history.Save_InsertLine( l_num );
 
@@ -1300,7 +1313,7 @@ class FileBuf
     m_styles.add( l_num, sp );
     m_lineRegexsValid.add( l_num, false );
 
-    ChangedLineLen( l_num );
+    ChangedLine( l_num );
 
     if( SavingHist() ) m_history.Save_InsertLine( l_num );
 
@@ -1321,7 +1334,7 @@ class FileBuf
     sr.insert( c_num, '\u0000' );
     m_lineRegexsValid.set( l_num, false );
 
-    ChangedLineLen( l_num );
+    ChangedLine( l_num );
 
     if( SavingHist() ) m_history.Save_InsertChar( l_num, c_num );
   }
@@ -1340,7 +1353,7 @@ class FileBuf
     // Simply need to increase sr's length to match lr's new length:
     sr.setLength( lr.length() );
 
-    ChangedLineLen( l_num );
+    ChangedLine( l_num );
 
     final int first_insert = lr.length() - line.length();
 
@@ -1359,7 +1372,7 @@ class FileBuf
 
   void InsertLine_Adjust_Views_topLines( final int l_num )
   {
-    for( int w=0; w<Vis.MAX_WINS && w<m_views.size(); w++ )
+    for( int w=0; w<VisIF.MAX_WINS && w<m_views.size(); w++ )
     {
       final View rV = m_views.get( w );
 
@@ -1368,7 +1381,7 @@ class FileBuf
   }
   void RemovedLine_Adjust_Views_topLines( final int l_num )
   {
-    for( int w=0; w<Vis.MAX_WINS && w<m_views.size(); w++ )
+    for( int w=0; w<VisIF.MAX_WINS && w<m_views.size(); w++ )
     {
       final View rV = m_views.get( w );
 
@@ -1386,7 +1399,7 @@ class FileBuf
     sr.append_c( (char)0 );
     m_lineRegexsValid.set( l_num, false );
 
-    ChangedLineLen( l_num );
+    ChangedLine( l_num );
 
     if( SavingHist() ) m_history.Save_InsertChar( l_num, lr.length()-1 );
   }
@@ -1447,7 +1460,7 @@ class FileBuf
 
     m_save_history = true;
   }
-  Vis                   m_vis;   // Not sure if we need this or should use m_views
+  VisIF                 m_vis;   // Not sure if we need this or should use m_views
   final String          m_fname; // Full path and filename head = m_pname + m_hname
   final String          m_pname; // Full path     = m_fname - m_hname, (for directories this is the same a m_fname)
   final String          m_hname; // Filename head = m_fname - m_pname, (for directories this is empty)
