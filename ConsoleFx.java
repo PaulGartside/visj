@@ -29,6 +29,8 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.geometry.VPos;
 
 import javafx.scene.text.Text;
@@ -36,12 +38,14 @@ import javafx.geometry.Bounds;
 
 import java.util.Queue;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 
 class ConsoleFx extends Canvas
              implements ConsoleIF
 {
   void Key_Pressed( KeyEvent ke )
   {
+    final KeyCode CODE  = ke.getCode();
     if( Add_Key_Char( ke ) )
     {
       if( m_input.add( m_C ) ) //< Should always be true
@@ -884,6 +888,68 @@ class ConsoleFx extends Canvas
     m_dot_buf.setLength( 0 );
     m_dot_buf.append( m_vis_buf );
   }
+  public void copy_paste_buf_2_system_clipboard()
+  {
+    if( null == m_cb )
+    {
+      m_cb = Clipboard.getSystemClipboard();
+    }
+    if( null == m_cbc )
+    {
+      m_cbc = new ClipboardContent();
+    }
+
+    m_sb.setLength( 0 );
+    ArrayList<Line> reg = m_vis.get_reg();
+
+    for( int k=0; k<reg.size(); k++ )
+    {
+      if( 0<k ) m_sb.append("\n");
+      m_sb.append( reg.get(k).toString() ); 
+    }
+    m_cbc.putString( m_sb.toString() ); 
+
+    m_cb.setContent( m_cbc );
+
+    if( 0<m_sb.length() )
+    {
+      m_vis.CmdLineMessage("Copied "
+                          + reg.size()    +" lines, "
+                          + m_sb.length() +" chars to system clipboard");
+    }
+    else {
+      m_vis.CmdLineMessage("Cleared system clipboard");
+    }
+  }
+  public void copy_system_clipboard_2_paste_buf()
+  {
+    if( null == m_cb )
+    {
+      m_cb = Clipboard.getSystemClipboard();
+    }
+
+    ArrayList<Line> reg = m_vis.get_reg();
+    reg.clear();
+    String cb_str = m_cb.getString();
+
+    if( null == cb_str )
+    {
+      m_vis.CmdLineMessage("Cleared paste buffer");
+    }
+    else {
+      String[] cb_lines = cb_str.split("\n");
+
+      for( int k=0; k<cb_lines.length; k++ )
+      {
+        Line line = new Line();
+        line.append_s( cb_lines[k] );
+        reg.add( line );
+      }
+      m_vis.CmdLineMessage("Copied "
+                          + cb_lines.length +" lines, "
+                          + cb_str.length() +" chars to paste buffer");
+    }
+  }
   private Color    m_comment_fg = Color.color( 0.3f, 0.3f, 1.0f );
   private Color    m_d_blue     = Color.color( 0.0f, 0.0f, 1.0f );
   private Color    m_d_green    = Color.color( 0.0f, 1.0f, 0.0f );
@@ -1006,5 +1072,8 @@ class ConsoleFx extends Canvas
   StringBuilder    m_map_buf = new StringBuilder();
   private int      m_dot_buf_index;
   private int      m_map_buf_index;
+  StringBuilder    m_sb = new StringBuilder();
+  Clipboard        m_cb;
+  ClipboardContent m_cbc;
 }
 

@@ -24,6 +24,9 @@
 import java.lang.Math;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+//import javafx.scene.input.Clipboard;
+//import javafx.scene.input.ClipboardContent;
 
 class View
 {
@@ -3220,12 +3223,12 @@ class View
     for( int L=v_st_line; L<=v_fn_line; L++ )
     {
       Line nlr = new Line();
-  
+
       final int LL = m_fb.LineLen( L );
       if( 0<LL ) {
         final int P_st = (L==v_st_line) ? v_st_char : 0;
         final int P_fn = (L==v_fn_line) ? Math.min(LL-1,v_fn_char) : LL-1;
-  
+
         for( int P = P_st; P <= P_fn; P++ )
         {
           nlr.append_c( m_fb.Get( L, P ) );

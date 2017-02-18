@@ -987,7 +987,7 @@ class LineView
     if( 0 == last_slash_idx )
     {
       path_tail.val.append('/');
-      for( int i = last_slash_idx + 1; i<in_fname_len  ; i++ )
+      for( int i = last_slash_idx + 1; i<in_fname_len; i++ )
       {
         path_head.val.append( in_fname.charAt( i ) );
       }
@@ -998,7 +998,7 @@ class LineView
       {
         path_tail.val.append( in_fname.charAt( i ) );
       }
-      for( int i = last_slash_idx + 1; i<in_fname_len  ; i++ )
+      for( int i = last_slash_idx + 1; i<in_fname_len; i++ )
       {
         path_head.val.append( in_fname.charAt( i ) );
       }
@@ -1007,10 +1007,18 @@ class LineView
       // No tail, all head:
       path_head.val.append( in_fname );
     }
-    if( path_tail.val.toString().equals("~") )
+    String path_tail_str = path_tail.val.toString();
+    if( path_tail_str.equals("~") )
     {
       path_tail.val.setLength( 0 );
       path_tail.val.append( System.getenv("HOME") );
+    }
+    else if( 1<path_tail_str.length()
+          && path_tail_str.charAt(0) == '~'
+          && path_tail_str.charAt(1) == Utils.DIR_DELIM )
+    {
+      path_tail.val.deleteCharAt(0);
+      path_tail.val.insert( 0, System.getenv("HOME") );
     }
   }
 

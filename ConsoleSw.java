@@ -844,6 +844,14 @@ class ConsoleSw extends JComponent
     m_dot_buf.setLength( 0 );
     m_dot_buf.append( m_vis_buf );
   }
+  public void copy_paste_buf_2_system_clipboard()
+  {
+    m_vis.CmdLineMessage("CC not implemented");
+  }
+  public void copy_system_clipboard_2_paste_buf()
+  {
+    m_vis.CmdLineMessage("CP not implemented");
+  }
   private Color    m_comment_fg = new Color( 0.3f, 0.3f, 1.0f );
   private Color    m_d_blue     = new Color( 0.0f, 0.0f, 1.0f );
   private Color    m_d_green    = new Color( 0.0f, 1.0f, 0.0f );

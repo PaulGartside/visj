@@ -570,6 +570,7 @@ public class VisFx extends Application
     case 'B': Handle_B();         break;
     case 'c': Handle_c();         break;
     case 'd': Handle_d();         break;
+    case 'C': Handle_C();         break;
     case 'D': Handle_D();         break;
     case 'e': Handle_e();         break;
     case 'f': Handle_f();         break;
@@ -1161,6 +1162,29 @@ public class VisFx extends Application
           m_slash_view.Do_D();
           m_slash_view.Do_a();
         }
+      }
+    }
+  }
+
+  void Handle_C()
+  {
+    m_states.addFirst( m_run_C );
+  }
+  void run_C()
+  {
+    if( 0<m_console.KeysIn() )
+    {
+      m_states.removeFirst();
+
+      final char c2 = m_console.GetKey();
+
+      if( c2 == 'C' )
+      {
+        m_console.copy_paste_buf_2_system_clipboard();
+      }
+      else if( c2 == 'P' )
+      {
+        m_console.copy_system_clipboard_2_paste_buf();
       }
     }
   }
@@ -4089,6 +4113,7 @@ public class VisFx extends Application
   Thread             m_run_resize = new Thread() { public void run() { run_resize(); Give(); } };
   Thread             m_run_c      = new Thread() { public void run() { run_c     (); Give(); } };
   Thread             m_run_L_c    = new Thread() { public void run() { run_L_c   (); Give(); } };
+  Thread             m_run_C      = new Thread() { public void run() { run_C     (); Give(); } };
   Thread             m_run_d      = new Thread() { public void run() { run_d     (); Give(); } };
   Thread             m_run_L_d    = new Thread() { public void run() { run_L_d   (); Give(); } };
   Thread             m_run_g      = new Thread() { public void run() { run_g     (); Give(); } };

@@ -42,6 +42,8 @@ interface ConsoleIF
   void    SetS( final int ROW, final int COL, final String str, final Style S );
   char    GetKey();
   void    copy_vis_buf_2_dot_buf();
+  void    copy_paste_buf_2_system_clipboard();
+  void    copy_system_clipboard_2_paste_buf();
 
   StringBuilder get_dot_buf();
   boolean       get_from_dot_buf();
