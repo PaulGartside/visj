@@ -45,6 +45,7 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.ArrayDeque;
+import java.util.concurrent.Semaphore;
 
 public class VisFx extends Application
                 implements VisIF
@@ -139,20 +140,36 @@ public class VisFx extends Application
   {
     m_scene.setCursor( Cursor.DEFAULT );
   }
+//void Scheduler()
+//{
+//  try {
+//    while( 0<m_states.size() )
+//    {
+//      // Take:
+//      m_FX_running = true;
+//
+//      Platform.runLater( m_states.peekFirst() );
+//
+//      while( m_FX_running )
+//      {
+//        Utils.Sleep( 1 );
+//      }
+//    }
+//  }
+//  catch( Exception e )
+//  {
+//    Handle_Exception( e );
+//  }
+//}
   void Scheduler()
   {
     try {
       while( 0<m_states.size() )
       {
         // Take:
-        m_FX_running = true;
+        m_run_sem.acquire();
 
         Platform.runLater( m_states.peekFirst() );
-
-        while( m_FX_running )
-        {
-          Utils.Sleep( 1 );
-        }
       }
     }
     catch( Exception e )
@@ -162,7 +179,8 @@ public class VisFx extends Application
   }
   public void Give()
   {
-    m_FX_running = false;
+  //m_FX_running = false;
+    m_run_sem.release();
   }
   void Scene_Width_CB()
   {
@@ -2278,7 +2296,8 @@ public class VisFx extends Application
     final int X        = cv.X();
     final int Y        = cv.Cmd__Line_Row();
 
-    cv.Clear_Console_CrsCell();
+    if( m_diff_mode ) m_diff.Clear_Console_CrsCell();
+    else                  cv.Clear_Console_CrsCell();
  
     m_colon_view.SetContext( NUM_COLS, X, Y );
     m_colon_mode = true;
@@ -2350,7 +2369,9 @@ public class VisFx extends Application
     final int X        = cv.X();
     final int Y        = cv.Cmd__Line_Row();
 
-    cv.Clear_Console_CrsCell();
+  //cv.Clear_Console_CrsCell();
+    if( m_diff_mode ) m_diff.Clear_Console_CrsCell();
+    else                  cv.Clear_Console_CrsCell();
  
     m_slash_view.SetContext( NUM_COLS, X, Y );
     m_slash_mode = true;
@@ -3395,7 +3416,8 @@ public class VisFx extends Application
 
     boolean file_written = false;
 
-    if( m_sb.toString().equals("w") ) // :w
+    if( m_sb.toString().equals("w")   // :w
+     || m_sb.toString().equals("wq")) // :wq
     {
       if( V == m_views[ m_win ].get( SHELL_FILE ) )
       {
@@ -3409,6 +3431,10 @@ public class VisFx extends Application
         // else Window_Message will be called
         // which will put the cursor back in the message window
         file_written = V.m_fb.Write();
+      }
+      if( m_sb.toString().equals("wq") )
+      {
+        Exe_Colon_q();
       }
     }
     else // :w file_name
@@ -4131,7 +4157,9 @@ public class VisFx extends Application
   char               m_fast_char;
   boolean            m_diff_mode;
   boolean            m_run_mode; // True if running shell command
-  boolean            m_FX_running; // True if FX platform thread is running
+  private
+//boolean            m_FX_running; // True if FX platform thread is running
+  Semaphore          m_run_sem = new Semaphore( 1 );
   Diff               m_diff;
   StringBuilder      m_sb        = new StringBuilder();
   StringBuilder      m_sb2       = new StringBuilder();

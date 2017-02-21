@@ -25,8 +25,6 @@ import java.lang.Math;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-//import javafx.scene.input.Clipboard;
-//import javafx.scene.input.ClipboardContent;
 
 class View
 {
@@ -3186,24 +3184,24 @@ class View
     }
     m_inVisualMode = false;
   }
-  boolean Do_s_v_cursor_at_end_of_line()
-  {
-    final int LL = m_fb.LineLen( CrsLine() );
-
-    if( m_inVisualBlock )
-    {
-      return 0<LL ? LL-1 <= CrsChar()
-                  : 0    <  CrsChar();
-    }
-    return 0<LL ? CrsChar() == LL-1 : false;
-  }
+//boolean Do_s_v_cursor_at_end_of_line()
+//{
+//  final int LL = m_fb.LineLen( CrsLine() );
+//
+//  if( m_inVisualBlock )
+//  {
+//    return 0<LL ? LL-1 <= CrsChar()
+//                : 0    <  CrsChar();
+//  }
+//  return 0<LL ? LL-1 <= CrsChar() : false;
+//}
   void Do_s_v()
   {
-    // Need to know if cursor is at end of line before Do_x_v() is called:
-    final int LL = m_fb.LineLen( CrsLine() );
-    final boolean CURSOR_AT_END_OF_LINE = Do_s_v_cursor_at_end_of_line();
-
     Do_x_v();
+
+    final int LL = m_fb.LineLen( CrsLine() );
+    final boolean
+    CURSOR_AT_END_OF_LINE = 0<LL ? LL-1 <= CrsChar() : false;
 
     if( m_inVisualBlock )
     {

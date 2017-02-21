@@ -66,8 +66,8 @@ class Utils
 
       if( null != os )
       {
-        if( os.equals("Mac OS X"  ) ) m_os_type = OS_Type.OSX;
-        if( os.equals("Windows_NT") ) m_os_type = OS_Type.Windows;
+        if( os.equals("Mac OS X" ) ) m_os_type = OS_Type.OSX;
+        if( os.equals("Windows 7") ) m_os_type = OS_Type.Windows;
       }
     }
     return m_os_type;

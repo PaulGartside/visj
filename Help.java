@@ -153,6 +153,7 @@ class Help
 + "  :sp  = Split window horizonally into 2 editing windows\n"
 + "  :vsp = Split window vertically into 2 editing windows\n"
 + "  :w   = Write current file\n"
++ "  :wq  = Write and quit current file\n"
 + "  :w filename = Write current file to filename\n"
 + "  :+   = Increase font size\n"
 + "  :-   = Decrease font size\n"
