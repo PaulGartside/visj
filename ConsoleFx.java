@@ -400,8 +400,6 @@ class ConsoleFx extends Canvas
       {
         m_font_size = new_font_size;
 
-      //m_font_plain = new Font( GetFontName(), Font.PLAIN, m_font_size );
-      //m_font_bold  = new Font( GetFontName(), Font.BOLD , m_font_size );
         m_font_plain = Font.font( GetFontName(), FontWeight.NORMAL, m_font_size );
         m_font_bold  = Font.font( GetFontName(), FontWeight.BOLD  , m_font_size );
 
@@ -522,10 +520,8 @@ class ConsoleFx extends Canvas
   public
   void Set_Crs_Cell( final int ROW, final int COL )
   {
-    // Set new position to cursor style;
-    Set( ROW, COL
-       , m_chars__p[ROW][COL]
-       , Style.CURSOR );
+    m_crs_row = ROW;
+    m_crs_col = COL;
   }
   private
   void PrintC( final int row, final int col, final char C, final Style S )
@@ -547,7 +543,6 @@ class ConsoleFx extends Canvas
 
         final int x_p_t = col*m_text_W; // X point text
         final int y_p_t = row*m_text_H; // Y point text
-      //final int y_p_t = (int)((double)(row*m_text_H)+0.5); // Y point text
 
         m_gc.fillText( m_text_chars[C], x_p_t, y_p_t );
       }
@@ -867,8 +862,24 @@ class ConsoleFx extends Canvas
         m_min_touched[ row ] = m_num_cols; // Nothing
         m_max_touched[ row ] = 0;          // touched
       }
+      Print_Cursor();
     }
     return output_something;
+  }
+  void Print_Cursor()
+  {
+    // Print the cursor:
+    PrintC( m_crs_row
+          , m_crs_col
+          , m_chars__w[m_crs_row][m_crs_col]
+          , Style.CURSOR );
+
+    m_min_touched[ m_crs_row ] = m_crs_col;   // Cursor
+    m_max_touched[ m_crs_row ] = m_crs_col+1; // touched
+
+    // This will cause the old cursor cell to be put back to
+    // its highlighed value on the next call of Update():
+    m_styles_w[m_crs_row][m_crs_col] = Style.CURSOR;
   }
   public void set_save_2_vis_buf( final boolean save )
   {
@@ -1072,6 +1083,8 @@ class ConsoleFx extends Canvas
   StringBuilder    m_map_buf = new StringBuilder();
   private int      m_dot_buf_index;
   private int      m_map_buf_index;
+  private int      m_crs_row;
+  private int      m_crs_col;
   StringBuilder    m_sb = new StringBuilder();
   Clipboard        m_cb;
   ClipboardContent m_cbc;

@@ -464,13 +464,13 @@ class ConsoleSw extends JComponent
       Set( ROW, COL+k, str.charAt(k), S );
     }
   }
-  public void Set_Crs_Cell( final int ROW, final int COL )
-  {
-    // Set new position to cursor style;
-    Set( ROW, COL
-       , m_chars__p[ROW][COL]
-       , Style.CURSOR );
-  }
+//public void Set_Crs_Cell( final int ROW, final int COL )
+//{
+//  // Set new position to cursor style;
+//  Set( ROW, COL
+//     , m_chars__p[ROW][COL]
+//     , Style.CURSOR );
+//}
 //void Set_Crs_Cell_Empty( final int ROW, final int COL )
 //{
 //  // Set new position to cursor style;
@@ -478,6 +478,12 @@ class ConsoleSw extends JComponent
 //     , m_chars__p[ROW][COL]
 //     , Style.CURSOR_EMPTY );
 //}
+  public
+  void Set_Crs_Cell( final int ROW, final int COL )
+  {
+    m_crs_row = ROW;
+    m_crs_col = COL;
+  }
   public void paint( Graphics g )
   {
     if( null == m_image ) Init();
@@ -823,8 +829,24 @@ class ConsoleSw extends JComponent
         m_min_touched[ row ] = m_num_cols; // Nothing
         m_max_touched[ row ] = 0;          // touched
       }
+      Print_Cursor();
     }
     return output_something;
+  }
+  void Print_Cursor()
+  {
+    // Print the cursor:
+    PrintC( m_crs_row
+          , m_crs_col
+          , m_chars__w[m_crs_row][m_crs_col]
+          , Style.CURSOR );
+
+    m_min_touched[ m_crs_row ] = m_crs_col;   // Cursor
+    m_max_touched[ m_crs_row ] = m_crs_col+1; // touched
+
+    // This will cause the old cursor cell to be put back to
+    // its highlighed value on the next call of Update():
+    m_styles_w[m_crs_row][m_crs_col] = Style.CURSOR;
   }
   public void set_save_2_vis_buf( final boolean save )
   {
@@ -978,4 +1000,6 @@ class ConsoleSw extends JComponent
   StringBuilder    m_map_buf = new StringBuilder();
   private int      m_dot_buf_index;
   private int      m_map_buf_index;
+  private int      m_crs_row;
+  private int      m_crs_col;
 }                                

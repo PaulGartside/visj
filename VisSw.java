@@ -1488,11 +1488,9 @@ public class VisSw implements VisIF
   {
     if( m_diff_mode )
     {
-      m_diff.Clear_Console_CrsCell( pV_old );
       m_diff.Set_Console_CrsCell( pV_new );
     }
     else {
-      pV_old.Clear_Console_CrsCell();
       pV_new.Set_Console_CrsCell();
     }
     m_console.Update();
@@ -2229,8 +2227,6 @@ public class VisSw implements VisIF
     final int X        = cv.X();
     final int Y        = cv.Cmd__Line_Row();
 
-    cv.Clear_Console_CrsCell();
- 
     m_colon_view.SetContext( NUM_COLS, X, Y );
     m_colon_mode = true;
  
@@ -2251,7 +2247,6 @@ public class VisSw implements VisIF
   void L_Handle_Colon()
   {
     m_colon_mode = false;
-    m_colon_view.Clear_Console_CrsCell();
 
     if( m_diff_mode ) m_diff.PrintCursor();
     else                CV().PrintCursor();
@@ -2276,7 +2271,6 @@ public class VisSw implements VisIF
       m_colon_mode = false;
 
       m_colon_view.HandleReturn();
-    //m_colon_view.Clear_Console_CrsCell();
 
       Exe_Colon_Cmd();
     }
@@ -2301,8 +2295,6 @@ public class VisSw implements VisIF
     final int X        = cv.X();
     final int Y        = cv.Cmd__Line_Row();
 
-    cv.Clear_Console_CrsCell();
- 
     m_slash_view.SetContext( NUM_COLS, X, Y );
     m_slash_mode = true;
 
@@ -2322,7 +2314,6 @@ public class VisSw implements VisIF
   void L_Handle_Slash()
   {
     m_slash_mode = false;
-    m_slash_view.Clear_Console_CrsCell();
 
     if( m_diff_mode ) m_diff.PrintCursor();
     else                CV().PrintCursor();
@@ -3249,7 +3240,6 @@ public class VisSw implements VisIF
   void Exe_Colon_MapShow()
   {
     final View V = CV();
-    V.Clear_Console_CrsCell();
     final int ROW = V.Cmd__Line_Row();
     final int ST  = V.Col_Win_2_GL( 0 );
     final int WC  = V.WorkingCols();

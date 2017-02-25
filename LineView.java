@@ -94,35 +94,14 @@ class LineView
 
   void Set_crsCol( final int col )
   {
-    Clear_Console_CrsCell();
-
     m_crsCol = col;
 
     Set_Console_CrsCell();
   }
 
-  void Clear_Console_CrsCell()
-  {
-    // Set console current cursor cell to non-cursor hightlighted value:
-    final int CL = CrsLine();
-    final int CC = CrsChar();
-    final int LL = m_fb.LineLen( CL );
-
-    // For readability, display carriage return at end of line as a space
-    final char  C = m_fb.Get( CL, CC );
-    final Style S = Get_Style( CL, CC );
-
-    m_console.Set( m_y, Col_Win_2_GL( m_crsCol ), C, S );
-  }
   void Set_Console_CrsCell()
   {
-    // Set console current cursor cell to non-cursor hightlighted value:
-    final int CL = CrsLine();
-    final int CC = CrsChar();
-
-    final char C = m_fb.Get( CL, CC );
-
-    m_console.Set( m_y, Col_Win_2_GL( m_crsCol ), C, Style.CURSOR );
+    m_console.Set_Crs_Cell( m_y, Col_Win_2_GL( m_crsCol ) );
   }
 
   void ClearLine()
@@ -779,7 +758,6 @@ class LineView
       // Move cursor back one space:
       if( 0 < m_crsCol )
       {
-        Clear_Console_CrsCell();
         m_crsCol--;
       }
       m_inInsertMode = false;
@@ -1936,7 +1914,6 @@ class LineView
       if( m_crsCol < Math.min( LL-1, WorkingCols()-1 ) )
       {
         if( changed ) m_fb.Set( CL, CP, C, CONT_LAST_UPDATE );
-        else Clear_Console_CrsCell();
 
         // Need to move cursor right:
         m_crsCol++;
@@ -1945,7 +1922,6 @@ class LineView
       {
         // Need to scroll window right:
         if( changed ) m_fb.Set( CL, CP, C, CONT_LAST_UPDATE );
-        else Clear_Console_CrsCell();
 
         m_leftChar++;
       }
@@ -2562,12 +2538,9 @@ class LineView
   {
     m_sb.setLength( 0 );
 
-    if( m_vis.get_diff_mode() ) m_vis.get_diff().Clear_Console_CrsCell();
-    else                              m_vis.CV().Clear_Console_CrsCell();
-
     final int G_COL = m_x + 1;
     m_console.SetS( m_y, G_COL, m_cover_msg, Style.NORMAL );
-    m_console.Set( m_y, G_COL + m_cover_msg_len, ' ', Style.CURSOR );
+    m_console.Set_Crs_Cell( m_y, G_COL + m_cover_msg_len );
     m_console.Update();
 
     m_vis.get_states().addFirst( m_run_cover_key );
@@ -2600,7 +2573,7 @@ class LineView
 
           // Output cd and move cursor forward:
           m_console.Set( m_y, m_x + local_COL  , '*', Style.NORMAL );
-          m_console.Set( m_y, m_x + local_COL+1, ' ', Style.CURSOR );
+          m_console.Set_Crs_Cell( m_y, m_x + local_COL+1 );
         }
         else {
           if( 0 < m_sb.length() )
@@ -2608,7 +2581,7 @@ class LineView
             final int local_COL = Math.min( m_cover_msg_len+m_sb.length(), WC-1 );
 
             m_console.Set( m_y, m_x + local_COL+1, ' ', Style.NORMAL );
-            m_console.Set( m_y, m_x + local_COL  , ' ', Style.CURSOR );
+            m_console.Set_Crs_Cell( m_y, m_x + local_COL );
             m_console.Update();
 
             m_sb.deleteCharAt( m_sb.length()-1 );

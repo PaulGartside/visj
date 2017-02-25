@@ -61,7 +61,7 @@ class Highlight_Dir extends Highlight_Base
   {
     switch( m_state )
     {
-    case In_None  : Hi_In_None  (); break;
+    case In_None: Hi_In_None(); break;
     default:
       m_state = Hi_State.In_None;
     }

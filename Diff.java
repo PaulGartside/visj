@@ -1378,76 +1378,34 @@ class Diff
 
   void Set_crsRow( final int row )
   {
-    Clear_Console_CrsCell();
-
     m_crsRow = row;
 
     Set_Console_CrsCell();
   }
   void Set_crsCol( final int col )
   {
-    Clear_Console_CrsCell();
-
     m_crsCol = col;
 
     Set_Console_CrsCell();
   }
   void Set_crsRowCol( final int row, final int col )
   {
-    Clear_Console_CrsCell();
-
     m_crsRow = row;
     m_crsCol = col;
 
     Set_Console_CrsCell();
   }
-  void Clear_Console_CrsCell()
-  {
-    // Set console current cursor cell to non-cursor hightlighted value:
-    View pV = m_vis.CV();
-
-    Clear_Console_CrsCell( pV );
-  }
-  void Clear_Console_CrsCell( View V )
-  {
-    // Set console current cursor cell to non-cursor hightlighted value:
-    final int CL = CrsLine(); // Diff line number
-
-    // It is possible that the last diff line was just deleted,
-    // in which case we will crash if we try to move off of it
-    if( CL < NumLines( V ) )
-    {
-      final int VL = ViewLine( V, CL ); // View line number
-      final int CC = CrsChar();
-
-      final char  C = Get_Char_2 ( V, CL, VL, CC );
-      final Style S = Get_Style_2( V, CL, VL, CC );
-
-      m_console.Set( Row_Win_2_GL( V, m_crsRow )
-                   , Col_Win_2_GL( V, m_crsCol )
-                   , C, S );
-    }
-  }
   void Set_Console_CrsCell()
   {
     // Set console current cursor cell to cursor hightlighted value:
     View pV = m_vis.CV();
-
+  
     Set_Console_CrsCell( pV );
   }
   void Set_Console_CrsCell( View V )
   {
-    // Set console current cursor cell to cursor hightlighted value:
-    final int CL = CrsLine();
-    final int CC = CrsChar();
-
-    final int VL = ViewLine( V, CL ); //(VL=view line)
-
-    final char  C = Get_Char_2 ( V, CL, VL, CC );
-
-    m_console.Set( Row_Win_2_GL( V, m_crsRow )
-                 , Col_Win_2_GL( V, m_crsCol )
-                 , C, Style.CURSOR );
+    m_console.Set_Crs_Cell( Row_Win_2_GL( V, m_crsRow )
+                          , Col_Win_2_GL( V, m_crsCol ) );
   }
 
   void GoToCrsPos_Write( final int ncp_crsLine
@@ -1774,8 +1732,6 @@ class Diff
   {
     View pV = m_vis.CV();
   
-    Clear_Console_CrsCell();
-
     // These moves refer to View of buffer:
     final boolean MOVE_DOWN  = BotLine( pV )   < ncp_crsLine;
     final boolean MOVE_RIGHT = RightChar( pV ) < ncp_crsChar;
@@ -2991,7 +2947,6 @@ class Diff
     if( 0<m_crsRow )
     {
       // Make changes manually:
-      Clear_Console_CrsCell();
       m_topLine += m_crsRow;
       m_crsRow = 0;
       Set_Console_CrsCell();
@@ -3012,7 +2967,6 @@ class Diff
     {
       // Cursor line cannot be moved to center, but can be moved closer to center
       // CrsLine() does not change:
-      Clear_Console_CrsCell();
       m_crsRow += m_topLine;
       m_topLine = 0;
       Set_Console_CrsCell();
@@ -3022,7 +2976,6 @@ class Diff
     else if( center < OCL
           && center != m_crsRow )
     {
-      Clear_Console_CrsCell();
       m_topLine += m_crsRow - center;
       m_crsRow = center;
       Set_Console_CrsCell();
@@ -3042,7 +2995,6 @@ class Diff
 
       if( WR-1 <= OCL )
       {
-        Clear_Console_CrsCell();
         m_topLine -= WR - m_crsRow - 1;
         m_crsRow = WR-1;
         Set_Console_CrsCell();
@@ -3052,7 +3004,6 @@ class Diff
       else {
         // Cursor line cannot be moved to bottom, but can be moved closer to bottom
         // CrsLine() does not change:
-        Clear_Console_CrsCell();
         m_crsRow += m_topLine;
         m_topLine = 0;
         Set_Console_CrsCell();

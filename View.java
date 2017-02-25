@@ -128,62 +128,21 @@ class View
 //}
   void Set_crsCol( final int col )
   {
-    Clear_Console_CrsCell();
-
     m_crsCol = col;
 
     Set_Console_CrsCell();
   }
   void Set_crsRowCol( final int row, final int col )
   {
-    Clear_Console_CrsCell();
-
     m_crsRow = row;
     m_crsCol = col;
 
     Set_Console_CrsCell();
   }
-//void Clear_Console_CrsCell()
-//{
-//  // Set console current cursor cell to non-cursor hightlighted value:
-//  final int CL = CrsLine();
-//  final int CC = CrsChar();
-//
-//  final char  C = m_fb.Get( CL, CC );
-//  final Style s = Get_Style( CL, CC );
-//
-//  m_console.Set( Row_Win_2_GL( m_crsRow )
-//               , Col_Win_2_GL( m_crsCol )
-//               , C, s );
-//}
-  void Clear_Console_CrsCell()
-  {
-    // Set console current cursor cell to non-cursor hightlighted value:
-    final int CL = CrsLine();
-    final int CC = CrsChar();
-    final int LL = m_fb.LineLen( CL );
-
-    // For readability, display carriage return at end of line as a space
-    final char  C = m_fb.Get( CL, CC );
-    final Style S = ( '\r' == C && CC==(LL-1) )
-                  ? Style.NORMAL
-                  : Get_Style( CL, CC );
-
-    m_console.Set( Row_Win_2_GL( m_crsRow )
-                 , Col_Win_2_GL( m_crsCol )
-                 , C, S );
-  }
   void Set_Console_CrsCell()
   {
-    // Set console current cursor cell to cursor hightlighted value:
-    final int CL = CrsLine();
-    final int CC = CrsChar();
-
-    final char C = m_fb.Get( CL, CC );
-
-    m_console.Set( Row_Win_2_GL( m_crsRow )
-                 , Col_Win_2_GL( m_crsCol )
-                 , C, Style.CURSOR );
+    m_console.Set_Crs_Cell( Row_Win_2_GL( m_crsRow )
+                          , Col_Win_2_GL( m_crsCol ) );
   }
 
   void Update()
@@ -630,7 +589,6 @@ class View
 
       if( newTopLine < NUM_LINES )
       {
-        Clear_Console_CrsCell();
         m_crsCol = 0;
         m_topLine = newTopLine;
         // Dont let cursor go past the end of the file:
@@ -653,7 +611,6 @@ class View
     // Dont scroll if we are at the top of the file:
     if( 0<m_topLine )
     {
-      Clear_Console_CrsCell();
       //Leave m_crsRow unchanged.
       m_crsCol = 0;
 
@@ -796,8 +753,6 @@ class View
   void GoToCrsPos_NoWrite( final int ncp_crsLine
                          , final int ncp_crsChar )
   {
-    Clear_Console_CrsCell();
-
     // These moves refer to View of buffer:
     final boolean MOVE_DOWN  = BotLine()   < ncp_crsLine;
     final boolean MOVE_RIGHT = RightChar() < ncp_crsChar;
@@ -812,7 +767,6 @@ class View
     else if( MOVE_LEFT  ) m_leftChar = ncp_crsChar;
     m_crsCol   = ncp_crsChar - m_leftChar;
 
-  //Set_crsRowCol( m_crsRow, m_crsCol );
     Set_Console_CrsCell();
   }
 
@@ -2454,15 +2408,11 @@ class View
     }
   }
 
-  // This was crashing because
-  // Clear_Console_CrsCell() is called in Set_crsRow()
-  // after m_topLine is increased:
   void MoveCurrLineToTop()
   {
     if( 0<m_crsRow )
     {
       // Make changes manually:
-      Clear_Console_CrsCell();
       m_topLine += m_crsRow;
       m_crsRow = 0;
       Set_Console_CrsCell();
@@ -2480,7 +2430,6 @@ class View
     {
       // Cursor line cannot be moved to center, but can be moved closer to center
       // CrsLine() does not change:
-      Clear_Console_CrsCell();
       m_crsRow += m_topLine;
       m_topLine = 0;
       Set_Console_CrsCell();
@@ -2490,7 +2439,6 @@ class View
     else if( center <= OCL
           && center != m_crsRow )
     {
-      Clear_Console_CrsCell();
       m_topLine += m_crsRow - center;
       m_crsRow = center;
       Set_Console_CrsCell();
@@ -2507,7 +2455,6 @@ class View
 
       if( WR-1 <= OCL )
       {
-        Clear_Console_CrsCell();
         m_topLine -= WR - m_crsRow - 1;
         m_crsRow = WR-1;
         Set_Console_CrsCell();
@@ -2517,7 +2464,6 @@ class View
       else {
         // Cursor line cannot be moved to bottom, but can be moved closer to bottom
         // CrsLine() does not change:
-        Clear_Console_CrsCell();
         m_crsRow += m_topLine;
         m_topLine = 0;
         Set_Console_CrsCell();
@@ -2545,7 +2491,6 @@ class View
       if( m_crsCol < Math.min( LL-1, WorkingCols()-1 ) )
       {
         if( changed ) m_fb.Set( CL, CP, C, CONT_LAST_UPDATE );
-        else Clear_Console_CrsCell();
 
         // Need to move cursor right:
         m_crsCol++;
@@ -2554,7 +2499,6 @@ class View
       {
         // Need to scroll window right:
         if( changed ) m_fb.Set( CL, CP, C, CONT_LAST_UPDATE );
-        else Clear_Console_CrsCell();
 
         m_leftChar++;
       }
@@ -3184,24 +3128,35 @@ class View
     }
     m_inVisualMode = false;
   }
-//boolean Do_s_v_cursor_at_end_of_line()
+//void Do_s_v()
 //{
 //  final int LL = m_fb.LineLen( CrsLine() );
+//  final boolean
+//  CURSOR_AT_END_OF_LINE = 0<v_st_char
+//                       && 0<LL ? LL-1 <= CrsChar() : false;
+//  Do_x_v();
 //
 //  if( m_inVisualBlock )
 //  {
-//    return 0<LL ? LL-1 <= CrsChar()
-//                : 0    <  CrsChar();
+//    if( CURSOR_AT_END_OF_LINE ) Do_a_vb();
+//    else                        Do_i_vb(); 
 //  }
-//  return 0<LL ? LL-1 <= CrsChar() : false;
+//  else {
+//    if( CURSOR_AT_END_OF_LINE ) Do_a();
+//    else                        Do_i();
+//  }
+//  m_inVisualMode = false;
 //}
   void Do_s_v()
   {
-    Do_x_v();
-
     final int LL = m_fb.LineLen( CrsLine() );
     final boolean
-    CURSOR_AT_END_OF_LINE = 0<LL ? LL-1 <= CrsChar() : false;
+    CURSOR_AT_END_OF_LINE = 0<v_st_char
+                         && 0<v_fn_char
+                         && 0<LL ? (LL-1 <= v_st_char
+                                 || LL-1 <= v_fn_char)
+                                 : false;
+    Do_x_v();
 
     if( m_inVisualBlock )
     {
