@@ -128,7 +128,9 @@ class FileBuf
           || Find_File_Type_CMAKE()
           || Find_File_Type_CPP ()
           || Find_File_Type_IDL ()
+          || Find_File_Type_HTML()
           || Find_File_Type_Java()
+          || Find_File_Type_JS()
           || Find_File_Type_Make()
           || Find_File_Type_Python()
           || Find_File_Type_SQL ()
@@ -204,6 +206,21 @@ class FileBuf
     }
     return false;
   }
+  boolean Find_File_Type_HTML()
+  {
+    if( m_fname.endsWith(".html"    )
+     || m_fname.endsWith(".html.new")
+     || m_fname.endsWith(".html.old")
+     || m_fname.endsWith(".htm"    )
+     || m_fname.endsWith(".htm.new")
+     || m_fname.endsWith(".htm.old") )
+    {
+      m_file_type = File_Type.HTML;
+      m_Hi = new Highlight_HTML( this );
+      return true;
+    }
+    return false;
+  }
   boolean Find_File_Type_Java()
   {
     if( m_fname.endsWith(".java"    )
@@ -212,6 +229,18 @@ class FileBuf
     {
       m_file_type = File_Type.JAVA;
       m_Hi = new Highlight_Java( this );
+      return true;
+    }
+    return false;
+  }
+  boolean Find_File_Type_JS()
+  {
+    if( m_fname.endsWith(".js"    )
+     || m_fname.endsWith(".js.new")
+     || m_fname.endsWith(".js.old") )
+    {
+      m_file_type = File_Type.JS;
+      m_Hi = new Highlight_JS( this );
       return true;
     }
     return false;
@@ -368,10 +397,20 @@ class FileBuf
         m_file_type = File_Type.IDL;
         m_Hi = new Highlight_IDL( this );
       }
+      else if( syn.equals("html") )
+      {
+        m_file_type = File_Type.HTML;
+        m_Hi = new Highlight_HTML( this );
+      }
       else if( syn.equals("java") )
       {
         m_file_type = File_Type.JAVA;
         m_Hi = new Highlight_Java( this );
+      }
+      else if( syn.equals("js") )
+      {
+        m_file_type = File_Type.JS;
+        m_Hi = new Highlight_JS( this );
       }
       else if( syn.equals("make") )
       {

@@ -3019,45 +3019,49 @@ class Diff
     FileBuf pfb = pV.m_fb;
     if( pfb.NumLines() == 0 ) return "";
 
-    final int CL = CrsLine();
     // Convert CL, which is diff line, to view line:
     final int CLv = ViewLine( pV, CrsLine() );
     final int LL  = pfb.LineLen( CLv );
 
-    StringBuilder new_star = null;
+    StringBuilder pattern = null;
 
     if( 0<LL )
     {
-      new_star = new StringBuilder();
+      pattern = new StringBuilder();
 
       MoveInBounds();
       final int  CC = CrsChar();
-      final char c  = pfb.Get( CLv,  CC );
+      final char C  = pfb.Get( CLv,  CC );
 
-      if( Utils.IsIdent( c ) )
+      if( Utils.IsIdent( C ) )
       {
-        new_star.append( c );
+        pattern.append( C );
 
         // Search forward:
         for( int k=CC+1; k<LL; k++ )
         {
           final char c1 = pfb.Get( CLv, k );
-          if( Utils.IsIdent( c1 ) ) new_star.append( c1 );
+          if( Utils.IsIdent( c1 ) ) pattern.append( c1 );
           else                      break;
         }
         // Search backward:
         for( int k=CC-1; 0<=k; k-- )
         {
           final char c2 = pfb.Get( CLv, k );
-          if( Utils.IsIdent( c2 ) ) new_star.insert( 0, c2 );
+          if( Utils.IsIdent( c2 ) ) pattern.insert( 0, c2 );
           else                      break;
         }
       }
       else {
-        if( !Utils.IsSpace( c ) ) new_star.append( c );
+        if( !Utils.IsSpace( C ) ) pattern.append( C );
+      }
+      if( 0<pattern.length() )
+      {
+        pattern.insert( 0, "\\b" );
+        pattern.append(    "\\b" );
       }
     }
-    return null != new_star ? new_star.toString() : "";
+    return null != pattern ? pattern.toString() : "";
   }
 
   void Do_i()

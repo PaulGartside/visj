@@ -3042,24 +3042,21 @@ public class VisSw implements VisIF
         v0 = DoDiff_FindRegFileView( fb1, fb0, 0, v0 );
       }
       else {
-        if( !Paths.get( fb0.m_fname ).toFile().exists() )
+        if( !fb0.m_hname.equals(SHELL_BUF_NAME)
+         && !Paths.get( fb0.m_fname ).toFile().exists() )
         {
           ok = false;
-          Utils.Log("");
-          Utils.Log( fb0.m_fname + " does not exist");
+          Window_Message("\n"+ fb0.m_fname + " does not exist\n\n");
         }
-        if( !Paths.get( fb1.m_fname ).toFile().exists() )
+        if( !fb1.m_hname.equals(SHELL_BUF_NAME)
+         && !Paths.get("\n"+ fb1.m_fname ).toFile().exists() )
         {
           ok = false;
-          Utils.Log("");
-          Utils.Log( fb1.m_fname + " does not exist");
+          Window_Message("\n"+ fb1.m_fname + " does not exist\n\n");
         }
       }
-      if( !ok )
+      if( ok )
       {
-        System.exit( 0 );
-      }
-      else {
         ok = m_diff.Run( v0, v1 );
         if( ok ) {
           m_diff_mode = true;

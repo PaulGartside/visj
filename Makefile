@@ -70,8 +70,10 @@ source_fx: classes_fx \
            classes_fx/Highlight_Code.class \
            classes_fx/Highlight_CPP.class \
            classes_fx/Highlight_Dir.class \
+           classes_fx/Highlight_HTML.class \
            classes_fx/Highlight_IDL.class \
            classes_fx/Highlight_Java.class \
+           classes_fx/Highlight_JS.class \
            classes_fx/Highlight_Make.class \
            classes_fx/Highlight_Python.class \
            classes_fx/Highlight_SQL.class \
@@ -125,6 +127,7 @@ source_sw: classes_sw \
            classes_sw/Highlight_Code.class \
            classes_sw/Highlight_CPP.class \
            classes_sw/Highlight_Dir.class \
+           classes_sw/Highlight_HTML.class \
            classes_sw/Highlight_IDL.class \
            classes_sw/Highlight_Java.class \
            classes_sw/Highlight_Make.class \
@@ -145,7 +148,7 @@ source_sw: classes_sw \
            classes_sw/Paste_Pos.class \
            classes_sw/Ptr_InputStream.class \
            classes_sw/Ptr_Int.class \
-           classes_fx/Ptr_Double.class \
+           classes_sw/Ptr_Double.class \
            classes_sw/Ptr_String.class \
            classes_sw/Ptr_StringBuilder.class \
            classes_sw/SameArea.class \

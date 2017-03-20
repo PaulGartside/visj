@@ -32,21 +32,30 @@ abstract class Highlight_Base
   abstract void Run_Range( final CrsPos st
                          , final int    fn );
 
-  // Find keyes starting on st up to but not including fn line
+  // Find keyes starting from st up to but not including fn line
   //
   void Hi_FindKey_In_Range( HiKeyVal[] HiPairs
                           , final CrsPos st
                           , final int    fn )
   {
+    Hi_FindKey_In_Range( HiPairs, st.crsLine, st.crsChar, fn );
+  }
+  // Find keyes starting from st up to but not including fn line
+  //
+  void Hi_FindKey_In_Range( HiKeyVal[] HiPairs
+                          , final int st_line
+                          , final int st_char
+                          , final int fn )
+  {
     final int NUM_LINES = m_fb.NumLines();
  
-    for( int l=st.crsLine; l<fn && l<NUM_LINES; l++ )
+    for( int l=st_line; l<fn && l<NUM_LINES; l++ )
     {
       final Line lr = m_fb.GetLine( l );
       final Line sr = m_fb.GetStyle( l );
       final int LL = lr.length();
  
-      final int st_pos = st.crsLine==l ? st.crsChar : 0;
+      final int st_pos = st_line==l ? st_char : 0;
       final int fn_pos = 0<LL ? LL-1 : 0;
  
       for( int p=st_pos; p<=fn_pos && p<LL; p++ )
