@@ -140,27 +140,6 @@ public class VisFx extends Application
   {
     m_scene.setCursor( Cursor.DEFAULT );
   }
-//void Scheduler()
-//{
-//  try {
-//    while( 0<m_states.size() )
-//    {
-//      // Take:
-//      m_FX_running = true;
-//
-//      Platform.runLater( m_states.peekFirst() );
-//
-//      while( m_FX_running )
-//      {
-//        Utils.Sleep( 1 );
-//      }
-//    }
-//  }
-//  catch( Exception e )
-//  {
-//    Handle_Exception( e );
-//  }
-//}
   void Scheduler()
   {
     try {
@@ -179,7 +158,6 @@ public class VisFx extends Application
   }
   public void Give()
   {
-  //m_FX_running = false;
     m_run_sem.release();
   }
   void Scene_Width_CB()
@@ -302,27 +280,38 @@ public class VisFx extends Application
   {
     boolean run_diff = false;
 
-    // User file buffers, 5, 6, ...
-    for( int k=0; k<m_args.size(); k++ )
+    if( 0==m_args.size() )
     {
-      if( m_args.get(k).equals("-d") )
+      // If user does not supply arguments, open current directory:
+      InitUserFiles_AddFile(".");
+    }
+    else {
+      // User file buffers, 5, 6, ...
+      for( int k=0; k<m_args.size(); k++ )
       {
-        run_diff = true;
-      }
-      else {
-        String file_name = Utils.FindFullFileName_Process( m_args.get(k) );
-
-        if( !HaveFile( file_name, null ) )
+        if( m_args.get(k).equals("-d") )
         {
-          FileBuf fb = new FileBuf( this, file_name, true );
-
-          boolean ok = fb.ReadFile();
-
-          if( ok ) Add_FileBuf_2_Lists_Create_Views( fb, file_name );
+          run_diff = true;
+        }
+        else {
+          InitUserFiles_AddFile( m_args.get(k) );
         }
       }
     }
     return run_diff;
+  }
+  void InitUserFiles_AddFile( String relative_name )
+  {
+    String full_name = Utils.FindFullFileName_Process( relative_name );
+
+    if( !HaveFile( full_name, null ) )
+    {
+      FileBuf fb = new FileBuf( this, full_name, true );
+
+      boolean ok = fb.ReadFile();
+
+      if( ok ) Add_FileBuf_2_Lists_Create_Views( fb, full_name );
+    }
   }
   //-------------------------
   //| u1| be| he| u5| u3| u2|
@@ -2478,8 +2467,11 @@ public class VisFx extends Application
     else if( m_sb.toString().equals("cs2") )   m_console.Set_Color_Scheme_2();
     else if( m_sb.toString().equals("cs3") )   m_console.Set_Color_Scheme_3();
     else if( m_sb.toString().equals("cs4") )   m_console.Set_Color_Scheme_4();
+    else if( m_sb.toString().equals("dos2unix")) Exe_dos2unix();
+    else if( m_sb.toString().equals("unix2dos")) Exe_unix2dos();
     else if( m_sb.toString().startsWith("cd"))Exe_Colon_cd();
-    else if( m_sb.toString().startsWith("syn"))Exe_Colon_Syntax();
+    else if( m_sb.toString().startsWith("syn="))Exe_Colon_Syntax();
+    else if( m_sb.toString().startsWith("detab="))Exe_Colon_Detab();
     else if( m_sb.charAt(0)=='w' )            Exe_Colon_w();
     else if( m_sb.charAt(0)=='b' )            Exe_Colon_b();
     else if( m_sb.charAt(0)=='n' )            Exe_Colon_n();
@@ -3112,7 +3104,7 @@ public class VisFx extends Application
           Window_Message("\n"+ fb0.m_fname + " does not exist\n\n");
         }
         if( !fb1.m_hname.equals(SHELL_BUF_NAME)
-         && !Paths.get("\n"+ fb1.m_fname ).toFile().exists() )
+         && !Paths.get( fb1.m_fname ).toFile().exists() )
         {
           ok = false;
           Window_Message("\n"+ fb1.m_fname + " does not exist\n\n");
@@ -3273,6 +3265,36 @@ public class VisFx extends Application
     {
       CV().m_fb.Set_File_Type( toks[1] );
     }
+  }
+
+  void Exe_Colon_Detab()
+  {
+    String[] toks = m_sb.toString().split("=");
+
+    if( toks.length==2 )
+    {
+      Ptr_Int ptr_int = new Ptr_Int( 0 );
+
+      if( Utils.String_2_Int( toks[1], ptr_int ) )
+      {
+        final int tab_sz = ptr_int.val;
+
+        if( 0 < tab_sz && tab_sz <= 32 )
+        {
+          CV().m_fb.RemoveTabs_SpacesAtEOLs( tab_sz );
+        }
+      }
+    }
+  }
+
+  void Exe_dos2unix()
+  {
+    CV().m_fb.dos2unix();
+  }
+
+  void Exe_unix2dos()
+  {
+    CV().m_fb.unix2dos();
   }
 
   void Exe_Colon_MapStart()
@@ -3464,10 +3486,10 @@ public class VisFx extends Application
       else if( m_sb.toString().equals("be") ) GoToFileBuffer();  // :be
       else if( m_sb.toString().equals("bm") ) GoToMsgBuffer();   // :bm
       else {                                                     // :b<number>
-        Ptr_Int buffer_num = new Ptr_Int( 0 );
-        if( Utils.String_2_Int( m_sb.substring(1), buffer_num ) )
+        Ptr_Int ptr_int = new Ptr_Int( 0 );
+        if( Utils.String_2_Int( m_sb.substring(1), ptr_int ) )
         {
-          GoToBuffer( buffer_num.val );
+          GoToBuffer( ptr_int.val );
         }
         else {
           CV().PrintCursor();
@@ -3914,9 +3936,15 @@ public class VisFx extends Application
 
   void Exe_Colon_GoToLine()
   {
-    final int line_num = Integer.valueOf( m_sb.toString() );
-    if( m_diff_mode ) m_diff.GoToLine( line_num );
-    else                CV().GoToLine( line_num );
+    Ptr_Int ptr_int = new Ptr_Int( 0 );
+
+    if( Utils.String_2_Int( m_sb.toString(), ptr_int ) )
+    {
+      final int line_num = ptr_int.val;
+
+      if( m_diff_mode ) m_diff.GoToLine( line_num );
+      else                CV().GoToLine( line_num );
+    }
   }
 
   void UpdateViewsPositions()
@@ -4142,7 +4170,6 @@ public class VisFx extends Application
   boolean            m_diff_mode;
   boolean            m_run_mode; // True if running shell command
   private
-//boolean            m_FX_running; // True if FX platform thread is running
   Semaphore          m_run_sem = new Semaphore( 1 );
   Diff               m_diff;
   StringBuilder      m_sb        = new StringBuilder();

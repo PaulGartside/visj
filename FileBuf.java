@@ -723,8 +723,8 @@ class FileBuf
       final int LL = m_lines.get(k).length();
       for( int i=0; i<LL; i++ )
       {
-        final int c = m_lines.get(k).charAt(i);
-        bos.write( c );
+        final int C = m_lines.get(k).charAt(i);
+        bos.write( C );
       }
       if( k<NUM_LINES-1 || m_LF_at_EOF )
       {
@@ -1499,6 +1499,163 @@ class FileBuf
 
     m_save_history = true;
   }
+
+  void RemoveTabs_SpacesAtEOLs( final int tab_sz )
+  {
+    int num_tabs_removed = 0;
+    int num_spcs_removed = 0;
+
+    final int NUM_LINES = m_lines.size();
+
+    for( int l=0; l<NUM_LINES; l++ )
+    {
+      num_tabs_removed += RemoveTabs_from_line( l, tab_sz );
+      num_spcs_removed += RemoveSpcs_from_EOL( l );
+    }
+    if( 0 < num_tabs_removed && 0 < num_spcs_removed )
+    {
+      Update();
+      m_vis.CmdLineMessage("Removed "+ num_tabs_removed
+                          +" tabs, "+ num_spcs_removed +" spaces");
+    }
+    else if( 0 < num_tabs_removed )
+    {
+      Update();
+      m_vis.CmdLineMessage("Removed "+ num_tabs_removed +" tabs");
+    }
+    else if( 0 < num_spcs_removed ) 
+    {
+      Update();
+      m_vis.CmdLineMessage("Removed "+ num_spcs_removed +" spaces");
+    }
+    else {
+      m_vis.CmdLineMessage("No tabs or spaces removed");
+    }
+  }
+  // Returns number of tabs removed
+  int RemoveTabs_from_line( final int l, final int tab_sz )
+  {
+    int tabs_removed = 0;
+
+    Line l_c = m_lines.get(l);
+    final int LL = l_c.length();
+    int cnum_t = 0; // char number with respect to tabs
+
+    for( int p=0; p<LL; p++ )
+    {
+      final int C = l_c.charAt(p);
+
+      if( C != '\t' ) cnum_t += 1;
+      else {
+        tabs_removed++;
+        final int num_spaces = tab_sz-(cnum_t%tab_sz);
+        Set( l, p, ' ', false );
+        for( int i=1; i<num_spaces; i++ )
+        {
+          p++;
+          InsertChar( l, p, ' ');
+        }
+        cnum_t = 0;
+      }
+    }
+    return tabs_removed;
+  }
+  // Returns number of spaces removed
+  int RemoveSpcs_from_EOL( final int l )
+  {
+    int spaces_removed = 0;
+
+    Line l_c = m_lines.get(l);
+    final int LL = l_c.length();
+
+    if( 0 < LL )
+    {
+      final int end_C = l_c.charAt(LL-1);
+      final int logical_EOL = end_C == '\r'
+                            ? LL-2  // Windows line ending
+                            : LL-1; // Unix line ending
+      boolean done = false;
+      for( int p=logical_EOL; !done && -1<p; p-- )
+      {
+        if( ' ' == l_c.charAt( p ) )
+        {
+          RemoveChar( l, p );
+          spaces_removed++;
+        }
+        else done = true;
+      }
+    }
+    return spaces_removed;
+  }
+
+  void dos2unix()
+  {
+    int num_CRs_removed = 0;
+
+    final int NUM_LINES = m_lines.size();
+
+    for( int l=0; l<NUM_LINES; l++ )
+    {
+      Line l_c = m_lines.get(l);
+      final int LL = l_c.length();
+
+      if( 0 < LL )
+      {
+        final int C = l_c.charAt( LL-1 );
+
+        if( C == '\r' )
+        {
+          RemoveChar( l, LL-1 );
+          num_CRs_removed++;
+        }
+      }
+    }
+    if( 0 < num_CRs_removed )
+    {
+      Update();
+      m_vis.CmdLineMessage("Removed "+ num_CRs_removed +" CRs");
+    }
+    else {
+      m_vis.CmdLineMessage("No CRs removed");
+    }
+  }
+
+  void unix2dos()
+  {
+    int num_CRs_added = 0;
+
+    final int NUM_LINES = m_lines.size();
+
+    for( int l=0; l<NUM_LINES; l++ )
+    {
+      Line l_c = m_lines.get(l);
+      final int LL = l_c.length();
+
+      if( 0 < LL )
+      {
+        final int C = l_c.charAt( LL-1 );
+
+        if( C != '\r' )
+        {
+          PushChar( l, '\r' );
+          num_CRs_added++;
+        }
+      }
+      else {
+        PushChar( l, '\r' );
+        num_CRs_added++;
+      }
+    }
+    if( 0 < num_CRs_added )
+    {
+      Update();
+      m_vis.CmdLineMessage("Added "+ num_CRs_added +" CRs");
+    }
+    else {
+      m_vis.CmdLineMessage("No CRs added");
+    }
+  }
+
   VisIF                 m_vis;   // Not sure if we need this or should use m_views
   final String          m_fname; // Full path and filename head = m_pname + m_hname
   final String          m_pname; // Full path     = m_fname - m_hname, (for directories this is the same a m_fname)

@@ -287,10 +287,10 @@ class Diff
   // Return the diff line of the view line on the short side
   int DiffLine_S( final int view_line )
   {
-    final int LEN = m_DI_List_S.size();
-
     if( 0 < m_vS.m_fb.NumLines() )
     {
+      final int LEN = m_DI_List_S.size();
+
       // Diff line is greater or equal to view line,
       // so start at view line number and search forward
       boolean ok = true;
@@ -313,10 +313,10 @@ class Diff
   // Return the diff line of the view line on the long side
   int DiffLine_L( final int view_line )
   {
-    final int LEN = m_DI_List_L.size();
-
     if( 0 < m_vL.m_fb.NumLines() )
     {
+      final int LEN = m_DI_List_L.size();
+
       // Diff line is greater or equal to view line,
       // so start at view line number and search forward
       boolean ok = true;
@@ -832,6 +832,7 @@ class Diff
 
   void Sort_SameList()
   {
+    // Sorts m_sameList from least to greatest in terms of SameArea.m_ln_l
     final int SLL = m_sameList.size();
 
     for( int k=0; k<SLL; k++ )
@@ -1207,6 +1208,7 @@ class Diff
 
   void Sort_SimiList()
   {
+    // Sorts m_simiList from least to greatest in terms of SameLines.ln_l
     final int SLL = m_simiList.size();
 
     for( int k=0; k<SLL; k++ )
@@ -1245,6 +1247,8 @@ class Diff
                           , ArrayList<Diff_Info> DI_List_s
                           , ArrayList<Diff_Info> DI_List_l )
   {
+    // Since diff info short has by default a Diff_Type of deleted,
+    // it gets the line number of the previous non-deleted line.
     // Diff info short line number:
     int dis_ln = 0<da_ln_s ? da_ln_s-1 : 0;
 
@@ -1469,59 +1473,6 @@ class Diff
     }
   }
 
-//void GoToCrsPos_Write_Visual( final int OCL, final int OCP
-//                            , final int NCL, final int NCP )
-//{
-//  View pV = m_vis.CV();
-//  // Visual (visual start) < (new cursor pos)
-//  //      (old cursor pos) < (new cursor pos)
-//  final boolean VST_LT_NCP = v_st_line < NCL || (v_st_line == NCL && v_st_char < NCP);
-//  final boolean NCP_LT_VST = NCL < v_st_line || (v_st_line == NCL && NCP < v_st_char);
-//
-//  final boolean OCP_LT_NCP = OCL < NCL || (OCL == NCL && OCP < NCP);
-//  final boolean NCP_LT_OCP = NCL < OCL || (OCL == NCL && NCP < OCP);
-//  final boolean OCP_LT_VST = OCL < v_st_line || (OCL == v_st_line && OCP < v_st_char);
-//  final boolean VST_LT_OCP = v_st_line < OCL || (OCL == v_st_line && v_st_char < OCP);
-//
-//  if( OCP_LT_NCP ) // Cursor moved forward
-//  {
-//    if( NCP_LT_VST )
-//    {
-//      GoToCrsPos_WV_Forward( OCL, OCP, NCL, NCP );
-//    }
-//    else // VST <= NCP
-//    {
-//      if( OCP_LT_VST )
-//      {
-//        GoToCrsPos_WV_Forward( OCL, OCP, v_st_line, v_st_char );
-//        GoToCrsPos_WV_Forward( v_st_line, v_st_char, NCL, NCP );
-//      }
-//      else {
-//        GoToCrsPos_WV_Forward( OCL, OCP, NCL, NCP );
-//      }
-//    }
-//  }
-//  else // NCP_LT_OCP // Cursor moved backward
-//  {
-//    if( VST_LT_NCP )
-//    {
-//      GoToCrsPos_WV_Backward( OCL, OCP, NCL, NCP );
-//    }
-//    else // NCP <= VST
-//    {
-//      if( VST_LT_OCP )
-//      {
-//        GoToCrsPos_WV_Backward( OCL, OCP, v_st_line, v_st_char );
-//        GoToCrsPos_WV_Backward( v_st_line, v_st_char, NCL, NCP );
-//      }
-//      else {
-//        GoToCrsPos_WV_Backward( OCL, OCP, NCL, NCP );
-//      }
-//    }
-//  }
-//  Set_crsRowCol( NCL - m_topLine, NCP - m_leftChar );
-//  PrintCursor(); // Does m_console.Update()
-//}
   void GoToCrsPos_Write_Visual( final int OCL, final int OCP
                               , final int NCL, final int NCP )
   {

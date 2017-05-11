@@ -320,36 +320,38 @@ class View
     final int CC = CrsChar(); // Char position
     final int LL = m_fb.LineLen( CL );
     final int WC = WorkingCols();
-
-    String str = "";
-    // When inserting text at the end of a line, CrsChar() == LL
-    if( 0<LL && CC < LL ) // Print current char info:
+    if( 0 < WC )
     {
-      final int C = m_fb.Get( CL, CC );
-  
-      if     (  9 == C ) str = String.valueOf( C ) +",\\t";
-      else if( 13 == C ) str = String.valueOf( C ) +",\\r";
-      else               str = String.valueOf( C ) +","+ (char)C;
+      String str = "";
+      // When inserting text at the end of a line, CrsChar() == LL
+      if( 0<LL && CC < LL ) // Print current char info:
+      {
+        final int C = m_fb.Get( CL, CC );
+
+        if     (  9 == C ) str = String.valueOf( C ) +",\\t";
+        else if( 13 == C ) str = String.valueOf( C ) +",\\r";
+        else               str = String.valueOf( C ) +","+ (char)C;
+      }
+      final int fileSize = m_fb.GetSize();
+      final int  crsByte = m_fb.GetCursorByte( CL, CC );
+      int percent = (char)(100*(double)crsByte/(double)fileSize + 0.5);
+      // Screen width so far
+      m_sb.setLength( 0 );
+      m_sb.append( "Pos=("+(CL+1)+","+(CC+1)+")"
+                 + "  ("+percent+"%, "+crsByte
+                 + Utils.DIR_DELIM_STR + m_fb.GetSize()+")"
+                 + "  Char=("+str+")  ");
+
+      final int SW = m_sb.length(); // Screen width so far
+
+      if     ( SW < WC ) { for( int k=SW; k<WC; k++ ) m_sb.append(' '); }
+      else if( WC < SW ) { m_sb.setLength( WC ); } //< Truncate extra part
+
+      m_console.SetS( Sts__Line_Row()
+                    , Col_Win_2_GL( 0 )
+                    , m_sb.toString()
+                    , Style.STATUS );
     }
-    final int fileSize = m_fb.GetSize();
-    final int  crsByte = m_fb.GetCursorByte( CL, CC );
-    int percent = (char)(100*(double)crsByte/(double)fileSize + 0.5);
-    // Screen width so far
-    m_sb.setLength( 0 );
-    m_sb.append( "Pos=("+(CL+1)+","+(CC+1)+")"
-               + "  ("+percent+"%, "+crsByte
-               + Utils.DIR_DELIM_STR + m_fb.GetSize()+")"
-               + "  Char=("+str+")  ");
-
-    final int SW = m_sb.length(); // Screen width so far
-
-    if     ( SW < WC ) { for( int k=SW; k<WC; k++ ) m_sb.append(' '); }
-    else if( WC < SW ) { m_sb.setLength( WC ); } //< Truncate extra part
-
-    m_console.SetS( Sts__Line_Row()
-                  , Col_Win_2_GL( 0 )
-                  , m_sb.toString()
-                  , Style.STATUS );
   }
   void PrintFileLine()
   {
@@ -383,7 +385,7 @@ class View
       m_console.SetS( Cmd__Line_Row(), Col_Win_2_GL( 0 ), "--RUNNING--", Style.BANNER );
     }
     final int WC = WorkingCols();
- 
+
     for( ; col<WC; col++ )
     {
       m_console.Set( Cmd__Line_Row(), Col_Win_2_GL( col ), ' ', Style.NORMAL );
@@ -526,9 +528,9 @@ class View
     final int NUM_LINES = m_fb.NumLines();
 
     int bottom_line_in_view = m_topLine + WorkingRows()-1;
-  
+
     bottom_line_in_view = Math.min( NUM_LINES-1, bottom_line_in_view );
-  
+
     GoToCrsPos_Write( bottom_line_in_view, 0 );
   }
   void GoToMidLineInView()
@@ -932,7 +934,7 @@ class View
       final int NCLL = m_fb.LineLen( NCL ); // New cursor line length
       if( 0<NCLL ) {
         final int END_LAST_LINE = Math.min( RightChar(), NCLL-1 );
-  
+
         // Print from beginning of next line to new cursor position:
         for( int k=END_LAST_LINE; NCP<=k; k-- )
         {
@@ -954,29 +956,29 @@ class View
     final int vis_box_rite = Math.max( v_st_char, Math.max( OCP, NCP ) );
     final int vis_box_top  = Math.min( v_st_line, Math.min( OCL, NCL ) );
     final int vis_box_bot  = Math.max( v_st_line, Math.max( OCL, NCL ) );
-  
+
     final int draw_box_left = Math.max( m_leftChar , vis_box_left );
     final int draw_box_rite = Math.min( RightChar(), vis_box_rite );
     final int draw_box_top  = Math.max( m_topLine  , vis_box_top  );
     final int draw_box_bot  = Math.min( BotLine()  , vis_box_bot  );
-  
+
     for( int l=draw_box_top; l<=draw_box_bot; l++ )
     {
       final int LL = m_fb.LineLen( l );
-  
+
       for( int k=draw_box_left; k<LL && k<=draw_box_rite; k++ )
       {
         // On some terminals, the cursor on reverse video on white space does not
         // show up, so to prevent that, do not reverse video the cursor position:
         final char  C     = m_fb.Get ( l, k );
         final Style style = Get_Style( l, k );
-  
+
         if( NCL==l && NCP==k )
         {
           if( RV_Style( style ) )
           {
             final Style NonRV_style = RV_Style_2_NonRV( style );
-  
+
             m_console.Set( Line_2_GL( l ), Char_2_GL( k ), C, NonRV_style );
           }
         }
@@ -1100,12 +1102,12 @@ class View
   void TilePos_2_x()
   {
     final int CON_COLS = m_console.Num_Cols();
-  
+
     // FULL     , BOT__HALF    , LEFT_QTR
     // LEFT_HALF, TOP__LEFT_QTR, TOP__LEFT_8TH
     // TOP__HALF, BOT__LEFT_QTR, BOT__LEFT_8TH
     m_x = 0;
-  
+
     if( Tile_Pos.RITE_HALF         == m_tile_pos
      || Tile_Pos.TOP__RITE_QTR     == m_tile_pos
      || Tile_Pos.BOT__RITE_QTR     == m_tile_pos
@@ -1132,7 +1134,7 @@ class View
   void TilePos_2_y()
   {
     final int CON_ROWS = m_console.Num_Rows();
-  
+
     // FULL         , LEFT_CTR__QTR
     // LEFT_HALF    , RITE_CTR__QTR
     // RITE_HALF    , RITE_QTR
@@ -1141,7 +1143,7 @@ class View
     // TOP__RITE_QTR, TOP__RITE_CTR_8TH
     // LEFT_QTR     , TOP__RITE_8TH
     m_y = 0;
-  
+
     if( Tile_Pos.BOT__HALF         == m_tile_pos
      || Tile_Pos.BOT__LEFT_QTR     == m_tile_pos
      || Tile_Pos.BOT__RITE_QTR     == m_tile_pos
@@ -1194,7 +1196,7 @@ class View
   {
     final int CON_COLS = m_console.Num_Cols();
     final int ODD_COLS = CON_COLS%4;
-  
+
     // LEFT_QTR     , TOP__LEFT_8TH    , BOT__LEFT_8TH    ,
     // LEFT_CTR__QTR, TOP__LEFT_CTR_8TH, BOT__LEFT_CTR_8TH,
     // RITE_CTR__QTR, TOP__RITE_CTR_8TH, BOT__RITE_CTR_8TH,
@@ -1219,15 +1221,15 @@ class View
     if( ((Tile_Pos.RITE_HALF         == m_tile_pos) && (ODD_COLS==1 || ODD_COLS==3))
      || ((Tile_Pos.TOP__RITE_QTR     == m_tile_pos) && (ODD_COLS==1 || ODD_COLS==3))
      || ((Tile_Pos.BOT__RITE_QTR     == m_tile_pos) && (ODD_COLS==1 || ODD_COLS==3))
-  
+
      || ((Tile_Pos.RITE_QTR          == m_tile_pos) && (ODD_COLS==1 || ODD_COLS==2 || ODD_COLS==3))
      || ((Tile_Pos.TOP__RITE_8TH     == m_tile_pos) && (ODD_COLS==1 || ODD_COLS==2 || ODD_COLS==3))
      || ((Tile_Pos.BOT__RITE_8TH     == m_tile_pos) && (ODD_COLS==1 || ODD_COLS==2 || ODD_COLS==3))
-  
+
      || ((Tile_Pos.LEFT_CTR__QTR     == m_tile_pos) && (ODD_COLS==2 || ODD_COLS==3))
      || ((Tile_Pos.TOP__LEFT_CTR_8TH == m_tile_pos) && (ODD_COLS==2 || ODD_COLS==3))
      || ((Tile_Pos.BOT__LEFT_CTR_8TH == m_tile_pos) && (ODD_COLS==2 || ODD_COLS==3))
-  
+
      || ((Tile_Pos.RITE_CTR__QTR     == m_tile_pos) && (ODD_COLS==3))
      || ((Tile_Pos.TOP__RITE_CTR_8TH == m_tile_pos) && (ODD_COLS==3))
      || ((Tile_Pos.BOT__RITE_CTR_8TH == m_tile_pos) && (ODD_COLS==3)) )
@@ -1246,7 +1248,7 @@ class View
   String GetFileName_UnderCursor()
   {
     StringBuilder fname = null;
- 
+
     final int CL = CrsLine();
     final int LL = m_fb.LineLen( CL );
 
@@ -1475,7 +1477,7 @@ class View
   void ReplaceAddChars( final char C )
   {
     if( m_fb.NumLines()==0 ) m_fb.PushLine();
-  
+
     final int CL = CrsLine();
     final int CP = CrsChar();
     final int LL = m_fb.LineLen( CL );
@@ -1509,7 +1511,7 @@ class View
     Line new_line = new Line();
     final int OLL = m_fb.LineLen( CrsLine() );  // Old line length
     final int OCP = CrsChar();                  // Old cursor position
-  
+
     for( int k=OCP; k<OLL; k++ )
     {
       final char C = m_fb.RemoveChar( CrsLine(), OCP );
@@ -1695,14 +1697,14 @@ class View
         ident = false;
       }
       final int START_C = OCL==l ? OCP : 0;
-  
+
       for( int p=START_C; (!found_space || !found_word) && p<LL; p++ )
       {
         ncp_crsLine = l;
         ncp_crsChar = p;
-  
+
         final char C = m_fb.Get( l, p );
-  
+
         if( found_space  )
         {
           if( IsWord( C, ident ) ) found_word = true;
@@ -1736,7 +1738,7 @@ class View
 
     final int OCL = CrsLine(); // Old cursor line
     final int LL  = m_fb.LineLen( OCL );
-  
+
     if( LL < CrsChar() ) // Since cursor is now allowed past EOL,
     {                    // it may need to be moved back:
       if( 0<LL && !Utils.IsSpace( m_fb.Get( OCL, LL-1 ) ) )
@@ -1768,14 +1770,14 @@ class View
         ident = false;
       }
       final int START_C = OCL==l ? OCP-1 : LL2-1;
-  
+
       for( int p=START_C; (!found_space || !found_word) && -1<p; p-- )
       {
         ncp_crsLine = l;
         ncp_crsChar = p;
-  
+
         final char C = m_fb.Get( l, p );
-  
+
         if( found_word  )
         {
           if( !IsWord( C, ident ) || p==0 ) found_space = true;
@@ -2066,8 +2068,8 @@ class View
     {
       Line nlr = new Line();
 
-      final int P_st = Math.min( st_char, OLL-1 ); 
-      final int P_fn = Math.min( fn_char, OLL-1 );  
+      final int P_st = Math.min( st_char, OLL-1 );
+      final int P_fn = Math.min( fn_char, OLL-1 );
 
       int LL = OLL;
 
@@ -2197,20 +2199,20 @@ class View
     {
       final int NLL = m_vis.get_reg().get(k).length();  // New line length
       final int OCL = CrsLine();                        // Old cursor line
-  
+
       if( 0 == k ) // Add to current line
       {
         MoveInBounds();
         final int OLL = m_fb.LineLen( OCL );
         final int OCP = CrsChar();               // Old cursor position
-  
+
         // If line we are pasting to is zero length, dont paste a space forward
         final int forward = 0<OLL ? ( paste_pos==Paste_Pos.After ? 1 : 0 ) : 0;
-  
+
         for( int i=0; i<NLL; i++ )
         {
           char C = m_vis.get_reg().get(k).charAt(i);
-  
+
           m_fb.InsertChar( OCL, OCP+i+forward, C );
         }
         if( 1 < N_REG_LINES && OCP+forward < OLL ) // Move rest of first line onto new line below
@@ -2227,11 +2229,11 @@ class View
       {
         // Insert a new line if at end of file:
         if( m_fb.NumLines() == OCL+k ) m_fb.InsertLine( OCL+k );
-  
+
         for( int i=0; i<NLL; i++ )
         {
           char C = m_vis.get_reg().get(k).charAt(i);
-  
+
           m_fb.InsertChar( OCL+k, i, C );
         }
       }
@@ -2253,13 +2255,13 @@ class View
                                          // and LL is zero insert at 0,
                                          // else insert at 1
     final int N_REG_LINES = m_vis.get_reg().size();
-  
+
     for( int k=0; k<N_REG_LINES; k++ )
     {
       if( m_fb.NumLines()<=OCL+k ) m_fb.InsertLine( OCL+k );
-  
+
       final int LL = m_fb.LineLen( OCL+k );
-  
+
       if( LL < ISP )
       {
         // Fill in line with white space up to ISP:
@@ -2285,9 +2287,9 @@ class View
   void Do_p_line()
   {
     final int OCL = CrsLine();  // Old cursor line
-  
+
     final int NUM_LINES = m_vis.get_reg().size();
-  
+
     for( int k=0; k<NUM_LINES; k++ )
     {
       // Put m_reg on line below:
@@ -2307,9 +2309,9 @@ class View
     for( int k=0; k<N_REG_LINES; k++ )
     {
       if( m_fb.NumLines()<=OCL+k ) m_fb.InsertLine( OCL+k );
-  
+
       final int LL = m_fb.LineLen( OCL+k );
-  
+
       if( LL < OCP )
       {
         // Fill in line with white space up to OCP:
@@ -3023,16 +3025,16 @@ class View
   void PageDown_v()
   {
     final int NUM_LINES = m_fb.NumLines();
-  
+
     if( 0<NUM_LINES )
     {
       final int OCL = CrsLine(); // Old cursor line
-  
+
       int NCL = OCL + WorkingRows() - 1; // New cursor line
-  
+
       // Dont let cursor go past the end of the file:
       if( NUM_LINES-1 < NCL ) NCL = NUM_LINES-1;
-  
+
       GoToCrsPos_Write( NCL, 0 );
     }
   }
@@ -3040,16 +3042,16 @@ class View
   void PageUp_v()
   {
     final int NUM_LINES = m_fb.NumLines();
-  
+
     if( 0<NUM_LINES )
     {
       final int OCL = CrsLine(); // Old cursor line
-  
+
       int NCL = OCL - WorkingRows() + 1; // New cursor line
-  
+
       // Check for underflow:
       if( NCL < 0 ) NCL = 0;
-  
+
       GoToCrsPos_Write( NCL, 0 );
     }
   }
@@ -3139,7 +3141,7 @@ class View
 //  if( m_inVisualBlock )
 //  {
 //    if( CURSOR_AT_END_OF_LINE ) Do_a_vb();
-//    else                        Do_i_vb(); 
+//    else                        Do_i_vb();
 //  }
 //  else {
 //    if( CURSOR_AT_END_OF_LINE ) Do_a();
@@ -3161,7 +3163,7 @@ class View
     if( m_inVisualBlock )
     {
       if( CURSOR_AT_END_OF_LINE ) Do_a_vb();
-      else                        Do_i_vb(); 
+      else                        Do_i_vb();
     }
     else {
       if( CURSOR_AT_END_OF_LINE ) Do_a();
@@ -3203,9 +3205,9 @@ class View
     for( int L=v_st_line; L<=v_fn_line; L++ )
     {
       Line nlr = new Line();
-  
+
       final int LL = m_fb.LineLen(L);
-  
+
       if( 0<LL )
       {
         for( int P = 0; P <= LL-1; P++ )
@@ -3230,9 +3232,9 @@ class View
     for( int L = p_st_line.val; L<=p_fn_line.val; L++ )
     {
       Line nlr = new Line();
-  
+
       final int LL = m_fb.LineLen( L );
-  
+
       for( int P = p_st_char.val; P<LL && P <= p_fn_char.val; P++ )
       {
         nlr.append_c( m_fb.RemoveChar( L, p_st_char.val ) );
@@ -3249,7 +3251,7 @@ class View
           T = v_st_char; v_st_char = v_fn_char; v_fn_char = T;
     }
     m_vis.get_reg().clear();
-  
+
     boolean removed_line = false;
     // 1. If v_st_line==0, fn_line will go negative in the loop below,
     //    so use int's instead of unsigned's
@@ -3259,24 +3261,24 @@ class View
     {
       Line lr = m_fb.RemoveLine( L );
       m_vis.get_reg().add( lr );
-  
+
       removed_line = true;
     }
     m_vis.set_paste_mode( Paste_Mode.LINE );
-  
+
     m_inVisualMode = false;
   //Remove_Banner();
     // D'ed lines will be removed, so no need to Undo_v()
-  
+
     if( removed_line )
     {
       // Figure out and move to new cursor position:
       final int NUM_LINES = m_fb.NumLines();
       final int OCL       = CrsLine(); // Old cursor line
-  
+
       int ncl = v_st_line;
       if( NUM_LINES-1 < ncl ) ncl = 0<v_st_line ? v_st_line-1 : 0;
-  
+
       final int NCLL = m_fb.LineLen( ncl );
       int ncc = 0;
       if( 0<NCLL ) ncc = v_st_char < NCLL ? v_st_char : NCLL-1;
@@ -3291,14 +3293,14 @@ class View
     final int CL = CrsLine();
     final int LL = m_fb.LineLen( CL );
     if( 0==LL ) { Do_i_vb(); return; }
-  
+
     final boolean CURSOR_AT_EOL = ( CrsChar() == LL-1 );
     if( CURSOR_AT_EOL )
     {
       GoToCrsPos_NoWrite( CL, LL );
     }
     final boolean CURSOR_AT_RIGHT_COL = ( m_crsCol == WorkingCols()-1 );
-  
+
     if( CURSOR_AT_RIGHT_COL )
     {
       // Only need to scroll window right, and then enter insert i:
@@ -3386,7 +3388,7 @@ class View
       final int LL = m_fb.LineLen( L );
       final int P_st = (L==v_st_line) ? v_st_char : 0;
       final int P_fn = (L==v_fn_line) ? v_fn_char : LL-1;
-  
+
       for( int P = P_st; P <= P_fn; P++ )
       {
         char C = m_fb.Get( L, P );
@@ -3402,7 +3404,7 @@ class View
     for( int L = v_st_line; L<=v_fn_line; L++ )
     {
       final int LL = m_fb.LineLen( L );
-  
+
       for( int P = v_st_char; P<LL && P <= v_fn_char; P++ )
       {
         char C = m_fb.Get( L, P );
@@ -3512,7 +3514,7 @@ class View
         for( int p=OCP+1; !found_char && p<LL; p++ )
         {
           final char C = m_fb.Get( OCL, p );
-      
+
           if( C == FAST_CHAR )
           {
             NCP = p;
