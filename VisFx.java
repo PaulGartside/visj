@@ -2451,6 +2451,7 @@ public class VisFx extends Application
     else if( m_sb.toString().equals("help") ) Exe_Colon_help();
     else if( m_sb.toString().equals("diff") ) Exe_Colon_DoDiff();
     else if( m_sb.toString().equals("nodiff"))Exe_Colon_NoDiff();
+    else if( m_sb.toString().equals("rediff"))Exe_Colon_ReDiff();
     else if( m_sb.toString().equals("hi") )   Exe_Colon_hi();
     else if( m_sb.toString().equals("vsp") )  Exe_Colon_vsp();
     else if( m_sb.toString().equals("sp") )   Exe_Colon_sp();
@@ -3195,6 +3196,7 @@ public class VisFx extends Application
       View pvS = m_diff.m_vS;
       View pvL = m_diff.m_vL;
 
+      // Set the view contexts to similar values as the diff contexts:
       if( null != pvS )
       {
         pvS.SetTopLine ( m_diff.GetTopLine ( pvS ) );
@@ -3210,6 +3212,14 @@ public class VisFx extends Application
         pvL.SetCrsCol  ( m_diff.GetCrsCol  () );
       }
       UpdateViews();
+    }
+  }
+
+  void Exe_Colon_ReDiff()
+  {
+    if( true == m_diff_mode )
+    {
+      m_diff.ReDiff();
     }
   }
 

@@ -68,6 +68,7 @@ class Diff
           DiffArea CA = new DiffArea( 0, m_fS.NumLines(), 0, m_fL.NumLines() );
  
           RunDiff( CA );
+          Set_DiffContext_2_ViewContext();
         }
         return true;
       }
@@ -79,18 +80,20 @@ class Diff
   {
     final long t1 = System.currentTimeMillis();
 
-    Popu_SameList( CA );
+    Popu_SameList( CA ); // clears and uses CA to fill in m_sameList
     Sort_SameList();
   //PrintSameList();
-    Popu_DiffList( CA );
+    Popu_DiffList( CA ); // clears and uses CA,m_samelist to fill in m_diffList
   //PrintDiffList();
-    Popu_DI_List( CA );
+    Popu_DI_List( CA ); // uses CA,m_diffList to fill in m_DI_List_S,L
   //PrintDI_List( CA );
 
     final long t2 = System.currentTimeMillis();
     m_diff_ms = t2 - t1;
     m_printed_diff_ms = false;
-
+  }
+  void Set_DiffContext_2_ViewContext()
+  {
     View pV = m_vis.CV();
 
     m_topLine  = DiffLine( pV, pV.TopLine() );
@@ -106,6 +109,7 @@ class Diff
 
     m_DI_List_S.clear();
     m_DI_List_L.clear();
+    m_DI_L_ins_idx = 0;
 
     m_simiList.clear();
 
@@ -291,7 +295,7 @@ class Diff
     {
       final int LEN = m_DI_List_S.size();
 
-      // Diff line is greater or equal to view line,
+      // Diff line is greater than or equal to view line,
       // so start at view line number and search forward
       boolean ok = true;
       for( int k=view_line; k<LEN && ok; k++ )
@@ -317,7 +321,7 @@ class Diff
     {
       final int LEN = m_DI_List_L.size();
 
-      // Diff line is greater or equal to view line,
+      // Diff line is greater than or equal to view line,
       // so start at view line number and search forward
       boolean ok = true;
       for( int k=view_line; k<LEN && ok; k++ )
@@ -954,8 +958,8 @@ class Diff
 
   void Popu_DI_List( final DiffArea CA )
   {
-    Clear_DI_List_CA( CA.ln_s, CA.fnl_s(), m_DI_List_S );
-    Clear_DI_List_CA( CA.ln_l, CA.fnl_l(), m_DI_List_L );
+  //Clear_DI_List_CA( CA.ln_s, CA.fnl_s(), m_DI_List_S );
+  //Clear_DI_List_CA( CA.ln_l, CA.fnl_l(), m_DI_List_L );
 
     final int SLL = m_sameList.size();
     final int DLL = m_diffList.size();
@@ -980,28 +984,28 @@ class Diff
     }
   }
 
-  void Clear_DI_List_CA( final int st_line
-                       , final int fn_line
-                       , ArrayList<Diff_Info> DI_List )
-  {
-    // Since, Clear_DI_List_CA will only be call when DI_List is
-    // fully populated, the Diff_Info.line_num's will be at indexes
-    // greater than or equal to st_line
-    for( int k=st_line; k<DI_List.size(); k++ )
-    {
-      Diff_Info di = DI_List.get( k );
-
-      if( st_line <= di.line_num && di.line_num < fn_line )
-      {
-        DI_List.remove( k );
-      }
-      else if( fn_line <= di.line_num )
-      {
-        // Past the range of line_num's we want to remove
-        break;
-      }
-    }
-  }
+//void Clear_DI_List_CA( final int st_line
+//                     , final int fn_line
+//                     , ArrayList<Diff_Info> DI_List )
+//{
+//  // Since, Clear_DI_List_CA will only be call when DI_List is
+//  // fully populated, the Diff_Info.line_num's will be at indexes
+//  // greater than or equal to st_line
+//  for( int k=st_line; k<DI_List.size(); k++ )
+//  {
+//    Diff_Info di = DI_List.get( k );
+//
+//    if( st_line <= di.line_num && di.line_num < fn_line )
+//    {
+//      DI_List.remove( k );
+//    }
+//    else if( fn_line <= di.line_num )
+//    {
+//      // Past the range of line_num's we want to remove
+//      break;
+//    }
+//  }
+//}
 
   void Popu_DI_List_NoSameArea()
   {
@@ -1070,8 +1074,8 @@ class Diff
       Diff_Info dis = new Diff_Info( Diff_Type.SAME, sa.m_ln_s+k, new LineInfo() );
       Diff_Info dil = new Diff_Info( Diff_Type.SAME, sa.m_ln_l+k, new LineInfo() );
 
-      m_DI_List_S.add( dis );
-      m_DI_List_L.add( dil );
+      m_DI_List_S.add( m_DI_L_ins_idx, dis );
+      m_DI_List_L.add( m_DI_L_ins_idx, dil ); m_DI_L_ins_idx++;
     }
   }
 
@@ -1111,8 +1115,8 @@ class Diff
 
         Diff_Info dis = new Diff_Info( Diff_Type.CHANGED, da.ln_s+k, li_s );
         Diff_Info dil = new Diff_Info( Diff_Type.CHANGED, da.ln_l+k, li_l );
-        m_DI_List_S.add( dis );
-        m_DI_List_L.add( dil );
+        m_DI_List_S.add( m_DI_L_ins_idx, dis );
+        m_DI_List_L.add( m_DI_L_ins_idx, dil ); m_DI_L_ins_idx++;
       }
     }
   }
@@ -1275,8 +1279,8 @@ class Diff
         }
       }
       // DI_List_s and DI_List_l now own LineInfo objects:
-      DI_List_s.add( dis );
-      DI_List_l.add( dil );
+      DI_List_s.add( m_DI_L_ins_idx, dis );
+      DI_List_l.add( m_DI_L_ins_idx, dil ); m_DI_L_ins_idx++;
     }
   }
 
@@ -3425,7 +3429,7 @@ class Diff
       if( 0<m_crsCol ) m_crsCol--;
 
       Patch_Diff_Info_Changed( pV, DL );
-      Update();
+      if( !ReDiff() ) Update();
     }
   }
   void Do_dd()
@@ -3467,7 +3471,7 @@ class Diff
         }
         GoToCrsPos_NoWrite( ncld, CrsChar() );
 
-        Update();
+        if( !ReDiff() ) Update();
       }
     }
   }
@@ -3584,7 +3588,7 @@ class Diff
         pfb.AppendLineToLine( VL, lp );
         Patch_Diff_Info_Changed( pV, DL );
 
-        Update();
+        if( !ReDiff() ) Update();
       }
     }
   }
@@ -3813,7 +3817,7 @@ class Diff
     if( removed_line )
     {
       Do_D_v_find_new_crs_pos();
-      Update();
+      if( !ReDiff() ) Update();
     }
   }
   void Do_D_v_find_new_crs_pos()
@@ -4141,7 +4145,8 @@ class Diff
 
     m_inVisualMode = false;
 
-    Update(); //<- No need to Undo_v() or Remove_Banner() because of this
+  //Update(); //<- No need to Undo_v() or Remove_Banner() because of this
+    if( !ReDiff() ) Update(); //<- No need to Undo_v() or Remove_Banner() because of this
   }
   void Do_x_range_single( final int DL
                         , final int st_char
@@ -4301,7 +4306,7 @@ class Diff
       Patch_Diff_Info_Inserted( pV, DL_START+k, ODVL0 );
       ODVL0 = false;
     }
-    Update();
+    if( !ReDiff() ) Update();
   }
   void Do_p_or_P_st_fn( Paste_Pos paste_pos )
   {
@@ -4332,7 +4337,7 @@ class Diff
         Do_p_or_P_st_fn_IntermediatLine( k, ODL, OVL, ON_DELETED );
       }
     }
-    Update();
+    if( !ReDiff() ) Update();
   }
   void Do_p_or_P_st_fn_FirstLine( Paste_Pos paste_pos
                                 , final int k
@@ -4484,7 +4489,7 @@ class Diff
         Do_p_block_Insert_Line( k, DL, 0<VL?VL+1:0, ISP );
       }
     }
-    Update();
+    if( !ReDiff() ) Update();
   }
   void Do_p_block_Insert_Line( final int k
                              , final int DL
@@ -4596,7 +4601,7 @@ class Diff
         Do_p_block_Insert_Line( k, DL, 0<VL?VL+1:0, ISP );
       }
     }
-    Update();
+    if( !ReDiff() ) Update();
   }
 
   void Do_v()
@@ -5248,17 +5253,184 @@ class Diff
           T = v_st_char; v_st_char = v_fn_char; v_fn_char = T;
     }
   }
-//void Swap_Visual_Block_If_Needed()
-//{
-//  if( v_fn_line < v_st_line )
-//  {
-//    int T = v_st_line; v_st_line = v_fn_line; v_fn_line = T;
-//  }
-//  if( v_fn_char < v_st_char )
-//  {
-//    int T = v_st_char; v_st_char = v_fn_char; v_fn_char = T;
-//  }
-//}
+
+  // Returns success or failure
+  boolean ReDiff()
+  {
+    boolean ok = false;
+    DiffArea da = ReDiff_GetDiffArea();
+
+    if( null == da )
+    {
+      m_vis.CmdLineMessage("rediff: DiffArea not found");
+    }
+    else {
+    //Utils.Log("ReDiff DiffArea:"); da.Print();
+      ok = true;
+
+      m_DI_L_ins_idx = Remove_From_DI_Lists( da );
+
+      RunDiff( da );
+      Update();
+    }
+    return ok;
+  }
+
+  DiffArea ReDiff_GetDiffArea()
+  {
+    DiffArea da = null;
+
+    final int DL = CrsLine(); // Diff line number
+
+    final boolean in_short = m_vis.CV() == m_vS;
+    ArrayList<Diff_Info> cDI_List = in_short ? m_DI_List_S : m_DI_List_L; // Current
+    Diff_Info cDI = cDI_List.get( DL );
+
+    if( Diff_Type.SAME == cDI.diff_type )
+    {
+      da = ReDiff_GetDiffArea_Search_4_Diff_Then_Same();
+    }
+    else if( Diff_Type.CHANGED  == cDI.diff_type
+          || Diff_Type.INSERTED == cDI.diff_type
+          || Diff_Type.DELETED  == cDI.diff_type )
+    {
+      da = ReDiff_GetDiffArea_Search_4_Same();
+    }
+    return null != da
+        && (-1 != da.ln_s) && (-1 != da.nlines_s)
+        && (-1 != da.ln_l) && (-1 != da.nlines_l)
+         ? da : null;
+  }
+  DiffArea ReDiff_GetDiffArea_Search_4_Same()
+  {
+    DiffArea da = new DiffArea( -1, -1, -1, -1 );
+
+    final int DL = CrsLine(); // Diff line number
+    final boolean in_short = m_vis.CV() == m_vS;
+    ArrayList<Diff_Info> cDI_List = in_short ? m_DI_List_S : m_DI_List_L; // Current
+
+    // Search up for SAME
+    boolean found = false;
+    for( int L=DL; !found && 0<=L; L-- )
+    {
+      Diff_Info di = cDI_List.get( L );
+      if( Diff_Type.SAME == di.diff_type )
+      {
+        found = true;
+        da.ln_s = ( Diff_Type.DELETED == m_DI_List_S.get( L+1 ).diff_type )
+                ? m_DI_List_S.get(L+1).line_num+1
+                : m_DI_List_S.get(L+1).line_num;
+
+        da.ln_l = ( Diff_Type.DELETED == m_DI_List_L.get( L+1 ).diff_type )
+                ? m_DI_List_L.get(L+1).line_num+1
+                : m_DI_List_L.get(L+1).line_num;
+      }
+    }
+    // Search down for SAME
+    found = false;
+    for( int L=DL; !found && L<cDI_List.size(); L++ )
+    {
+      Diff_Info di = cDI_List.get( L );
+      if( Diff_Type.SAME == di.diff_type )
+      {
+        found = true;
+        da.nlines_s = m_DI_List_S.get(L).line_num - da.ln_s;
+        da.nlines_l = m_DI_List_L.get(L).line_num - da.ln_l;
+      }
+    }
+    return da;
+  }
+  DiffArea ReDiff_GetDiffArea_Search_4_Diff_Then_Same()
+  {
+    DiffArea da = new DiffArea( -1, -1, -1, -1 );
+
+    final int DL = CrsLine(); // Diff line number
+    final boolean in_short = m_vis.CV() == m_vS;
+    ArrayList<Diff_Info> cDI_List = in_short ? m_DI_List_S : m_DI_List_L; // Current
+
+    // Search up for CHANGED, INSERTED or DELETED and then for SAME
+    boolean found = false;
+    int L = DL;
+    for( ; !found && 0<=L; L-- )
+    {
+      Diff_Info di = cDI_List.get( L );
+      if( Diff_Type.CHANGED  == di.diff_type
+       || Diff_Type.INSERTED == di.diff_type
+       || Diff_Type.DELETED  == di.diff_type )
+      {
+        found = true;
+      }
+    }
+    if( found ) {
+      found = false;
+      for( ; !found && 0<=L; L-- )
+      {
+        Diff_Info di = cDI_List.get( L );
+        if( Diff_Type.SAME == di.diff_type )
+        {
+          found = true;
+          da.ln_s = ( Diff_Type.DELETED == m_DI_List_S.get( L+1 ).diff_type )
+                  ? m_DI_List_S.get(L+1).line_num+1
+                  : m_DI_List_S.get(L+1).line_num;
+
+          da.ln_l = ( Diff_Type.DELETED == m_DI_List_L.get( L+1 ).diff_type )
+                  ? m_DI_List_L.get(L+1).line_num+1
+                  : m_DI_List_L.get(L+1).line_num;
+        }
+      }
+    }
+    // Search down for CHANGED, INSERTED or DELETED and then for SAME
+    found = false;
+    L = DL;
+    for( ; !found && L<cDI_List.size(); L++ )
+    {
+      Diff_Info di = cDI_List.get( L );
+      if( Diff_Type.CHANGED  == di.diff_type
+       || Diff_Type.INSERTED == di.diff_type
+       || Diff_Type.DELETED  == di.diff_type )
+      {
+        found = true;
+      }
+    }
+    if( found ) {
+      found = false;
+      for( ; !found && L<cDI_List.size(); L++ )
+      {
+        Diff_Info di = cDI_List.get( L );
+        if( Diff_Type.SAME == di.diff_type )
+        {
+          found = true;
+          da.nlines_s = m_DI_List_S.get(L).line_num - da.ln_s;
+          da.nlines_l = m_DI_List_L.get(L).line_num - da.ln_l;
+        }
+      }
+    }
+    return da;
+  }
+  int Remove_From_DI_Lists( DiffArea da )
+  {
+    int DI_lists_insert_idx = 0;
+
+    int DI_list_s_remove_st = DiffLine_S( da.ln_s );
+    int DI_list_l_remove_st = DiffLine_L( da.ln_l );
+    int DI_list_remove_st = Math.min( DI_list_s_remove_st
+                                    , DI_list_l_remove_st );
+    DI_lists_insert_idx = DI_list_remove_st;
+
+    int DI_list_s_remove_fn = DiffLine_S( da.fnl_s() );
+    int DI_list_l_remove_fn = DiffLine_L( da.fnl_l() );
+    int DI_list_remove_fn = Math.max( DI_list_s_remove_fn
+                                    , DI_list_l_remove_fn );
+  //Utils.Log("(DI_list_remove_st,DI_list_remove_fn) = ("
+  //         + (DI_list_remove_st+1)+","+(DI_list_remove_fn+1) +")");
+
+    for( int k=DI_list_remove_st; k<DI_list_remove_fn; k++ )
+    {
+      m_DI_List_S.remove( DI_lists_insert_idx );
+      m_DI_List_L.remove( DI_lists_insert_idx );
+    }
+    return DI_lists_insert_idx;
+  }
 
   static final char BS  =   8; // Backspace
   static final char ESC =  27; // Escape
@@ -5268,7 +5440,7 @@ class Diff
   ConsoleIF m_console;
   StringBuilder m_sb = new StringBuilder();
 
-  private int m_topLine;  // top  of buffer view line number.
+  private int m_topLine;  // top  of buffer diff line number.
   private int m_leftChar; // left of buffer view character number.
   private int m_crsRow;   // cursor row    in buffer view. 0 <= m_crsRow < WorkingRows().
   private int m_crsCol;   // cursor column in buffer view. 0 <= m_crsCol < WorkingCols().
@@ -5285,6 +5457,7 @@ class Diff
 
   ArrayList<Diff_Info> m_DI_List_S = new ArrayList<>();
   ArrayList<Diff_Info> m_DI_List_L = new ArrayList<>();
+  int                  m_DI_L_ins_idx;
 
   ArrayList<SimLines> m_simiList        = new ArrayList<>();
   ArrayList<LineInfo> m_line_info_cache = new ArrayList<>();
