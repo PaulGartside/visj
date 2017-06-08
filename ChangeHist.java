@@ -46,11 +46,22 @@ class ChangeHist
       LineChange rlc = m_changes.remove( m_changes.size()-1 );
 
       final ChangeType ct = rlc.m_type;
-      if     ( ct == ChangeType.Insert_Line  ) Undo_InsertLine( rlc, rV );
-      else if( ct == ChangeType.Remove_Line  ) Undo_RemoveLine( rlc, rV );
-      else if( ct == ChangeType.Insert_Text  ) Undo_InsertChar( rlc, rV );
-      else if( ct == ChangeType.Remove_Text  ) Undo_RemoveChar( rlc, rV );
-      else if( ct == ChangeType.Replace_Text ) Undo_Set       ( rlc, rV );
+
+      if( m_fb.m_vis.get_diff_mode() )
+      {
+        if     ( ct == ChangeType.Insert_Line  ) Undo_InsertLine_Diff( rlc, rV );
+        else if( ct == ChangeType.Remove_Line  ) Undo_RemoveLine_Diff( rlc, rV );
+        else if( ct == ChangeType.Insert_Text  ) Undo_InsertChar_Diff( rlc, rV );
+        else if( ct == ChangeType.Remove_Text  ) Undo_RemoveChar_Diff( rlc, rV );
+        else if( ct == ChangeType.Replace_Text ) Undo_Set_Diff       ( rlc, rV );
+      }
+      else {
+        if     ( ct == ChangeType.Insert_Line  ) Undo_InsertLine( rlc, rV );
+        else if( ct == ChangeType.Remove_Line  ) Undo_RemoveLine( rlc, rV );
+        else if( ct == ChangeType.Insert_Text  ) Undo_InsertChar( rlc, rV );
+        else if( ct == ChangeType.Remove_Text  ) Undo_RemoveChar( rlc, rV );
+        else if( ct == ChangeType.Replace_Text ) Undo_Set       ( rlc, rV );
+      }
     }
   }
   void UndoAll( final View rV )
@@ -67,7 +78,7 @@ class ChangeHist
                , final boolean continue_last_update )
   {
     final int NUM_CHANGES = m_changes.size();
-  
+
     if( 0<NUM_CHANGES
      && continue_last_update
      && 0<c_pos
@@ -91,7 +102,7 @@ class ChangeHist
   void Save_InsertLine( final int l_num )
   {
     LineChange lc = new LineChange( ChangeType.Insert_Line, l_num, 0 );
-  
+
     m_changes.add( lc );
   }
 
@@ -99,7 +110,7 @@ class ChangeHist
                       , final int c_pos )
   {
     final int NUM_CHANGES = m_changes.size();
-  
+
     if( 0<NUM_CHANGES
      && 0<c_pos
      && ChangeType.Insert_Text == m_changes.get(NUM_CHANGES-1).m_type
@@ -132,7 +143,7 @@ class ChangeHist
                       , final char old_C )
   {
     final int NUM_CHANGES = m_changes.size();
-  
+
     if( 0<NUM_CHANGES
      && ChangeType.Remove_Text == m_changes.get( NUM_CHANGES-1 ).m_type
      && l_num                  == m_changes.get( NUM_CHANGES-1 ).m_lnum
@@ -174,15 +185,14 @@ class ChangeHist
   {
     // Undo an inserted line by removing the inserted line
     m_fb.RemoveLine( rlc.m_lnum );
-  
-  //CrsPos cp = { rlc.m_lnum, rlc.m_cpos };
+
     // If last line of file was just removed, rlc.m_lnum is out of range,
     // so go to NUM_LINES-1 instead:
     final int NUM_LINES = m_fb.NumLines();
     final int LINE_NUM  = rlc.m_lnum < NUM_LINES ? rlc.m_lnum : NUM_LINES-1;
-  
+
     rV.GoToCrsPos_NoWrite( LINE_NUM, rlc.m_cpos );
-  
+
     m_fb.Update();
   }
 
@@ -224,6 +234,104 @@ class ChangeHist
     rV.GoToCrsPos_NoWrite( rlc.m_lnum, rlc.m_cpos );
 
     m_fb.Update();
+  }
+
+  void Undo_Set_Diff( LineChange rlc, final View rV )
+  {
+    final int LINE_LEN = rlc.m_line.length();
+
+    for( int k=0; k<LINE_LEN; k++ )
+    {
+      final char C = rlc.m_line.charAt( k );
+
+      m_fb.Set( rlc.m_lnum, rlc.m_cpos+k, C, true );
+    }
+    Diff pDiff = m_fb.m_vis.get_diff();
+
+    final int DL = pDiff.DiffLine( rV, rlc.m_lnum );
+    pDiff.Patch_Diff_Info_Changed( rV, DL );
+
+    pDiff.GoToCrsPos_NoWrite( DL, rlc.m_cpos );
+
+    if( !pDiff.ReDiff() ) pDiff.Update();
+  }
+
+  void Undo_InsertLine_Diff( LineChange rlc, final View rV )
+  {
+    // Undo an inserted line by removing the inserted line
+    m_fb.RemoveLine( rlc.m_lnum );
+
+    // If last line of file was just removed, rlc.m_lnum is out of range,
+    // so go to NUM_LINES-1 instead:
+    final int NUM_LINES = m_fb.NumLines();
+    final int LINE_NUM  = rlc.m_lnum < NUM_LINES ? rlc.m_lnum : NUM_LINES-1;
+
+    Diff pDiff = m_fb.m_vis.get_diff();
+
+    final int DL = pDiff.DiffLine( rV, LINE_NUM );
+
+    pDiff.Patch_Diff_Info_Deleted( rV, DL );
+
+    pDiff.GoToCrsPos_NoWrite( DL, rlc.m_cpos );
+
+    if( !pDiff.ReDiff() ) pDiff.Update();
+  }
+
+  void Undo_RemoveLine_Diff( LineChange rlc, final View rV )
+  {
+    // Undo a removed line by inserting the removed line
+    m_fb.InsertLine( rlc.m_lnum, rlc.m_line );
+
+    Diff pDiff = m_fb.m_vis.get_diff();
+
+    final int     DL    = pDiff.DiffLine( rV, rlc.m_lnum );
+    final boolean ODVL0 = pDiff.On_Deleted_View_Line_Zero( DL );
+
+    pDiff.Patch_Diff_Info_Inserted( rV, DL, ODVL0 );
+
+    pDiff.GoToCrsPos_NoWrite( rlc.m_lnum, rlc.m_cpos );
+
+    if( !pDiff.ReDiff() ) pDiff.Update();
+  }
+
+  void Undo_InsertChar_Diff( LineChange rlc, final View rV )
+  {
+    final int LINE_LEN = rlc.m_line.length();
+
+    // Undo inserted chars by removing the inserted chars
+    for( int k=0; k<LINE_LEN; k++ )
+    {
+      m_fb.RemoveChar( rlc.m_lnum, rlc.m_cpos );
+    }
+    Diff pDiff = m_fb.m_vis.get_diff();
+
+    final int DL = pDiff.DiffLine( rV, rlc.m_lnum );
+    pDiff.Patch_Diff_Info_Changed( rV, DL );
+
+    pDiff.GoToCrsPos_NoWrite( DL, rlc.m_cpos );
+
+    if( !pDiff.ReDiff() ) pDiff.Update();
+  }
+
+  void Undo_RemoveChar_Diff( LineChange rlc, final View rV )
+  {
+    final int LINE_LEN = rlc.m_line.length();
+
+    // Undo removed chars by inserting the removed chars
+    for( int k=0; k<LINE_LEN; k++ )
+    {
+      final char C = rlc.m_line.charAt( k );
+
+      m_fb.InsertChar( rlc.m_lnum, rlc.m_cpos+k, C );
+    }
+    Diff pDiff = m_fb.m_vis.get_diff();
+
+    final int DL = pDiff.DiffLine( rV, rlc.m_lnum );
+    pDiff.Patch_Diff_Info_Changed( rV, DL );
+
+    pDiff.GoToCrsPos_NoWrite( DL, rlc.m_cpos );
+
+    if( !pDiff.ReDiff() ) pDiff.Update();
   }
 
   FileBuf               m_fb;

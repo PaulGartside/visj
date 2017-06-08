@@ -5024,11 +5024,15 @@ class Diff
   }
   void Do_u()
   {
-    // FIXME: Need to implement
+    View pV = m_vis.CV();
+
+    pV.m_fb.Undo( pV );
   }
   void Do_U()
   {
-    // FIXME: Need to implement
+    View pV = m_vis.CV();
+
+    pV.m_fb.UndoAll( pV );
   }
 
   boolean On_Deleted_View_Line_Zero( final int DL )
