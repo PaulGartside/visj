@@ -41,7 +41,7 @@ class Diff
     {
       final Tile_Pos tp0 = v0.m_tile_pos;
       final Tile_Pos tp1 = v1.m_tile_pos;
- 
+
       // Buffers must be vertically split to do diff:
       if( (Tile_Pos.LEFT_HALF == tp0 && Tile_Pos.RITE_HALF == tp1)
        || (Tile_Pos.LEFT_HALF == tp1 && Tile_Pos.RITE_HALF == tp0) )
@@ -53,20 +53,20 @@ class Diff
         }
         else {
           CleanDiff(); //< Start over with clean slate
- 
+
           final int nLines_0 = v0.m_fb.NumLines();
           final int nLines_1 = v1.m_fb.NumLines();
- 
+
           m_vS = nLines_0 < nLines_1 ? v0 : v1; // Short view
           m_vL = nLines_0 < nLines_1 ? v1 : v0; // Long  view
           m_fS = m_vS.m_fb;
           m_fL = m_vL.m_fb;
           m_mod_time_s = m_fS.m_mod_time;
           m_mod_time_l = m_fL.m_mod_time;
- 
+
           // All lines in both files:
           DiffArea CA = new DiffArea( 0, m_fS.NumLines(), 0, m_fL.NumLines() );
- 
+
           RunDiff( CA );
           Set_DiffContext_2_ViewContext();
         }
@@ -158,18 +158,18 @@ class Diff
     m_fL.Find_Regexs( ViewLine( m_vL, m_topLine ), WorkingRows( m_vL ) );
 
     RepositionViews();
- 
+
   //m_vL.RepositionView();
     m_vL.Print_Borders();
     PrintWorkingView( m_vL );
     PrintStsLine( m_vL );
     m_vL.PrintFileLine();
     PrintCmdLine( m_vL );
- 
+
     // Update short view:
     m_fS.Find_Styles( ViewLine( m_vS, m_topLine ) + WorkingRows( m_vS ) );
     m_fS.Find_Regexs( ViewLine( m_vS, m_topLine ), WorkingRows( m_vS ) );
- 
+
   //m_vS.RepositionView();
     m_vS.Print_Borders();
     PrintWorkingView( m_vS );
@@ -288,56 +288,134 @@ class Diff
                           : m_DI_List_L.get( diff_line ).diff_type;
   }
 
+//// Return the diff line of the view line on the short side
+//int DiffLine_S( final int view_line )
+//{
+//  if( 0 < m_vS.m_fb.NumLines() )
+//  {
+//    final int LEN = m_DI_List_S.size();
+//
+//    // Diff line is greater than or equal to view line,
+//    // so start at view line number and search forward
+//    boolean ok = true;
+//    for( int k=view_line; k<LEN && ok; k++ )
+//    {
+//      Diff_Info di = m_DI_List_S.get( k );
+//
+//      if( Diff_Type.SAME     == di.diff_type
+//       || Diff_Type.CHANGED  == di.diff_type
+//       || Diff_Type.INSERTED == di.diff_type )
+//      {
+//        if( view_line == di.line_num ) return k;
+//      }
+//    }
+//    Utils.Assert( false, "view_line : "+ view_line +" : not found");
+//  }
+//  return 0;
+//}
+
   // Return the diff line of the view line on the short side
   int DiffLine_S( final int view_line )
   {
-    if( 0 < m_vS.m_fb.NumLines() )
+    int diff_line = 0;
+
+    final int NUM_LINES_VS = m_vS.m_fb.NumLines();
+
+    if( 0 < NUM_LINES_VS )
     {
-      final int LEN = m_DI_List_S.size();
+      final int DI_LEN = m_DI_List_S.size();
 
-      // Diff line is greater than or equal to view line,
-      // so start at view line number and search forward
-      boolean ok = true;
-      for( int k=view_line; k<LEN && ok; k++ )
-      {
-        Diff_Info di = m_DI_List_S.get( k );
-
-        if( Diff_Type.SAME     == di.diff_type
-         || Diff_Type.CHANGED  == di.diff_type
-         || Diff_Type.INSERTED == di.diff_type )
+      if( NUM_LINES_VS <= view_line ) diff_line = DI_LEN-1;
+      else {
+        // Diff line is greater than or equal to view line,
+        // so start at view line number and search forward
+        boolean found = false;
+        for( int k=view_line; !found && k<DI_LEN; k++ )
         {
-          if( view_line == di.line_num ) return k;
+          Diff_Info di = m_DI_List_S.get( k );
+
+          if( Diff_Type.SAME     == di.diff_type
+           || Diff_Type.CHANGED  == di.diff_type
+           || Diff_Type.INSERTED == di.diff_type )
+          {
+            if( view_line == di.line_num )
+            {
+              found = true;
+              diff_line = k;
+            }
+          }
+        }
+        if( !found ) {
+          Utils.Assert( false, "view_line : "+ view_line +" : not found");
         }
       }
-      Utils.Assert( false, "view_line : "+ view_line +" : not found");
     }
-    return 0;
+    return diff_line;
   }
+
+//// Return the diff line of the view line on the long side
+//int DiffLine_L( final int view_line )
+//{
+//  if( 0 < m_vL.m_fb.NumLines() )
+//  {
+//    final int LEN = m_DI_List_L.size();
+//
+//    // Diff line is greater than or equal to view line,
+//    // so start at view line number and search forward
+//    boolean ok = true;
+//    for( int k=view_line; k<LEN && ok; k++ )
+//    {
+//      Diff_Info di = m_DI_List_L.get( k );
+//
+//      if( Diff_Type.SAME     == di.diff_type
+//       || Diff_Type.CHANGED  == di.diff_type
+//       || Diff_Type.INSERTED == di.diff_type )
+//      {
+//        if( view_line == di.line_num ) return k;
+//      }
+//    }
+//    Utils.Assert( false, "view_line : "+ view_line +" : not found");
+//  }
+//  return 0;
+//}
 
   // Return the diff line of the view line on the long side
   int DiffLine_L( final int view_line )
   {
-    if( 0 < m_vL.m_fb.NumLines() )
+    int diff_line = 0;
+
+    final int NUM_LINES_VL = m_vL.m_fb.NumLines();
+
+    if( 0 < NUM_LINES_VL )
     {
-      final int LEN = m_DI_List_L.size();
+      final int DI_LEN = m_DI_List_L.size();
 
-      // Diff line is greater than or equal to view line,
-      // so start at view line number and search forward
-      boolean ok = true;
-      for( int k=view_line; k<LEN && ok; k++ )
-      {
-        Diff_Info di = m_DI_List_L.get( k );
-
-        if( Diff_Type.SAME     == di.diff_type
-         || Diff_Type.CHANGED  == di.diff_type
-         || Diff_Type.INSERTED == di.diff_type )
+      if( NUM_LINES_VL <= view_line ) diff_line = DI_LEN-1;
+      else {
+        // Diff line is greater than or equal to view line,
+        // so start at view line number and search forward
+        boolean found = false;
+        for( int k=view_line; !found && k<DI_LEN; k++ )
         {
-          if( view_line == di.line_num ) return k;
+          Diff_Info di = m_DI_List_L.get( k );
+
+          if( Diff_Type.SAME     == di.diff_type
+           || Diff_Type.CHANGED  == di.diff_type
+           || Diff_Type.INSERTED == di.diff_type )
+          {
+            if( view_line == di.line_num )
+            {
+              found = true;
+              diff_line = k;
+            }
+          }
+        }
+        if( !found ) {
+          Utils.Assert( false, "view_line : "+ view_line +" : not found");
         }
       }
-      Utils.Assert( false, "view_line : "+ view_line +" : not found");
     }
-    return 0;
+    return diff_line;
   }
 
   void PrintCursor()
@@ -427,7 +505,7 @@ class Diff
         Diff_Type dt = di.pLineInfo.get(i);
 
         if( Diff_Type.SAME == dt )
-        { 
+        {
           Style s = Get_Style( pV, dl, vl, cp );
           char  c = pV.m_fb.Get( vl, cp );
           pV.PrintWorkingView_Set( LL, G_ROW, col, cp, c, s );
@@ -706,13 +784,13 @@ class Diff
   void Remove_Banner()
   {
     View pV = m_vis.CV();
-  
+
     final int WC = WorkingCols( pV );
     final int N  = Math.min( WC, 11 );
-  
+
     // Command line row in window:
     final int WIN_ROW = WorkingRows( pV ) + 2;
-  
+
     // Clear command line:
     for( int k=0; k<N; k++ )
     {
@@ -1351,7 +1429,7 @@ class Diff
     {
       final char cs = pls.charAt( i_s );
       final char cl = pll.charAt( i_l );
- 
+
       if( cs == cl )
       {
         num_same++;
@@ -1361,7 +1439,7 @@ class Diff
       else {
         final int remaining_s = SLL - i_s;
         final int remaining_l = LLL - i_l;
- 
+
         if( 0<remaining_s
          && 0<remaining_l && remaining_s == remaining_l )
         {
@@ -1380,7 +1458,7 @@ class Diff
     }
     for( int k=SLL; k<LLL; k++ ) pli_s.add( Diff_Type.DELETED );
     for( int k=i_l; k<LLL; k++ ) pli_l.add( Diff_Type.INSERTED );
- 
+
     return num_same;
   }
 
@@ -1407,7 +1485,7 @@ class Diff
   {
     // Set console current cursor cell to cursor hightlighted value:
     View pV = m_vis.CV();
-  
+
     Set_Console_CrsCell( pV );
   }
   void Set_Console_CrsCell( View V )
@@ -1575,7 +1653,7 @@ class Diff
     // Convert OCL and NCL, which are diff lines, to view lines:
     final int OCLv = ViewLine( pV, OCL );
     final int NCLv = ViewLine( pV, NCL );
-  
+
     if( OCL == NCL ) // Only one line:
     {
       for( int k=OCP; NCP<k; k-- )
@@ -1686,17 +1764,17 @@ class Diff
                          , final int ncp_crsChar )
   {
     View pV = m_vis.CV();
-  
+
     // These moves refer to View of buffer:
     final boolean MOVE_DOWN  = BotLine( pV )   < ncp_crsLine;
     final boolean MOVE_RIGHT = RightChar( pV ) < ncp_crsChar;
     final boolean MOVE_UP    = ncp_crsLine     < m_topLine;
     final boolean MOVE_LEFT  = ncp_crsChar     < m_leftChar;
-  
+
     if     ( MOVE_DOWN ) m_topLine = ncp_crsLine - WorkingRows( pV ) + 1;
     else if( MOVE_UP   ) m_topLine = ncp_crsLine;
     m_crsRow  = ncp_crsLine - m_topLine;
-  
+
     if     ( MOVE_RIGHT ) m_leftChar = ncp_crsChar - WorkingCols( pV ) + 1;
     else if( MOVE_LEFT  ) m_leftChar = ncp_crsChar;
     m_crsCol   = ncp_crsChar - m_leftChar;
@@ -1739,9 +1817,9 @@ class Diff
     {
       //Leave m_crsRow unchanged.
       m_crsCol = 0;
-  
+
       View pV = m_vis.CV();
-  
+
       // Dont scroll past the top of the file:
       if( m_topLine < WorkingRows( pV ) - 1 )
       {
@@ -1862,7 +1940,7 @@ class Diff
       PrintCursor(); // Does m_console.Update()
     }
     else {
-      final int NCLd = DiffLine( pV, NCLv ); 
+      final int NCLd = DiffLine( pV, NCLv );
 
       GoToCrsPos_Write( NCLd, 0 );
     }
@@ -1986,9 +2064,9 @@ class Diff
   void GoToLeftSquigglyBracket()
   {
     View pV = m_vis.CV();
- 
+
     MoveInBounds();
- 
+
     final char  start_char = '}';
     final char finish_char = '{';
     GoToOppositeBracket_Backward( start_char, finish_char );
@@ -1996,9 +2074,9 @@ class Diff
   void GoToRightSquigglyBracket()
   {
     View pV = m_vis.CV();
- 
+
     MoveInBounds();
- 
+
     final char  start_char = '{';
     final char finish_char = '}';
     GoToOppositeBracket_Forward( start_char, finish_char );
@@ -2007,35 +2085,35 @@ class Diff
   void GoToOppositeBracket_Forward( final char ST_C, final char FN_C )
   {
     View pV = m_vis.CV();
-  
+
     final int NUM_LINES = pV.m_fb.NumLines();
-  
+
     // Convert from diff line (CrsLine()), to view line:
     final int CL = ViewLine( pV, CrsLine() );
     final int CC = CrsChar();
-  
+
     // Search forward
     int level = 0;
     boolean     found = false;
-  
+
     for( int vl=CL; !found && vl<NUM_LINES; vl++ )
     {
       final int LL = pV.m_fb.LineLen( vl );
-  
+
       for( int p=(CL==vl)?(CC+1):0; !found && p<LL; p++ )
       {
         final char C = pV.m_fb.Get( vl, p );
-  
+
         if     ( C==ST_C ) level++;
         else if( C==FN_C )
         {
           if( 0 < level ) level--;
           else {
             found = true;
-  
+
             // Convert from view line back to diff line:
             final int dl = DiffLine(pV, vl);
-  
+
             GoToCrsPos_Write( dl, p );
           }
         }
@@ -2046,30 +2124,30 @@ class Diff
   void GoToOppositeBracket_Backward( final char ST_C, final char FN_C )
   {
     View pV = m_vis.CV();
-  
+
     // Convert from diff line (CrsLine()), to view line:
     final int CL = ViewLine( pV, CrsLine() );
     final int CC = CrsChar();
-  
+
     // Search forward
     int level = 0;
     boolean     found = false;
-  
+
     for( int vl=CL; !found && 0<=vl; vl-- )
     {
       final int LL = pV.m_fb.LineLen( vl );
-  
+
       for( int p=(CL==vl)?(CC-1):(LL-1); !found && 0<=p; p-- )
       {
         final char C = pV.m_fb.Get( vl, p );
-  
+
         if     ( C==ST_C ) level++;
         else if( C==FN_C )
         {
           if( 0 < level ) level--;
           else {
             found = true;
-  
+
             // Convert from view line back to dif line:
             final int dl = DiffLine( pV, vl );
 
@@ -2095,7 +2173,7 @@ class Diff
   CrsPos GoToNextWord_GetPosition()
   {
     View pV = m_vis.CV();
-  
+
     final int NUM_LINES = pV.m_fb.NumLines();
     if( NUM_LINES<=0 ) return null;
 
@@ -2104,7 +2182,7 @@ class Diff
 
     boolean found_space = false;
     boolean found_word  = false;
-  
+
     // Convert from diff line (CrsLine()), to view line:
     final int OCL = ViewLine( pV, CrsLine() ); //< Old cursor view line
     final int OCP = CrsChar();                 //< Old cursor position
@@ -2123,11 +2201,11 @@ class Diff
         ident = false;
       }
       final int START_C = OCL==vl ? OCP : 0;
-  
+
       for( int p=START_C; (!found_space || !found_word) && p<LL; p++ )
       {
         final char C = pV.m_fb.Get( vl, p );
-  
+
         if( found_space  )
         {
           if( IsWord( C, ident ) ) found_word = true;
@@ -2142,7 +2220,7 @@ class Diff
         {
           // Convert from view line back to diff line:
           final int dl = DiffLine( pV, vl );
-  
+
           ncp_crsLine = dl;
           ncp_crsChar = p;
         }
@@ -2208,11 +2286,11 @@ class Diff
         ident = false;
       }
       final int START_C = OCL==vl ? OCP-1 : LL2-1;
-  
+
       for( int p=START_C; (!found_space || !found_word) && -1<p; p-- )
       {
         final char C = pV.m_fb.Get( vl, p);
-  
+
         if( found_word  )
         {
           if( !IsWord( C, ident ) || p==0 ) found_space = true;
@@ -2225,12 +2303,12 @@ class Diff
         }
         // Once we have encountered a space, word is anything non-space
         if( Utils.IsIdent( C ) ) ident = true;
-  
+
         if( found_space && found_word )
         {
           // Convert from view line back to diff line:
           final int dl = DiffLine( pV, vl );
-  
+
           ncp_crsLine = dl;
           ncp_crsChar = p;
         }
@@ -2279,14 +2357,14 @@ class Diff
 
     // At end of line, or line too short:
     if( (LL-1) <= CP || LL < 2 ) return null;
-  
+
     char CC = pV.m_fb.Get( CL, CP );   // Current char
     char NC = pV.m_fb.Get( CL, CP+1 ); // Next char
-  
+
     // 1. If at end of word, or end of non-word, move to next char
     if( (Utils.IsWord_Ident   ( CC ) && !Utils.IsWord_Ident   ( NC ))
      || (Utils.IsWord_NonIdent( CC ) && !Utils.IsWord_NonIdent( NC )) ) CP++;
-  
+
     // 2. If on white space, skip past white space
     if( Utils.IsSpace( pV.m_fb.Get(CL, CP) ) )
     {
@@ -2295,10 +2373,10 @@ class Diff
     }
     // At this point (CL,CP) should be non-white space
     CC = pV.m_fb.Get( CL, CP );  // Current char
-  
+
     int ncp_crsLine = CrsLine(); // Diff line
     int ncp_crsChar = 0;
-  
+
     if( Utils.IsWord_Ident( CC ) ) // On identity
     {
       // 3. If on word space, go to end of word space
@@ -2332,7 +2410,7 @@ class Diff
     StringBuilder fname = null;
 
     View pV = m_vis.CV();
- 
+
     final int DL = CrsLine();
     final int VL = ViewLine( pV, DL ); // View line number
     final int LL = pV.m_fb.LineLen( VL );
@@ -2399,7 +2477,7 @@ class Diff
   {
     View pV = m_vis.CV();
     FileBuf pfb = pV.m_fb;
-  
+
     final int NUM_LINES = pfb.NumLines();
 
     final int OCL = CrsLine(); // Diff line
@@ -2414,21 +2492,21 @@ class Diff
 
     // Move past current star:
     final int LL = pfb.LineLen( OCLv );
-  
+
     pfb.Check_4_New_Regex();
     pfb.Find_Regexs_4_Line( OCL );
     for( ; st_c<LL && pV.InStar(OCLv,st_c); st_c++ ) ;
-  
+
     // Go down to next line
     if( LL <= st_c ) { st_c=0; st_l++; }
-  
+
     // Search for first star position past current position
     for( int l=st_l; !found_next_star && l<NUM_LINES; l++ )
     {
       pfb.Find_Regexs_4_Line( l );
 
       final int LL2 = pfb.LineLen( l );
-  
+
       for( int p=st_c ; !found_next_star && p<LL2 ; p++ )
       {
         if( pV.InStar(l,p) )
@@ -2452,7 +2530,7 @@ class Diff
 
         final int LL3 = pfb.LineLen( l );
         final int END_C = (OCLv==l) ? Math.min( OCC, LL3 ) : LL3;
-  
+
         for( int p=0; !found_next_star && p<END_C; p++ )
         {
           if( pV.InStar(l,p) )
@@ -2552,16 +2630,16 @@ class Diff
   {
     final int NUM_LINES = NumLines();
     final int dl_st = dl.val;
-  
+
     // Search forward for non-Diff_Type.SAME
     boolean found = false;
-  
+
     if( 1 < NUM_LINES )
     {
       while( !found && dl.val<NUM_LINES )
       {
         final Diff_Type DT = DI_List.get( dl.val ).diff_type;
-  
+
         if( DT == Diff_Type.CHANGED
          || DT == Diff_Type.INSERTED
          || DT == Diff_Type.DELETED )
@@ -2630,17 +2708,17 @@ class Diff
     pfb.Check_4_New_Regex();
 
     boolean found_prev_star = false;
-  
+
     // Search for first star position before current position
     for( int l=OCLv; !found_prev_star && 0<=l; l-- )
     {
       pfb.Find_Regexs_4_Line( l );
 
       final int LL = pfb.LineLen( l );
-  
+
       int p=LL-1;
       if( OCLv==l ) p = 0<OCC ? OCC-1 : 0;
-  
+
       for( ; 0<p && !found_prev_star; p-- )
       {
         for( ; 0<=p && pV.InStar(l,p); p-- )
@@ -2707,12 +2785,12 @@ class Diff
       if( found )
       {
         found = Do_N_Search_for_Diff( dl, DI_List );
-  
+
         if( found )
         {
           final int NCL = dl.val;
           final int NCP = CrsChar();
-  
+
           GoToCrsPos_Write( NCL, NCP );
         }
       }
@@ -2791,7 +2869,7 @@ class Diff
           final Diff_Type DT = DI_List.get( dl.val ).diff_type;
 
           if( DT == Diff_Type.CHANGED
-           || DT == Diff_Type.INSERTED 
+           || DT == Diff_Type.INSERTED
            || DT == Diff_Type.DELETED )
           {
             found = true;
@@ -2837,7 +2915,7 @@ class Diff
         for( int p=CP+1; !found_char && p<LL; p++ )
         {
           final char C = pV.m_fb.Get( VL, p );
-      
+
           if( C == FAST_CHAR )
           {
             NCP = p;
@@ -2944,7 +3022,7 @@ class Diff
     if( 0 < m_topLine )
     {
       View pV = m_vis.CV();
-  
+
       final int WR  = WorkingRows( pV );
       final int OCL = CrsLine(); // Old cursor line
 
@@ -3085,7 +3163,7 @@ class Diff
     View pV = m_vis.CV();
     FileBuf pfb = pV.m_fb;
     pV.m_inInsertMode = false;
- 
+
     // Move cursor back one space:
     if( 0<m_crsCol )
     {
@@ -3139,7 +3217,7 @@ class Diff
   {
     View pV = m_vis.CV();
     FileBuf pfb = pV.m_fb;
-  
+
     // The lines in fb do not end with '\n's.
     // When the file is written, '\n's are added to the ends of the lines.
     Line new_line = new Line();
@@ -3147,7 +3225,7 @@ class Diff
     final int VL = ViewLine( pV, DL ); // View line number
     final int OLL = pfb.LineLen( VL ); // Old line length
     final int OCP = CrsChar();          // Old cursor position
-  
+
     for( int k=OCP; k<OLL; k++ )
     {
       final char C = pfb.RemoveChar( VL, OCP );
@@ -3239,7 +3317,7 @@ class Diff
   }
 
   void Do_a()
-  { 
+  {
     View    pV  = m_vis.CV();
     FileBuf pfb = pV.m_fb;
 
@@ -4012,7 +4090,7 @@ class Diff
     if( m_inVisualBlock )
     {
       if( CURSOR_AT_END_OF_LINE ) Do_a_vb();
-      else                        Do_i_vb(); 
+      else                        Do_i_vb();
     }
     else {
       if( CURSOR_AT_END_OF_LINE ) Do_a();
@@ -4071,7 +4149,7 @@ class Diff
     for( int L = v_st_line; L<=v_fn_line; L++ )
     {
       final int LL = pfb.LineLen( L );
-    
+
       for( int P = v_st_char; P<LL && P <= v_fn_char; P++ )
       {
         char C = pfb.Get( L, P );
@@ -4126,9 +4204,9 @@ class Diff
   {
     if( m_inVisualBlock ) m_vis.set_paste_mode( Paste_Mode.BLOCK );
     else                  m_vis.set_paste_mode( Paste_Mode.ST_FN );
- 
+
     View pV = m_vis.CV();
- 
+
     ArrayList<Diff_Info> cDI_List = (pV == m_vS) ? m_DI_List_S : m_DI_List_L; // Current diff info list
 
     // Figure out new cursor position:
@@ -4140,7 +4218,7 @@ class Diff
 
     int ncc = 0;
     if( 0<NCLL ) ncc = st_char < NCLL ? st_char : NCLL-1;
- 
+
     GoToCrsPos_NoWrite( ncld, ncc );
 
     m_inVisualMode = false;
@@ -4705,15 +4783,15 @@ class Diff
   void Replace_Crs_Char( Style style )
   {
     View pV  = m_vis.CV();
-    
+
     // Convert CL, which is diff line, to view line:
     final int CLv = ViewLine( pV, CrsLine() );
-    
+
     final int LL = pV.m_fb.LineLen( CLv ); // Line length
     if( 0<LL )
     {
       char C = pV.m_fb.Get( CLv, CrsChar() );
-    
+
       m_console.Set( Row_Win_2_GL( pV, CrsLine()-m_topLine )
                    , Col_Win_2_GL( pV, CrsChar()-m_leftChar )
                    , C, style );
@@ -5144,9 +5222,9 @@ class Diff
         else { // Lines are different
           if( null == sDI.pLineInfo ) sDI.pLineInfo = new LineInfo();
           if( null == lDI.pLineInfo ) lDI.pLineInfo = new LineInfo();
-  
+
           Compare_Lines( ls, sDI.pLineInfo, ll, lDI.pLineInfo );
-  
+
           cDI.diff_type = Diff_Type.CHANGED;
           oDI.diff_type = Diff_Type.CHANGED;
         }
@@ -5160,7 +5238,7 @@ class Diff
         Diff_Info dio = new Diff_Info( Diff_Type.DELETED , dio_line    , null );
         cDI_List.add( DPL, dic );
         oDI_List.add( DPL, dio );
-  
+
         // Added a view line, so increment all following view line numbers:
         for( int k=DPL+1; k<cDI_List.size(); k++ )
         {
@@ -5262,7 +5340,16 @@ class Diff
   boolean ReDiff()
   {
     boolean ok = false;
-    DiffArea da = ReDiff_GetDiffArea();
+    final int DL = CrsLine(); // Diff line number
+    final int NUM_DLs = m_DI_List_L.size();
+    final int SIDE_BAND = 50;
+    int DL_st = DL < SIDE_BAND ? 0 : DL - SIDE_BAND;
+    int DL_fn = NUM_DLs;
+    if( SIDE_BAND < NUM_DLs )
+    {
+      DL_fn = NUM_DLs-SIDE_BAND < DL ? NUM_DLs : DL + SIDE_BAND;
+    }
+    DiffArea da = ReDiff_GetDiffArea( DL_st, DL_fn );
 
     if( null == da )
     {
@@ -5280,81 +5367,152 @@ class Diff
     return ok;
   }
 
-  DiffArea ReDiff_GetDiffArea()
+  DiffArea ReDiff_GetDiffArea( final int DL_st, final int DL_fn )
   {
     DiffArea da = null;
 
-    final int DL = CrsLine(); // Diff line number
+    // Diff area if from l_DL_st up to but not including l_DL_fn
+    Ptr_Int l_DL_st = new Ptr_Int( DL_st ); // local diff line start
+    Ptr_Int l_DL_fn = new Ptr_Int( DL_fn ); // local diff line finish
+
+    boolean found_st = ReDiff_FindDiffSt( l_DL_st );
+    boolean found_fn = false;
+
+    if( found_st )
+    {
+      found_fn = l_DL_fn.val < m_DI_List_L.size()
+               ? ReDiff_FindDiffFn( l_DL_fn )
+               : true;
+    }
+    boolean found_diff_area = found_st && found_fn;
+
+    if( found_diff_area )
+    {
+      da = DL_st_fn_2_DiffArea( l_DL_st.val, l_DL_fn.val );
+    }
+    else {
+      final int DL = CrsLine(); // Diff line number
+
+      Ptr_Int l_DL_st_2 = new Ptr_Int( DL ); // local diff line start
+      Ptr_Int l_DL_fn_2 = new Ptr_Int( DL ); // local diff line finish
+
+      found_diff_area = ReDiff_FindDiffSt( l_DL_st_2 )
+                     && ReDiff_FindDiffFn( l_DL_fn_2 );
+
+      if( found_diff_area )
+      {
+        da = DL_st_fn_2_DiffArea( l_DL_st_2.val, l_DL_fn_2.val );
+      }
+    }
+    return da;
+  }
+
+  DiffArea DL_st_fn_2_DiffArea( final int DL_st
+                              , final int DL_fn )
+  {
+    DiffArea da = new DiffArea( 0, 0, 0, 0 );
+
+    da.ln_s = ( Diff_Type.DELETED == m_DI_List_S.get( DL_st ).diff_type )
+            ? m_DI_List_S.get(DL_st).line_num+1
+            : m_DI_List_S.get(DL_st).line_num;
+
+    da.ln_l = ( Diff_Type.DELETED == m_DI_List_L.get( DL_st ).diff_type )
+            ? m_DI_List_L.get(DL_st).line_num+1
+            : m_DI_List_L.get(DL_st).line_num;
+
+    if( DL_fn < m_DI_List_L.size() )
+    {
+      da.nlines_s = m_DI_List_S.get(DL_fn).line_num - da.ln_s;
+      da.nlines_l = m_DI_List_L.get(DL_fn).line_num - da.ln_l;
+    }
+    else {
+      // Need the extra -1 here to avoid a crash.
+      // Not sure why it is needed.
+    //da.nlines_s = m_fS.NumLines() - da.ln_s - 1;
+    //da.nlines_l = m_fL.NumLines() - da.ln_l - 1;
+      da.nlines_s = m_fS.NumLines() - da.ln_s;
+      da.nlines_l = m_fL.NumLines() - da.ln_l;
+    }
+    return da;
+  }
+
+  boolean ReDiff_FindDiffSt( Ptr_Int DL_st )
+  {
+    boolean found_diff_st = false;
 
     final boolean in_short = m_vis.CV() == m_vS;
     ArrayList<Diff_Info> cDI_List = in_short ? m_DI_List_S : m_DI_List_L; // Current
-    Diff_Info cDI = cDI_List.get( DL );
+    Diff_Info cDI_st = cDI_List.get( DL_st.val );
 
-    if( Diff_Type.SAME == cDI.diff_type )
+    if( Diff_Type.SAME == cDI_st.diff_type )
     {
-      da = ReDiff_GetDiffArea_Search_4_Diff_Then_Same();
+      found_diff_st = ReDiff_GetSt_Search_4_Diff_Then_Same( DL_st );
     }
-    else if( Diff_Type.CHANGED  == cDI.diff_type
-          || Diff_Type.INSERTED == cDI.diff_type
-          || Diff_Type.DELETED  == cDI.diff_type )
+    else if( Diff_Type.CHANGED  == cDI_st.diff_type
+          || Diff_Type.INSERTED == cDI_st.diff_type
+          || Diff_Type.DELETED  == cDI_st.diff_type )
     {
-      da = ReDiff_GetDiffArea_Search_4_Same();
+      found_diff_st = ReDiff_GetDiffSt_Search_4_Same( DL_st );
     }
-    return null != da
-        && (-1 != da.ln_s) && (-1 != da.nlines_s)
-        && (-1 != da.ln_l) && (-1 != da.nlines_l)
-         ? da : null;
+    return found_diff_st;
   }
-  DiffArea ReDiff_GetDiffArea_Search_4_Same()
-  {
-    DiffArea da = new DiffArea( -1, -1, -1, -1 );
 
-    final int DL = CrsLine(); // Diff line number
+  boolean ReDiff_FindDiffFn( Ptr_Int DL_fn )
+  {
+    boolean found_diff_fn = false;
+
+    final boolean in_short = m_vis.CV() == m_vS;
+    ArrayList<Diff_Info> cDI_List = in_short ? m_DI_List_S : m_DI_List_L; // Current
+    Diff_Info cDI_fn = cDI_List.get( DL_fn.val );
+
+    if( Diff_Type.SAME == cDI_fn.diff_type )
+    {
+      found_diff_fn = ReDiff_GetFn_Search_4_Diff_Then_Same( DL_fn );
+    }
+    else if( Diff_Type.CHANGED  == cDI_fn.diff_type
+          || Diff_Type.INSERTED == cDI_fn.diff_type
+          || Diff_Type.DELETED  == cDI_fn.diff_type )
+    {
+      found_diff_fn = ReDiff_GetDiffFn_Search_4_Same( DL_fn );
+    }
+    else {
+    }
+    return found_diff_fn;
+  }
+
+  boolean ReDiff_GetDiffSt_Search_4_Same( Ptr_Int DL_st )
+  {
     final boolean in_short = m_vis.CV() == m_vS;
     ArrayList<Diff_Info> cDI_List = in_short ? m_DI_List_S : m_DI_List_L; // Current
 
     // Search up for SAME
     boolean found = false;
-    for( int L=DL; !found && 0<=L; L-- )
+    int L = DL_st.val;
+    for( ; !found && 0<=L; L-- )
     {
       Diff_Info di = cDI_List.get( L );
       if( Diff_Type.SAME == di.diff_type )
       {
         found = true;
-        da.ln_s = ( Diff_Type.DELETED == m_DI_List_S.get( L+1 ).diff_type )
-                ? m_DI_List_S.get(L+1).line_num+1
-                : m_DI_List_S.get(L+1).line_num;
-
-        da.ln_l = ( Diff_Type.DELETED == m_DI_List_L.get( L+1 ).diff_type )
-                ? m_DI_List_L.get(L+1).line_num+1
-                : m_DI_List_L.get(L+1).line_num;
+        DL_st.val = L+1; // Diff area starts on first diff after first same
       }
     }
-    // Search down for SAME
-    found = false;
-    for( int L=DL; !found && L<cDI_List.size(); L++ )
+    if( !found && L < 0 )
     {
-      Diff_Info di = cDI_List.get( L );
-      if( Diff_Type.SAME == di.diff_type )
-      {
-        found = true;
-        da.nlines_s = m_DI_List_S.get(L).line_num - da.ln_s;
-        da.nlines_l = m_DI_List_L.get(L).line_num - da.ln_l;
-      }
+      found = true;
+      DL_st.val = 0; // Diff area starts at beginning of file
     }
-    return da;
+    return found;
   }
-  DiffArea ReDiff_GetDiffArea_Search_4_Diff_Then_Same()
-  {
-    DiffArea da = new DiffArea( -1, -1, -1, -1 );
 
-    final int DL = CrsLine(); // Diff line number
+  boolean ReDiff_GetSt_Search_4_Diff_Then_Same( Ptr_Int DL_st )
+  {
     final boolean in_short = m_vis.CV() == m_vS;
     ArrayList<Diff_Info> cDI_List = in_short ? m_DI_List_S : m_DI_List_L; // Current
 
     // Search up for CHANGED, INSERTED or DELETED and then for SAME
     boolean found = false;
-    int L = DL;
+    int L = DL_st.val;
     for( ; !found && 0<=L; L-- )
     {
       Diff_Info di = cDI_List.get( L );
@@ -5365,7 +5523,8 @@ class Diff
         found = true;
       }
     }
-    if( found ) {
+    if( found )
+    {
       found = false;
       for( ; !found && 0<=L; L-- )
       {
@@ -5373,19 +5532,51 @@ class Diff
         if( Diff_Type.SAME == di.diff_type )
         {
           found = true;
-          da.ln_s = ( Diff_Type.DELETED == m_DI_List_S.get( L+1 ).diff_type )
-                  ? m_DI_List_S.get(L+1).line_num+1
-                  : m_DI_List_S.get(L+1).line_num;
-
-          da.ln_l = ( Diff_Type.DELETED == m_DI_List_L.get( L+1 ).diff_type )
-                  ? m_DI_List_L.get(L+1).line_num+1
-                  : m_DI_List_L.get(L+1).line_num;
+          DL_st.val = L+1; // Diff area starts on first diff after first same
         }
       }
     }
+    if( !found && L < 0 )
+    {
+      found = true;
+      DL_st.val = 0; // Diff area starts at beginning of file
+    }
+    return found;
+  }
+
+  boolean ReDiff_GetDiffFn_Search_4_Same( Ptr_Int DL_fn )
+  {
+    final boolean in_short = m_vis.CV() == m_vS;
+    ArrayList<Diff_Info> cDI_List = in_short ? m_DI_List_S : m_DI_List_L; // Current
+
+    // Search down for SAME
+    boolean found = false;
+    int L = DL_fn.val;
+    for( ; !found && L<cDI_List.size(); L++ )
+    {
+      Diff_Info di = cDI_List.get( L );
+      if( Diff_Type.SAME == di.diff_type )
+      {
+        found = true;
+        DL_fn.val = L;
+      }
+    }
+    if( !found && cDI_List.size() < L )
+    {
+      found = true;
+      DL_fn.val = cDI_List.size(); // Diff area ends at end of file
+    }
+    return found;
+  }
+
+  boolean ReDiff_GetFn_Search_4_Diff_Then_Same( Ptr_Int DL_fn )
+  {
+    final boolean in_short = m_vis.CV() == m_vS;
+    ArrayList<Diff_Info> cDI_List = in_short ? m_DI_List_S : m_DI_List_L; // Current
+
     // Search down for CHANGED, INSERTED or DELETED and then for SAME
-    found = false;
-    L = DL;
+    boolean found = false;
+    int L = DL_fn.val;
     for( ; !found && L<cDI_List.size(); L++ )
     {
       Diff_Info di = cDI_List.get( L );
@@ -5396,7 +5587,8 @@ class Diff
         found = true;
       }
     }
-    if( found ) {
+    if( found )
+    {
       found = false;
       for( ; !found && L<cDI_List.size(); L++ )
       {
@@ -5404,13 +5596,18 @@ class Diff
         if( Diff_Type.SAME == di.diff_type )
         {
           found = true;
-          da.nlines_s = m_DI_List_S.get(L).line_num - da.ln_s;
-          da.nlines_l = m_DI_List_L.get(L).line_num - da.ln_l;
+          DL_fn.val = L;
         }
       }
     }
-    return da;
+    if( !found && cDI_List.size() < L )
+    {
+      found = true;
+      DL_fn.val = cDI_List.size(); // Diff area ends at end of file
+    }
+    return found;
   }
+
   int Remove_From_DI_Lists( DiffArea da )
   {
     int DI_lists_insert_idx = 0;
@@ -5555,7 +5752,7 @@ class Diff_Info
   {
     this.diff_type = diff_type;
     this.line_num  = line_num ;
-    this.pLineInfo = pLineInfo; 
+    this.pLineInfo = pLineInfo;
   }
   Diff_Type diff_type; // Diff type of line this Diff_Info refers to
   int       line_num;  // Line number in file to which this Diff_Info applies (view line)
