@@ -21,7 +21,7 @@
 # DEALINGS IN THE SOFTWARE.                                                  #
 ##############################################################################
 
-.PHONE: source_fx source_sw jar_fx jar_sw clean install
+.PHONY: source_fx source_sw jar_fx jar_sw clean install
 
 jar_fx: source_fx
 	jar -cvfe vis_fx.jar VisFx -C classes_fx .

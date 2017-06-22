@@ -3087,7 +3087,6 @@ public class VisFx extends Application
       FileBuf fb0 = v0.m_fb;
       FileBuf fb1 = v1.m_fb;
  
-      // New code in progress:
       boolean ok = true;
       if( !fb0.m_isDir && fb1.m_isDir )
       {
@@ -3111,8 +3110,7 @@ public class VisFx extends Application
           Window_Message("\n"+ fb1.m_fname + " does not exist\n\n");
         }
       }
-      if( ok )
-      {
+      if( ok ) {
         ok = m_diff.Run( v0, v1 );
         if( ok ) {
           m_diff_mode = true;
@@ -3130,7 +3128,7 @@ public class VisFx extends Application
     StringBuilder fname_extension = new StringBuilder();
 
     final int BASE_LEN = possible_fname.length();
-    // vit -d dir1/file.cc dir2/
+    // vis -d dir1/file.cc dir2/
     // Try -d m_cwd/dir1/file.cc m_cwd/dir2/file.cc
     // Dir file name always has DIR_DELIM at end, so no need to add
     // a DIR_DELIM before appending head:
@@ -3752,7 +3750,7 @@ public class VisFx extends Application
         {
           // Look for context for the new view:
           boolean found_context = false;
-          for( int w=0; !found_context && w<m_num_wins; w++ )
+          for( int w=0; !found_context && w<MAX_WINS; w++ )
           {
             View v = m_views[ w ].get( buf_idx );
             if( v.Has_Context() )
@@ -3853,6 +3851,30 @@ public class VisFx extends Application
   //-------------------------
   //| 5 | 4 | 3 | 2 | 1 | 0 |
   //-------------------------
+//void GoToPrevBuffer()
+//{
+//  final int FILE_HIST_LEN = m_file_hist[ m_win ].size();
+//
+//  if( FILE_HIST_LEN <= 1 )
+//  {
+//    // Nothing to do, so just put cursor back
+//    CV().PrintCursor();
+//  }
+//  else {
+//    Exe_Colon_NoDiff();
+//
+//    View     pV_old = CV();
+//    Tile_Pos tp_old = pV_old.m_tile_pos;
+//
+//    // Move view index at front to back of m_file_hist
+//    int view_index_old = m_file_hist[ m_win ].remove( 0 );
+//    m_file_hist[ m_win ].add( view_index_old );
+//
+//    // Redisplay current window with new view:
+//    CV().SetTilePos( tp_old );
+//    CV().Update();
+//  }
+//}
   void GoToPrevBuffer()
   {
     final int FILE_HIST_LEN = m_file_hist[ m_win ].size();
@@ -3863,20 +3885,119 @@ public class VisFx extends Application
       CV().PrintCursor();
     }
     else {
-      Exe_Colon_NoDiff();
+      boolean went_back_to_prev_dir_diff = false;
+      if( m_diff_mode )
+      {
+        went_back_to_prev_dir_diff = WentBackToPrevDirDiff();
 
-      View     pV_old = CV();
-      Tile_Pos tp_old = pV_old.m_tile_pos;
+        if( !went_back_to_prev_dir_diff ) Exe_Colon_NoDiff();
+      }
+      if( !went_back_to_prev_dir_diff )
+      {
+        View     pV_old = CV();
+        Tile_Pos tp_old = pV_old.m_tile_pos;
 
-      // Move view index at front to back of m_file_hist
-      int view_index_old = m_file_hist[ m_win ].remove( 0 );
-      m_file_hist[ m_win ].add( view_index_old );
+        // Move view index at front to back of m_file_hist
+        int view_index_old = m_file_hist[ m_win ].remove( 0 );
+        m_file_hist[ m_win ].add( view_index_old );
 
-      // Redisplay current window with new view:
-      CV().SetTilePos( tp_old );
-      CV().Update();
+        // Redisplay current window with new view:
+        CV().SetTilePos( tp_old );
+        CV().Update();
+      }
     }
   }
+
+// Which version of WentBackToPrevDirDiff() is better.
+// This one which uses Diff_By_File_Indexes() ?
+//boolean WentBackToPrevDirDiff()
+//{
+//  boolean went_back = false;
+//  View pV = CV();
+//  View cV = (pV == m_diff.m_vS) ? m_diff.m_vS : m_diff.m_vL; // Current view
+//  View oV = (pV == m_diff.m_vS) ? m_diff.m_vL : m_diff.m_vS; // Other   view
+//  // Get m_win for cV and oV
+//  final int c_win = GetWinNum_Of_View( cV );
+//  final int o_win = GetWinNum_Of_View( oV );
+//  View cV_prev = GetView_WinPrev( c_win, 1 );
+//  View oV_prev = GetView_WinPrev( o_win, 1 );
+//
+//  if( null != cV_prev && null != oV_prev )
+//  {
+//    if( cV_prev.m_fb.m_isDir && oV_prev.m_fb.m_isDir )
+//    {
+//      Line l_cV_prev = cV_prev.m_fb.GetLine( cV_prev.CrsLine() );
+//      Line l_oV_prev = oV_prev.m_fb.GetLine( oV_prev.CrsLine() );
+//
+//      if( l_cV_prev.equals( l_oV_prev ) )
+//      { // Previous file one both sides were directories, and cursor was
+//        // on same file name on both sides, so go back to previous diff:
+//        final int c_file_idx = FName_2_FNum( cV_prev.m_fb.m_fname );
+//        final int o_file_idx = FName_2_FNum( oV_prev.m_fb.m_fname );
+//
+//        if( 0 <= c_file_idx && 0 <= o_file_idx )
+//        {
+//          // Move view indexes at front to back of m_file_hist
+//          int c_view_index_old = m_file_hist[ c_win ].remove( 0 );
+//          int o_view_index_old = m_file_hist[ o_win ].remove( 0 );
+//          m_file_hist[ c_win ].add( c_view_index_old );
+//          m_file_hist[ o_win ].add( o_view_index_old );
+//
+//          went_back = Diff_By_File_Indexes( cV_prev, c_file_idx, oV_prev, o_file_idx );
+//        }
+//      }
+//    }
+//  }
+//  return went_back;
+//}
+
+  // Which version of WentBackToPrevDirDiff() is better.
+  // Or this one which uses m_diff.Run() ?
+  boolean WentBackToPrevDirDiff()
+  {
+    boolean went_back = false;
+    View pV = CV();
+    View cV = (pV == m_diff.m_vS) ? m_diff.m_vS : m_diff.m_vL; // Current view
+    View oV = (pV == m_diff.m_vS) ? m_diff.m_vL : m_diff.m_vS; // Other   view
+    // Get m_win for cV and oV
+    final int c_win = GetWinNum_Of_View( cV );
+    final int o_win = GetWinNum_Of_View( oV );
+    View cV_prev = GetView_WinPrev( c_win, 1 );
+    View oV_prev = GetView_WinPrev( o_win, 1 );
+
+    if( null != cV_prev && null != oV_prev )
+    {
+      if( cV_prev.m_fb.m_isDir && oV_prev.m_fb.m_isDir )
+      {
+        Line l_cV_prev = cV_prev.m_fb.GetLine( cV_prev.CrsLine() );
+        Line l_oV_prev = oV_prev.m_fb.GetLine( oV_prev.CrsLine() );
+
+        if( l_cV_prev.equals( l_oV_prev ) )
+        { // Previous file one both sides were directories, and cursor was
+          // on same file name on both sides, so go back to previous diff:
+          final int c_file_idx = FName_2_FNum( cV_prev.m_fb.m_fname );
+          final int o_file_idx = FName_2_FNum( oV_prev.m_fb.m_fname );
+
+          if( 0 <= c_file_idx && 0 <= o_file_idx )
+          {
+            // Move view indexes at front to back of m_file_hist
+            int c_view_index_old = m_file_hist[ c_win ].remove( 0 );
+            int o_view_index_old = m_file_hist[ o_win ].remove( 0 );
+            m_file_hist[ c_win ].add( c_view_index_old );
+            m_file_hist[ o_win ].add( o_view_index_old );
+
+            went_back = m_diff.Run( cV_prev, oV_prev );
+            if( went_back ) {
+              m_diff_mode = true;
+              m_diff.Update();
+            }
+          }
+        }
+      }
+    }
+    return went_back;
+  }
+
   void GoToFileBuffer()
   {
     GoToBuffer( BE_FILE );
@@ -3955,6 +4076,50 @@ public class VisFx extends Application
       if( m_diff_mode ) m_diff.GoToLine( line_num );
       else                CV().GoToLine( line_num );
     }
+  }
+
+  public
+  boolean Diff_By_File_Indexes( View cV, int c_file_idx
+                              , View oV, int o_file_idx )
+  {
+    boolean ok = false;
+    // Get m_win for cV and oV
+    final int c_win = GetWinNum_Of_View( cV );
+    final int o_win = GetWinNum_Of_View( oV );
+
+    if( 0 <= c_win && 0 <= o_win )
+    {
+      m_file_hist[ c_win ].add( 0, c_file_idx );
+      m_file_hist[ o_win ].add( 0, o_file_idx );
+      // Remove subsequent file_idx's from m_file_hist[ c_win ]:
+      for( int k=1; k<m_file_hist[ c_win ].size(); k++ )
+      {
+        if( c_file_idx == m_file_hist[ c_win ].get( k ) )
+        {
+          m_file_hist[ c_win ].remove( k );
+        }
+      }
+      // Remove subsequent file_idx's from m_file_hist[ o_win ]:
+      for( int k=1; k<m_file_hist[ o_win ].size(); k++ )
+      {
+        if( c_file_idx == m_file_hist[ o_win ].get( k ) )
+        {
+          m_file_hist[ o_win ].remove( k );
+        }
+      }
+      View nv_c = GetView_WinPrev( c_win, 0 );
+      View nv_o = GetView_WinPrev( o_win, 0 );
+
+      nv_c.SetTilePos( cV.m_tile_pos );
+      nv_o.SetTilePos( oV.m_tile_pos );
+
+      ok = m_diff.Run( nv_c, nv_o );
+      if( ok ) {
+        m_diff_mode = true;
+        m_diff.Update();
+      }
+    }
+    return ok;
   }
 
   void UpdateViewsPositions()
@@ -4072,9 +4237,27 @@ public class VisFx extends Application
     return m_views[w].get( m_file_hist[w].get( 0 ) );
   }
   // Get view of window w, filebuf'th previously displayed file
-  View GetView_WinPrev( final int w, final int prev )
+  public View GetView_WinPrev( final int w, final int prev )
   {
-    return m_views[w].get( m_file_hist[w].get( prev ) );
+    View pV = null;
+
+    if( prev < m_file_hist[w].size() )
+    {
+      pV = m_views[w].get( m_file_hist[w].get( prev ) );
+    }
+    return pV;
+  }
+  // Get window number of currently displayed View
+  public int GetWinNum_Of_View( final View rV )
+  {
+    for( int w=0; w<m_num_wins; w++ )
+    {
+      if( rV == GetView_Win( w ) )
+      {
+        return w;
+      }
+    }
+    return -1;
   }
   public ConsoleIF get_Console()
   {

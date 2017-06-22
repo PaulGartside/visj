@@ -981,7 +981,7 @@ class ConsoleFx extends Canvas
   private Color DEFINE_FG       = Color.MAGENTA;
   private Color CONST_FG        = Color.CYAN   ;
   private Color CONTROL_FG      = Color.YELLOW ;
-  private Color VARTYPE_FG      = Color.LIME   ; // FX call green LIME
+  private Color VARTYPE_FG      = Color.LIME   ; // FX calls green LIME
   private Color VISUAL_FG       = Color.WHITE  ;
   private Color NONASCII_FG     = Color.RED    ;
   private Color RV_NORMAL_FG    = Color.BLACK  ;

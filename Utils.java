@@ -24,6 +24,8 @@
 import java.lang.AssertionError;
 import java.io.IOException;
 import java.io.File;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -62,7 +64,6 @@ class Utils
     if( !m_determined_os )
     {
       String os = System.getProperty("os.name");
-//Log("os='"+os+"'");
 
       if( null != os )
       {
@@ -423,32 +424,67 @@ class Utils
     return mod_time;
   }
 
+  // Given full path names of files, return true if the two
+  // files are the same
+  public static
+  boolean Files_Are_Same( String fname_s, String fname_l )
+  {
+    boolean files_are_same = false;
+
+    Path path_s = FileSystems.getDefault().getPath( fname_s );
+    Path path_l = FileSystems.getDefault().getPath( fname_l );
+
+    if( Files.isRegularFile( path_s )
+     && Files.isRegularFile( path_l ) )
+    {
+      File file_s = path_s.toFile();
+      File file_l = path_l.toFile();
+
+      final long len_s = file_s.length();
+      final long len_l = file_l.length();
+
+      if( len_s == len_l )
+      {
+        try {
+          FileInputStream     fis_s = new FileInputStream( file_s );
+          BufferedInputStream bis_s = new BufferedInputStream( fis_s, 512 );
+        
+          FileInputStream     fis_l = new FileInputStream( file_l );
+          BufferedInputStream bis_l = new BufferedInputStream( fis_l, 512 );
+        
+          for( boolean done = false; !done; )
+          {
+            final int C_s = bis_s.read();
+            final int C_l = bis_l.read();
+        
+            if( -1 == C_s && -1 == C_l )
+            {
+              done = true;
+              files_are_same = true;
+            }
+            else if( C_s != C_l )
+            {
+              done = true; // Files are different
+            }
+            else {
+              // Keep reading till end of files or difference
+            }
+          }
+          fis_s.close();
+          fis_l.close();
+        }
+        catch( Exception e ) {}
+      }
+    }
+    return files_are_same;
+  }
+
   public static
   void Assert( final boolean condition, String msg )
   {
     if( !condition ) throw new AssertionError( msg, null );
   }
 
-//private static
-//char Get_Dir_Delim()
-//{
-//  char dir_delim_c = '/';
-//  String dir_delim_s = System.getProperty("file.separator");
-//  if( null != dir_delim_s )
-//  {
-//    dir_delim_c = dir_delim_s.charAt( 0 );
-//  }
-//  return dir_delim_c;
-//}
-//private static
-//String Get_Dir_Delim_Str()
-//{
-//  StringBuilder sb = new StringBuilder();
-//
-//  sb.append( DIR_DELIM );
-//
-//  return sb.toString();
-//}
   private static
   String Get_Dir_Delim_Str()
   {

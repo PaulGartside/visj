@@ -1538,7 +1538,7 @@ class FileBuf
     int tabs_removed = 0;
 
     Line l_c = m_lines.get(l);
-    final int LL = l_c.length();
+    int LL = l_c.length();
     int cnum_t = 0; // char number with respect to tabs
 
     for( int p=0; p<LL; p++ )
@@ -1554,6 +1554,7 @@ class FileBuf
         {
           p++;
           InsertChar( l, p, ' ');
+          LL++;
         }
         cnum_t = 0;
       }

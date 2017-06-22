@@ -124,44 +124,6 @@ class Line
     }
     return m_chksum;
   }
-//  private int calc_chksum()
-//  {
-//    int chk_sum = 0;
-//
-//    int start = 0;
-//    int finish = 0<m_sb.length() ? m_sb.length()-1 : -1;
-// 
-//    start  = skip_white_beg( m_sb, start );
-//    finish = skip_white_end( m_sb, start, finish );
-// 
-//    int N = 0xFEDCBA98;
-//    for( int i=start; i<=finish; i++, N-- )
-//    {
-//      chk_sum ^= N ^ m_sb.charAt( i );
-//      chk_sum = ((chk_sum <<  8)&0xFFFFFF00)
-//              | ((chk_sum >> 24)&0x000000FF);
-//    }
-//Utils.Log("calc_chksum(): length="+ length() +" chk_sum="+ chk_sum);
-//    return chk_sum;
-//  }
-//private int calc_chksum()
-//{
-//  int chk_sum = 0;
-//
-//  int start = 0;
-//  int finish = 0<m_sb.length() ? m_sb.length()-1 : -1;
-//
-//  start  = skip_white_beg( m_sb, start );
-//  finish = skip_white_end( m_sb, start, finish );
-//
-//  for( int i=start; i<=finish; i++ )
-//  {
-//    chk_sum ^= m_primes[i%m_num_primes] ^ m_sb.charAt( i );
-//    chk_sum = ((chk_sum << 13)&0xFFFFE000)
-//            | ((chk_sum >> 19)&0x00001FFF);
-//  }
-//  return chk_sum;
-//}
   private int calc_chksum()
   {
     int chk_sum = 0;

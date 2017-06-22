@@ -61,6 +61,10 @@ interface VisIF
 
   int  Curr_FileNum();
   View GetView_Win( final int w );
+  View GetView_WinPrev( final int w, final int prev );
+  int  GetWinNum_Of_View( final View rV );
+  boolean Diff_By_File_Indexes( View cV, int c_file_idx
+                              , View oV, int o_file_idx );
 
   void Handle_SemiColon();
   void Handle_Slash_GotPattern( final String  pattern

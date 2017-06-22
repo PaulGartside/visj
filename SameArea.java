@@ -64,8 +64,8 @@ class SameArea
          + " nlines="+m_nlines+" nbytes="+m_nbytes;
   }
 
-  int m_ln_s;   // Beginning line number in short file
-  int m_ln_l;   // Beginning line number in long  file
+  int m_ln_s;   // Beginning line number in short file (view line)
+  int m_ln_l;   // Beginning line number in long  file (view line)
   int m_nlines; // Number of consecutive lines the same
   int m_nbytes; // Number of bytes in consecutive lines the same
 }

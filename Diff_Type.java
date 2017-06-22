@@ -22,11 +22,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 enum Diff_Type
-{
-  UNKN0WN,
-  SAME,
-  CHANGED,
-  INSERTED,
-  DELETED
+{            // Line in File    | Line in Dir
+  UNKNOWN,   //
+  SAME,      // Lines are same  | File names are same and contents same
+  CHANGED,   // Lines different | File names are different
+  INSERTED,  // Line inserted   | File added
+  DELETED,   // Line deleted    | File removed
+  DIFF_FILES // NA              | File names same but files differ
 }
 
