@@ -360,7 +360,8 @@ class View
     final int WC = WorkingCols();
     final int FILE_NAME_LEN = buf.length();
 
-    while( WC < buf.length() ) buf.deleteCharAt( 0 );
+    while( 0 < buf.length()
+        && WC < buf.length() ) buf.deleteCharAt( 0 );
     while( buf.length() < WC ) buf.append(' ');
 
     m_console.SetS( File_Line_Row(), Col_Win_2_GL( 0 ), buf.toString(), Style.STATUS );
