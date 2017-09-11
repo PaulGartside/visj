@@ -264,6 +264,14 @@ class Utils
   }
 
   public static
+  char Byte_2_Char( final byte B )
+  {
+    final int  I = B < 0 ? B + 256 : B;
+    final char C = (char)I;
+    return C;
+  }
+
+  public static
   String GetCWD()
   {
     FileSystem fs = FileSystems.getDefault();

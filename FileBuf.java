@@ -28,6 +28,15 @@ import java.io.FileNotFoundException;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.CharBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CoderResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.FileSystem;
@@ -615,6 +624,7 @@ class FileBuf
 
     return fname;
   }
+  // Original version:
   // File is read in one byte at a time:
   void ReadExistingFile() throws FileNotFoundException, IOException
   {
@@ -651,6 +661,47 @@ class FileBuf
       Find_File_Type_FirstLine();
     }
   }
+
+//// FileChannel but not decoding:
+//void ReadExistingFile() throws FileNotFoundException, IOException
+//{
+//  File infile = m_path.toFile();
+//
+//  FileInputStream     fis   = new FileInputStream( infile );
+//  FileChannel         fchan = fis.getChannel();
+//  ByteBuffer          bbuf  = ByteBuffer.allocate( 1024 );
+//
+//  Line l_line = new Line();
+//
+//  for( boolean done = false; !done; )
+//  {
+//    bbuf.clear();
+//    done = ( fchan.read( bbuf ) == -1 );
+//    bbuf.flip();
+//
+//    for( int k=0; k<bbuf.remaining(); k++ )
+//    {
+//      final char C = (char)bbuf.get(k);
+//      if( '\n' == C) {
+//        PushLine( l_line );
+//        l_line = new Line();
+//        m_LF_at_EOF = true;
+//      }
+//      else {
+//        l_line.append_c( (char)C);
+//        m_LF_at_EOF = false;
+//      }
+//    }
+//  }
+//  if( 0 < l_line.length() ) PushLine( l_line );
+//  fis.close();
+//
+//  if( File_Type.UNKNOWN == m_file_type )
+//  {
+//    Find_File_Type_FirstLine();
+//  }
+//}
+
   void ReadString( final String STR )
   {
     Line l_line = null;
@@ -700,33 +751,53 @@ class FileBuf
 
   boolean Write()
   {
+    boolean ok = false;
     try {
-      return Write_p();
+      if( Encoding.NONE == m_encoding )
+      {
+        ok = Write_p( m_lines, m_LF_at_EOF );
+      }
+      else { // m_lines to 
+        final long file_size = GetSize();
+        // Going from WIN_1252 or UTF_8 to NONE
+        CharBuffer cbuf = File_2_char_buf( file_size );
+        cbuf.flip();
+        ByteBuffer bbuf = Encode( cbuf );
+        if( null != bbuf ) {
+          Ptr_Boolean p_LF_at_EOF = new Ptr_Boolean( true );
+          ArrayList<Line> n_lines = Byte_buf_2_lines( bbuf, p_LF_at_EOF );
+          ok = Write_p( n_lines, p_LF_at_EOF.val );
+        }
+      }
     }
     catch( Exception e )
     {
       m_vis.Window_Message( e.toString() );
     }
-    return false;
+    return ok;
   }
-  private boolean Write_p() throws FileNotFoundException, IOException
+
+  private
+  boolean Write_p( ArrayList<Line> l_lines
+                 , final boolean   l_LF_at_EOF ) throws FileNotFoundException
+                                                      , IOException
   {
     File outfile = m_path.toFile();
 
     FileOutputStream     fos = new FileOutputStream( outfile );
     BufferedOutputStream bos = new BufferedOutputStream( fos, 512 );
 
-    final int NUM_LINES = m_lines.size();
+    final int NUM_LINES = l_lines.size();
 
     for( int k=0; k<NUM_LINES; k++ )
     {
-      final int LL = m_lines.get(k).length();
+      final int LL = l_lines.get(k).length();
       for( int i=0; i<LL; i++ )
       {
-        final int C = m_lines.get(k).charAt(i);
+        final int C = l_lines.get(k).charAt(i);
         bos.write( C );
       }
-      if( k<NUM_LINES-1 || m_LF_at_EOF )
+      if( k<NUM_LINES-1 || l_LF_at_EOF )
       {
         bos.write( '\n' );
       }
@@ -861,7 +932,7 @@ class FileBuf
       if( NUM_LINES <= CL ) CL = NUM_LINES-1;
 
       final int CLL = m_lines.get( CL ).length();
-  
+
       if( CLL <= CC ) CC = 0<CLL ? CLL-1 : 0;
 
       // Absolute byte offset of beginning of first line in file is always zero:
@@ -905,12 +976,12 @@ class FileBuf
         // scrolls down another line.  Find_Styles() will only be called
         // once for every EXTRA_LINES scrolled down.
         final int EXTRA_LINES = 10;
- 
+
         CrsPos st = Update_Styles_Find_St( m_hi_touched_line );
         int    fn = Math.min( up_to_line+EXTRA_LINES, NumLines() );
- 
+
         Find_Styles_In_Range( st, fn );
- 
+
         m_hi_touched_line = fn;
       }
     }
@@ -933,7 +1004,7 @@ class FileBuf
           st.crsLine = l;
           st.crsChar = p;
           done = true;
-        } 
+        }
       }
     }
     return st;
@@ -1026,7 +1097,8 @@ class FileBuf
   // Uses java regex:
   void Find_Regexs_4_Line( final int line_num )
   {
-    if( line_num < m_lineRegexsValid.size() && !m_lineRegexsValid.get(line_num) )
+    if( 0 <= line_num && line_num < m_lineRegexsValid.size()
+     && !m_lineRegexsValid.get(line_num) )
     {
       Line lr = m_lines.get( line_num );
       final int LL = lr.length();
@@ -1160,7 +1232,7 @@ class FileBuf
   {
     final int NUM_BUILT_IN_FILES = m_vis.USER_FILE;
     final int FNAME_START_CHAR   = 0;
- 
+
     // Sort lines (file names), least to greatest:
     for( int i=NumLines()-1; NUM_BUILT_IN_FILES<i; i-- )
     {
@@ -1293,7 +1365,7 @@ class FileBuf
 
     if( old_C != C )
     {
-      lr.setCharAt( c_num, C ); 
+      lr.setCharAt( c_num, C );
 
       if( SavingHist() )
       {
@@ -1523,7 +1595,7 @@ class FileBuf
       Update();
       m_vis.CmdLineMessage("Removed "+ num_tabs_removed +" tabs");
     }
-    else if( 0 < num_spcs_removed ) 
+    else if( 0 < num_spcs_removed )
     {
       Update();
       m_vis.CmdLineMessage("Removed "+ num_spcs_removed +" spaces");
@@ -1655,6 +1727,233 @@ class FileBuf
     else {
       m_vis.CmdLineMessage("No CRs added");
     }
+  }
+
+  boolean Set_encoding( final Encoding enc )
+  {
+    boolean ok = true;
+    if( enc != m_encoding )
+    {
+      final long file_size = GetSize();
+      if( Encoding.NONE == m_encoding )
+      {
+        // Going from NONE to WIN_1252 or UTF_8
+        if( Integer.MAX_VALUE < file_size ) ok = false;
+        else {
+          ByteBuffer bbuf = File_2_byte_buf( file_size );
+          bbuf.flip();
+          CharBuffer cbuf = Decode( bbuf, enc );
+          if( null == cbuf ) ok = false;
+          else {
+            Ptr_Boolean p_LF_at_EOF = new Ptr_Boolean( true );
+            ArrayList<Line> n_lines = Char_buf_2_lines( cbuf, p_LF_at_EOF );
+            Replace_current_file( enc, n_lines, p_LF_at_EOF );
+          }
+        }
+      }
+      else if( Encoding.NONE == enc )
+      {
+        // Going from WIN_1252 or UTF_8 to NONE
+        CharBuffer cbuf = File_2_char_buf( file_size );
+        cbuf.flip();
+        ByteBuffer bbuf = Encode( cbuf );
+        if( null == bbuf ) ok = false;
+        else {
+        //bbuf.order( ByteOrder.nativeOrder() );
+        //bbuf.order( cbuf.order() );
+          Ptr_Boolean p_LF_at_EOF = new Ptr_Boolean( true );
+          ArrayList<Line> n_lines = Byte_buf_2_lines( bbuf, p_LF_at_EOF );
+          Replace_current_file( enc, n_lines, p_LF_at_EOF );
+        }
+      }
+      else ok = false;
+    }
+    return ok;
+  }
+
+  // Puts current file into an allocated byte buffer.
+  // returns the byte buffer.
+  ByteBuffer File_2_byte_buf( final long file_size )
+  {
+    ByteBuffer bbuf = ByteBuffer.allocate( (int)file_size );
+    final int NUM_LINES = m_lines.size();
+    for( int k=0; k<NUM_LINES; k++ )
+    {
+      Line l = m_lines.get(k);
+      final int LL = l.length();
+      for( int i=0; i<LL; i++ ) bbuf.put( (byte)l.charAt(i) );
+      if( k<NUM_LINES-1 || m_LF_at_EOF ) bbuf.put((byte)'\n');
+    }
+    return bbuf;
+  }
+
+  // Puts current file into an allocated char buffer.
+  // returns the char buffer.
+  CharBuffer File_2_char_buf( final long file_size )
+  {
+    CharBuffer cbuf = CharBuffer.allocate( (int)file_size );
+    final int NUM_LINES = m_lines.size();
+    for( int k=0; k<NUM_LINES; k++ )
+    {
+      Line l = m_lines.get(k);
+      final int LL = l.length();
+      for( int i=0; i<LL; i++ ) cbuf.put( l.charAt(i) );
+      if( k<NUM_LINES-1 || m_LF_at_EOF ) cbuf.put('\n');
+    }
+    return cbuf;
+  }
+
+  // Decodes ByteBuffer bbuf according to Encoding enc into newly
+  // allocated CharBuffer.
+  // Returns CharBuffer if successfull, else null.
+  CharBuffer Decode( ByteBuffer bbuf, final Encoding enc )
+  {
+    CharBuffer cbuf = null;
+    CharsetDecoder decoder = null;
+
+    if( enc == Encoding.UTF_8 )
+    {
+      decoder = Charset.forName("UTF-8").newDecoder();
+    }
+    else if( enc == Encoding.WIN_1252 )
+    {
+      decoder = Charset.forName("windows-1252").newDecoder();
+    }
+    else {
+      // enc is NONE, so just put plain bytes into cbuf
+      final int bbuf_size = bbuf.remaining();
+      cbuf = CharBuffer.allocate( bbuf_size );
+      for( int k=0; k<bbuf_size; k++ )
+      {
+        cbuf.put( (char)bbuf.get(k) );
+      }
+    }
+    if( null != decoder )
+    {
+      try {
+        cbuf = decoder.decode( bbuf );
+      }
+      catch( Exception e )
+      {
+        cbuf = null;
+      }
+    }
+    return cbuf;
+  }
+
+  // Encodes CharBuffer cbuf according to m_encoding into newly
+  // allocated ByteBuffer.
+  // Returns ByteBuffer if successfull, else null.
+  ByteBuffer Encode( CharBuffer cbuf )
+  {
+    ByteBuffer bbuf = null;
+    CharsetEncoder encoder = null;
+
+    if( m_encoding == Encoding.UTF_8 )
+    {
+      encoder = Charset.forName("UTF-8").newEncoder();
+    }
+    else if( m_encoding == Encoding.WIN_1252 )
+    {
+      encoder = Charset.forName("windows-1252").newEncoder();
+    }
+    else {
+      // cbuf already contains plain bytes, so just put them into bbuf
+      final int cbuf_size = cbuf.remaining();
+      bbuf = ByteBuffer.allocate( cbuf_size );
+    //bbuf.order( cbuf.order() );
+    //bbuf.order( ByteOrder.nativeOrder() );
+      for( int k=0; k<cbuf_size; k++ )
+      {
+        bbuf.put( (byte)cbuf.get(k) );
+      }
+    }
+    if( null != encoder )
+    {
+      try {
+        bbuf = encoder.encode( cbuf );
+      }
+      catch( Exception e )
+      {
+        bbuf = null;
+      }
+    }
+    return bbuf;
+  }
+
+  ArrayList<Line> Byte_buf_2_lines( ByteBuffer bbuf, Ptr_Boolean p_LF_at_EOF )
+  {
+    ArrayList<Line> n_lines = new ArrayList<>();
+
+    Line l_line = new Line();
+
+    for( int k=0; k<bbuf.remaining(); k++ )
+    {
+      final byte B = bbuf.get(k);
+      final char C = Utils.Byte_2_Char( B );
+
+      if('\n' == C)
+      {
+        n_lines.add( l_line );
+        l_line = new Line();
+        p_LF_at_EOF.val = true;
+      }
+      else {
+        l_line.append_c( C );
+        p_LF_at_EOF.val = false;
+      }
+    }
+    if( 0 < l_line.length() ) n_lines.add( l_line );
+
+    return n_lines;
+  }
+
+  ArrayList<Line> Char_buf_2_lines( CharBuffer cbuf, Ptr_Boolean p_LF_at_EOF )
+  {
+    ArrayList<Line> n_lines = new ArrayList<>();
+
+    Line l_line = new Line();
+
+    for( int k=0; k<cbuf.remaining(); k++ )
+    {
+      final char C = cbuf.get(k);
+
+      if('\n' == C)
+      {
+        n_lines.add( l_line );
+        l_line = new Line();
+        p_LF_at_EOF.val = true;
+      }
+      else {
+        l_line.append_c( C );
+        p_LF_at_EOF.val = false;
+      }
+    }
+    if( 0 < l_line.length() ) n_lines.add( l_line );
+
+    return n_lines;
+  }
+
+  void Replace_current_file( final Encoding enc
+                           , ArrayList<Line> n_lines
+                           , Ptr_Boolean p_LF_at_EOF )
+  {
+    m_history.Clear();
+    m_save_history = false;
+
+    m_lines.clear();
+    m_styles.clear();
+    m_lineRegexsValid.clear();
+
+    m_LF_at_EOF = p_LF_at_EOF.val;
+
+    for( int k=0; k<n_lines.size(); k++ )
+    {
+      PushLine( n_lines.get(k) );
+    }
+    m_save_history = true;
+    m_encoding = enc;
+    m_hi_touched_line = 0;
   }
 
   VisIF                 m_vis;   // Not sure if we need this or should use m_views

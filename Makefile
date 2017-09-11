@@ -21,10 +21,13 @@
 # DEALINGS IN THE SOFTWARE.                                                  #
 ##############################################################################
 
-.PHONY: fx_jar sw_jar clean install
+.PHONY: fx_jar sw_jar run clean install
 
 fx_jar: vis_fx.jar
 sw_jar: vis_sw.jar
+
+run:
+	java -jar vis_fx.jar
 
 GENERIC_SOURCES = ChangeHist \
                   ChangeType \
@@ -65,6 +68,7 @@ GENERIC_SOURCES = ChangeHist \
                   OS_Type \
                   Paste_Mode \
                   Paste_Pos \
+                  Ptr_Boolean \
                   Ptr_InputStream \
                   Ptr_Int \
                   Ptr_Double \

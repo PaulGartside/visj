@@ -345,8 +345,8 @@ class Diff
       final int DI_LEN = m_DI_List_S.size();
 
       if( NUM_LINES_VS <= view_line ) diff_line = DI_LEN-1;
-      else {
-        // Diff line is greater than or equal to view line,
+      else if( 0 < view_line )
+      { // Diff line is greater than or equal to view line,
         // so start at view line number and search forward
         int k = view_line;
         Diff_Info di = m_DI_List_S.get( view_line );
@@ -423,8 +423,8 @@ class Diff
       final int DI_LEN = m_DI_List_L.size();
 
       if( NUM_LINES_VL <= view_line ) diff_line = DI_LEN-1;
-      else {
-        // Diff line is greater than or equal to view line,
+      else if( 0 < view_line )
+      { // Diff line is greater than or equal to view line,
         // so start at view line number and search forward
         int k = view_line;
         Diff_Info di = m_DI_List_L.get( view_line );
@@ -4525,7 +4525,6 @@ class Diff
     else if( Paste_Mode.BLOCK == PM ) Do_p_block();
     else /*( Paste_Mode.LINE  == PM*/ Do_p_line();
   }
-  // New:
   void Do_p_line()
   {
     View    pV  = m_vis.CV();
@@ -5418,6 +5417,8 @@ class Diff
       }
     }
   }
+  // Since a line was just inserted, increment line numbers of all lines
+  // following, and increment line number of inserted line if needed.
   void Patch_Diff_Info_Inserted_Inc( final int DPL
                                    , final boolean ON_DELETED_VIEW_LINE_ZERO
                                    , ArrayList<Diff_Info> cDI_List )
@@ -5425,12 +5426,13 @@ class Diff
     // If started inserting into empty first line in file, dont increment
     // Diff_Info line_num, because DELETED first line starts at zero:
     int inc_st = DPL;
-    if( ON_DELETED_VIEW_LINE_ZERO ) {
-      // If there are Diff_Type.DELETED lines directly below where
-      // we inserted a line, decrement their Diff_Info.line_num's
-      // because they were incremented in Patch_Diff_Info_Inserted()
-      // and they should not be incremented here:
-      for( int k=DPL+1; k<cDI_List.size(); k++ )
+    if( ON_DELETED_VIEW_LINE_ZERO )
+    {
+      inc_st = DPL+1;
+      // Since we just inserted into DELETED_VIEW_LINE_ZERO,
+      // current line is line zero.
+      // Move increment start down to first non-DELETED line after current line.
+      for( int k=inc_st; k<cDI_List.size(); k++ )
       {
         Diff_Info di = cDI_List.get( k );
         if( Diff_Type.DELETED == di.diff_type )

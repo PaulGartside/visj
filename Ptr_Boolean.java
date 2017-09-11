@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // VI-Simplified (vis) Java Implementation                                    //
-// Copyright (c) 19 May 2016 Paul J. Gartside                                 //
+// Copyright (c) 06 Sep 2017 Paul J. Gartside                                 //
 ////////////////////////////////////////////////////////////////////////////////
 // Permission is hereby granted, free of charge, to any person obtaining a    //
 // copy of this software and associated documentation files (the "Software"), //
@@ -21,10 +21,15 @@
 // DEALINGS IN THE SOFTWARE.                                                  //
 ////////////////////////////////////////////////////////////////////////////////
 
-enum Encoding
+class Ptr_Boolean
 {
-  NONE,
-  UTF_8,
-  WIN_1252
+  Ptr_Boolean()
+  {
+  }
+  Ptr_Boolean( boolean val )
+  {
+    this.val = val;
+  }
+  boolean val;
 }
 

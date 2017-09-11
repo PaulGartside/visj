@@ -2473,6 +2473,7 @@ public class VisFx extends Application
     else if( m_sb.toString().startsWith("cd"))Exe_Colon_cd();
     else if( m_sb.toString().startsWith("syn="))Exe_Colon_Syntax();
     else if( m_sb.toString().startsWith("detab="))Exe_Colon_Detab();
+    else if( m_sb2.toString().startsWith("enc")) Exe_Colon_Encoding();
     else if( m_sb.charAt(0)=='w' )            Exe_Colon_w();
     else if( m_sb.charAt(0)=='b' )            Exe_Colon_b();
     else if( m_sb.charAt(0)=='n' )            Exe_Colon_n();
@@ -2493,7 +2494,10 @@ public class VisFx extends Application
     m_sb2.ensureCapacity( m_sb.length() );
     m_sb2.setLength( 0 );
     for( int k=0; k<m_sb.length(); k++ ) m_sb2.append( m_sb.charAt( k ) );
+    Utils.Trim( m_sb2 ); //< Remove leading and trailing white space
     Utils.RemoveSpaces( m_sb );
+    // m_sb2 has spaces between tokens, but no leading or trailing spaces
+    // m_sb  has no spaces
     Exe_Colon_MapEnd();
   }
   void Exe_Colon_PrintCursor()
@@ -3246,7 +3250,7 @@ public class VisFx extends Application
   }
   void Exe_Colon_cd()
   {
-    String[] tokens = m_sb.toString().split("\\s");
+    String[] tokens = m_sb2.toString().split("\\s");
 
     if( tokens.length == 1 ) // ":cd" to location of current file
     {
@@ -3261,7 +3265,7 @@ public class VisFx extends Application
       CmdLineMessage( m_cwd );
     }
     else {
-      CmdLineMessage( m_sb.toString() +" failed" );
+      CmdLineMessage( m_sb2.toString() +" failed" );
     }
   }
 
@@ -3303,6 +3307,54 @@ public class VisFx extends Application
   void Exe_unix2dos()
   {
     CV().m_fb.unix2dos();
+  }
+
+  void Exe_Colon_Encoding()
+  {
+    String[] toks = m_sb.toString().split("=");
+
+    Encoding enc      = CV().m_fb.m_encoding;
+    String   enc_name = NONE_str;
+
+    if( toks.length!=2 )
+    {
+      if     ( enc == Encoding.UTF_8    ) enc_name = UTF_8_str;
+      else if( enc == Encoding.WIN_1252 ) enc_name = WIN_1252_str;
+
+      CmdLineMessage("Encoding is: "+ enc_name );
+    }
+    else {
+      boolean ok = true;
+
+      if( toks[1].equals( NONE_str ) )
+      {
+        enc      = Encoding.NONE;
+        enc_name = NONE_str;
+      }
+      else if( toks[1].equals( UTF_8_str ) )
+      {
+        enc      = Encoding.UTF_8;
+        enc_name = UTF_8_str;
+      }
+      else if( toks[1].equals( WIN_1252_str ) )
+      {
+        enc      = Encoding.WIN_1252;
+        enc_name = WIN_1252_str;
+      }
+      else {
+        ok = false;
+        CmdLineMessage("Unknown Encoding: "+ toks[1] +", Encodings are: "
+                      + NONE_str +", "+ UTF_8_str +", "+ WIN_1252_str );
+      }
+      if( ok )
+      {
+        ok = CV().m_fb.Set_encoding( enc );
+        if( ok ) CV().m_fb.Update();
+
+        if( ok ) CmdLineMessage("Encoding is: "+ enc_name );
+        else     CmdLineMessage("Failed to set Encoding to: "+ enc_name );
+      }
+    }
   }
 
   void Exe_Colon_MapStart()
@@ -4029,7 +4081,6 @@ public class VisFx extends Application
     }
     else // :e file_name
     {
-      Utils.Trim( m_sb2 ); // Remove leading and trailing white space
       m_sb2.deleteCharAt( 0 ); // Remove initial 'e'
       Utils.Trim_Beg( m_sb2 ); // Remove space after initial 'e'
 
@@ -4328,6 +4379,9 @@ public class VisFx extends Application
   {
     return m_diff;
   }
+  static String NONE_str     = "none";
+  static String UTF_8_str    = "utf-8";
+  static String WIN_1252_str = "win-1252";
 
   List<String>    m_args;
   Stage           m_stage;
