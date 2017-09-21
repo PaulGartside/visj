@@ -769,12 +769,16 @@ public class VisFx extends Application
     if( ! pattern.equals( m_regex ) )
     {
       m_regex = pattern;
- 
+
       if( 0<m_regex.length() )
       {
         Do_Star_Update_Search_Editor();
       }
-      if( m_diff_mode ) m_diff.Update();
+      if( m_diff_mode )
+      {
+        m_diff.Set_Cmd_Line_Msg( '\\' + m_regex );
+        m_diff.Update();
+      }
       else {
         // Show new star patterns for all windows currently displayed,
         // but update current window last, so that the cursor ends up
@@ -782,9 +786,10 @@ public class VisFx extends Application
         for( int w=0; w<m_num_wins; w++ )
         {
           View pV = GetView_Win( w );
- 
+
           if( pV != CV() ) pV.Update();
         }
+        CV().Set_Cmd_Line_Msg( '\\' + m_regex );
         CV().Update();
       }
     }
@@ -1323,7 +1328,7 @@ public class VisFx extends Application
       if( m_colon_view.m_i_EOL_delim )
       {
         m_colon_mode = false;
- 
+
         Exe_Colon_Cmd();
       }
       else {
@@ -1335,7 +1340,7 @@ public class VisFx extends Application
       if( m_slash_view.m_i_EOL_delim )
       {
         m_slash_mode = false;
- 
+
         Exe_Slash();
       }
       else {
@@ -1576,10 +1581,10 @@ public class VisFx extends Application
   boolean GoToNextWindow_l_Find()
   {
     boolean found = false; // Found next view to go to
-  
+
     final View     curr_V  = CV();
     final Tile_Pos curr_TP = curr_V.m_tile_pos;
-  
+
     if( curr_TP == Tile_Pos.LEFT_HALF )
     {
       for( int k=0; !found && k<m_num_wins; k++ )
@@ -2004,14 +2009,14 @@ public class VisFx extends Application
     if( 1 < m_num_wins )
     {
       final int win_old = m_win;
-  
+
       // If next view to go to was not found, dont do anything, just return
       // If next view to go to is found, m_win will be updated to new value
       if( GoToNextWindow_jk_Find() )
       {
         View pV     = GetView_Win( m_win   );
         View pV_old = GetView_Win( win_old );
-  
+
         pV_old.Print_Borders();
         pV    .Print_Borders();
 
@@ -2022,10 +2027,10 @@ public class VisFx extends Application
   boolean GoToNextWindow_jk_Find()
   {
     boolean found = false; // Found next view to go to
-  
+
     final View     curr_V  = CV();
     final Tile_Pos curr_TP = curr_V.m_tile_pos;
-  
+
     if( curr_TP == Tile_Pos.TOP__HALF )
     {
       for( int k=0; !found && k<m_num_wins; k++ )
@@ -2181,23 +2186,122 @@ public class VisFx extends Application
     return found;
   }
 
+//void FlipWindows()
+//{
+//  if( 1 < m_num_wins )
+//  {
+//    boolean split_vertically = false;
+//
+//    for( int k=0; !split_vertically && k<m_num_wins; k++ )
+//    {
+//      // pV is View of displayed window k
+//      View pV = GetView_Win( k );
+//
+//      split_vertically = pV.m_tile_pos == Tile_Pos.LEFT_HALF
+//                      || pV.m_tile_pos == Tile_Pos.RITE_HALF
+//                      || pV.m_tile_pos == Tile_Pos.RITE_QTR
+//                      || pV.m_tile_pos == Tile_Pos.LEFT_QTR
+//                      || pV.m_tile_pos == Tile_Pos.RITE_CTR__QTR
+//                      || pV.m_tile_pos == Tile_Pos.LEFT_CTR__QTR;
+//    }
+//    for( int k=0; k<m_num_wins; k++ )
+//    {
+//      // pV is View of displayed window k
+//      final View     pV = GetView_Win( k );
+//      final Tile_Pos OTP = pV.m_tile_pos; // Old tile position
+//
+//      // New tile position:
+//      final Tile_Pos NTP = split_vertically
+//                         ? FlipWindows_Horizontally( OTP )
+//                         : FlipWindows_Vertically( OTP );
+//
+//      if( NTP != Tile_Pos.NONE )
+//      {
+//        pV.SetTilePos( NTP );
+//      }
+//    }
+//    UpdateViews();
+//  }
+//}
+
   void FlipWindows()
   {
     if( 1 < m_num_wins )
     {
-      // This code only works for MAX_WINS == 2
-      View pV1 = GetView_Win( 0 );
-      View pV2 = GetView_Win( 1 );
-  
-      if( pV1 != pV2 )
+      boolean split_horizontally = false;
+
+      for( int k=0; !split_horizontally && k<m_num_wins; k++ )
       {
-        // Swap pV1 and pV2 Tile Positions:
-        Tile_Pos tp_v1 = pV1.m_tile_pos;
-        pV1.SetTilePos( pV2.m_tile_pos );
-        pV2.SetTilePos( tp_v1 );
+        // pV is View of displayed window k
+        View pV = GetView_Win( k );
+
+        split_horizontally = pV.m_tile_pos == Tile_Pos.TOP__HALF
+                          || pV.m_tile_pos == Tile_Pos.BOT__HALF;
+      }
+      for( int k=0; k<m_num_wins; k++ )
+      {
+        // pV is View of displayed window k
+        final View     pV = GetView_Win( k );
+        final Tile_Pos OTP = pV.m_tile_pos; // Old tile position
+
+        // New tile position:
+        final Tile_Pos NTP = split_horizontally
+                           ? FlipWindows_Vertically( OTP )
+                           : FlipWindows_Horizontally( OTP );
+
+        if( NTP != Tile_Pos.NONE )
+        {
+          pV.SetTilePos( NTP );
+        }
       }
       UpdateViews();
     }
+  }
+  Tile_Pos FlipWindows_Horizontally( final Tile_Pos OTP )
+  {
+    Tile_Pos NTP = Tile_Pos.NONE;
+
+    if     ( OTP == Tile_Pos.LEFT_HALF         ) NTP = Tile_Pos.RITE_HALF        ;
+    else if( OTP == Tile_Pos.RITE_HALF         ) NTP = Tile_Pos.LEFT_HALF        ;
+    else if( OTP == Tile_Pos.TOP__LEFT_QTR     ) NTP = Tile_Pos.TOP__RITE_QTR    ;
+    else if( OTP == Tile_Pos.TOP__RITE_QTR     ) NTP = Tile_Pos.TOP__LEFT_QTR    ;
+    else if( OTP == Tile_Pos.BOT__LEFT_QTR     ) NTP = Tile_Pos.BOT__RITE_QTR    ;
+    else if( OTP == Tile_Pos.BOT__RITE_QTR     ) NTP = Tile_Pos.BOT__LEFT_QTR    ;
+    else if( OTP == Tile_Pos.LEFT_QTR          ) NTP = Tile_Pos.RITE_QTR         ;
+    else if( OTP == Tile_Pos.RITE_QTR          ) NTP = Tile_Pos.LEFT_QTR         ;
+    else if( OTP == Tile_Pos.LEFT_CTR__QTR     ) NTP = Tile_Pos.RITE_CTR__QTR    ;
+    else if( OTP == Tile_Pos.RITE_CTR__QTR     ) NTP = Tile_Pos.LEFT_CTR__QTR    ;
+    else if( OTP == Tile_Pos.TOP__LEFT_8TH     ) NTP = Tile_Pos.TOP__RITE_8TH    ;
+    else if( OTP == Tile_Pos.TOP__RITE_8TH     ) NTP = Tile_Pos.TOP__LEFT_8TH    ;
+    else if( OTP == Tile_Pos.TOP__LEFT_CTR_8TH ) NTP = Tile_Pos.TOP__RITE_CTR_8TH;
+    else if( OTP == Tile_Pos.TOP__RITE_CTR_8TH ) NTP = Tile_Pos.TOP__LEFT_CTR_8TH;
+    else if( OTP == Tile_Pos.BOT__LEFT_8TH     ) NTP = Tile_Pos.BOT__RITE_8TH    ;
+    else if( OTP == Tile_Pos.BOT__RITE_8TH     ) NTP = Tile_Pos.BOT__LEFT_8TH    ;
+    else if( OTP == Tile_Pos.BOT__LEFT_CTR_8TH ) NTP = Tile_Pos.BOT__RITE_CTR_8TH;
+    else if( OTP == Tile_Pos.BOT__RITE_CTR_8TH ) NTP = Tile_Pos.BOT__LEFT_CTR_8TH;
+
+    return NTP;
+  }
+  Tile_Pos FlipWindows_Vertically( final Tile_Pos OTP )
+  {
+    Tile_Pos NTP = Tile_Pos.NONE;
+
+    if     ( OTP == Tile_Pos.TOP__HALF         ) NTP = Tile_Pos.BOT__HALF        ;
+    else if( OTP == Tile_Pos.BOT__HALF         ) NTP = Tile_Pos.TOP__HALF        ;
+    else if( OTP == Tile_Pos.TOP__LEFT_QTR     ) NTP = Tile_Pos.BOT__LEFT_QTR    ;
+    else if( OTP == Tile_Pos.TOP__RITE_QTR     ) NTP = Tile_Pos.BOT__RITE_QTR    ;
+    else if( OTP == Tile_Pos.BOT__LEFT_QTR     ) NTP = Tile_Pos.TOP__LEFT_QTR    ;
+    else if( OTP == Tile_Pos.BOT__RITE_QTR     ) NTP = Tile_Pos.TOP__RITE_QTR    ;
+    else if( OTP == Tile_Pos.TOP__LEFT_8TH     ) NTP = Tile_Pos.BOT__LEFT_8TH    ;
+    else if( OTP == Tile_Pos.TOP__RITE_8TH     ) NTP = Tile_Pos.BOT__RITE_8TH    ;
+    else if( OTP == Tile_Pos.TOP__LEFT_CTR_8TH ) NTP = Tile_Pos.BOT__LEFT_CTR_8TH;
+    else if( OTP == Tile_Pos.TOP__RITE_CTR_8TH ) NTP = Tile_Pos.BOT__RITE_CTR_8TH;
+    else if( OTP == Tile_Pos.BOT__LEFT_8TH     ) NTP = Tile_Pos.TOP__LEFT_8TH    ;
+    else if( OTP == Tile_Pos.BOT__RITE_8TH     ) NTP = Tile_Pos.TOP__RITE_8TH    ;
+    else if( OTP == Tile_Pos.BOT__LEFT_CTR_8TH ) NTP = Tile_Pos.TOP__LEFT_CTR_8TH;
+    else if( OTP == Tile_Pos.BOT__RITE_CTR_8TH ) NTP = Tile_Pos.TOP__RITE_CTR_8TH;
+
+    return NTP;
   }
 
   void Handle_x()
@@ -2285,10 +2389,10 @@ public class VisFx extends Application
 
     m_colon_view.SetContext( NUM_COLS, X, Y );
     m_colon_mode = true;
- 
+
     final int CL = m_colon_view.CrsLine();
     final int LL = m_colon_file.LineLen( CL );
- 
+
     if( 0<LL )
     {
       // Something on current line, so goto command line in escape mode
@@ -2619,7 +2723,7 @@ public class VisFx extends Application
     {
       View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
-  
+
       if     ( TP == Tile_Pos.RITE_HALF         ) { v.SetTilePos( Tile_Pos.FULL ); break; }
       else if( TP == Tile_Pos.TOP__RITE_QTR     ) v.SetTilePos( Tile_Pos.TOP__HALF );
       else if( TP == Tile_Pos.BOT__RITE_QTR     ) v.SetTilePos( Tile_Pos.BOT__HALF );
@@ -2637,7 +2741,7 @@ public class VisFx extends Application
     {
       View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
-  
+
       if     ( TP == Tile_Pos.LEFT_HALF         ) { v.SetTilePos( Tile_Pos.FULL ); break; }
       else if( TP == Tile_Pos.TOP__LEFT_QTR     ) v.SetTilePos( Tile_Pos.TOP__HALF );
       else if( TP == Tile_Pos.BOT__LEFT_QTR     ) v.SetTilePos( Tile_Pos.BOT__HALF );
@@ -2655,7 +2759,7 @@ public class VisFx extends Application
     {
       View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
- 
+
       if     ( TP == Tile_Pos.BOT__HALF         ) { v.SetTilePos( Tile_Pos.FULL ); break; }
       else if( TP == Tile_Pos.BOT__LEFT_QTR     ) v.SetTilePos( Tile_Pos.LEFT_HALF );
       else if( TP == Tile_Pos.BOT__RITE_QTR     ) v.SetTilePos( Tile_Pos.RITE_HALF );
@@ -2671,7 +2775,7 @@ public class VisFx extends Application
     {
       View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
-  
+
       if     ( TP == Tile_Pos.TOP__HALF         ) { v.SetTilePos( Tile_Pos.FULL ); break; }
       else if( TP == Tile_Pos.TOP__LEFT_QTR     ) v.SetTilePos( Tile_Pos.LEFT_HALF );
       else if( TP == Tile_Pos.TOP__RITE_QTR     ) v.SetTilePos( Tile_Pos.RITE_HALF );
@@ -2689,7 +2793,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if     ( TP == Tile_Pos.TOP__RITE_QTR     ) { v.SetTilePos( Tile_Pos.TOP__HALF ); break; }
         else if( TP == Tile_Pos.TOP__RITE_8TH     ) v.SetTilePos( Tile_Pos.TOP__RITE_QTR );
         else if( TP == Tile_Pos.TOP__RITE_CTR_8TH ) v.SetTilePos( Tile_Pos.TOP__LEFT_QTR );
@@ -2700,7 +2804,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if     ( TP == Tile_Pos.BOT__LEFT_QTR     ) { v.SetTilePos( Tile_Pos.LEFT_HALF ); break; }
         else if( TP == Tile_Pos.BOT__LEFT_8TH     ) v.SetTilePos( Tile_Pos.LEFT_QTR );
         else if( TP == Tile_Pos.BOT__LEFT_CTR_8TH ) v.SetTilePos( Tile_Pos.LEFT_CTR__QTR );
@@ -2715,7 +2819,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if     ( TP == Tile_Pos.TOP__LEFT_QTR     ) { v.SetTilePos( Tile_Pos.TOP__HALF ); break; }
         else if( TP == Tile_Pos.TOP__LEFT_8TH     ) v.SetTilePos( Tile_Pos.TOP__LEFT_QTR );
         else if( TP == Tile_Pos.TOP__LEFT_CTR_8TH ) v.SetTilePos( Tile_Pos.TOP__RITE_QTR );
@@ -2726,7 +2830,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if     ( TP == Tile_Pos.BOT__RITE_QTR     ) { v.SetTilePos( Tile_Pos.RITE_HALF ); break; }
         else if( TP == Tile_Pos.BOT__RITE_8TH     ) v.SetTilePos( Tile_Pos.RITE_QTR );
         else if( TP == Tile_Pos.BOT__RITE_CTR_8TH ) v.SetTilePos( Tile_Pos.RITE_CTR__QTR );
@@ -2741,7 +2845,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if     ( TP == Tile_Pos.BOT__RITE_QTR     ) { v.SetTilePos( Tile_Pos.BOT__HALF ); break; }
         else if( TP == Tile_Pos.BOT__RITE_8TH     ) v.SetTilePos( Tile_Pos.BOT__RITE_QTR );
         else if( TP == Tile_Pos.BOT__RITE_CTR_8TH ) v.SetTilePos( Tile_Pos.BOT__LEFT_QTR );
@@ -2752,7 +2856,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if     ( TP == Tile_Pos.TOP__LEFT_QTR     ) { v.SetTilePos( Tile_Pos.LEFT_HALF ); break; }
         else if( TP == Tile_Pos.TOP__LEFT_8TH     ) v.SetTilePos( Tile_Pos.LEFT_QTR );
         else if( TP == Tile_Pos.TOP__LEFT_CTR_8TH ) v.SetTilePos( Tile_Pos.LEFT_CTR__QTR );
@@ -2767,7 +2871,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if     ( TP == Tile_Pos.BOT__LEFT_QTR     ) { v.SetTilePos( Tile_Pos.BOT__HALF ); break; }
         else if( TP == Tile_Pos.BOT__LEFT_8TH     ) v.SetTilePos( Tile_Pos.BOT__LEFT_QTR );
         else if( TP == Tile_Pos.BOT__LEFT_CTR_8TH ) v.SetTilePos( Tile_Pos.BOT__RITE_QTR );
@@ -2778,7 +2882,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if     ( TP == Tile_Pos.TOP__RITE_QTR     ) { v.SetTilePos( Tile_Pos.RITE_HALF ); break; }
         else if( TP == Tile_Pos.TOP__RITE_8TH     ) v.SetTilePos( Tile_Pos.RITE_QTR );
         else if( TP == Tile_Pos.TOP__RITE_CTR_8TH ) v.SetTilePos( Tile_Pos.RITE_CTR__QTR );
@@ -2791,7 +2895,7 @@ public class VisFx extends Application
     {
       View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
-  
+
       if     ( TP == Tile_Pos.LEFT_CTR__QTR     ) { v.SetTilePos( Tile_Pos.LEFT_HALF ); break; }
       else if( TP == Tile_Pos.TOP__LEFT_CTR_8TH ) v.SetTilePos( Tile_Pos.TOP__LEFT_QTR );
       else if( TP == Tile_Pos.BOT__LEFT_CTR_8TH ) v.SetTilePos( Tile_Pos.BOT__LEFT_QTR );
@@ -2803,7 +2907,7 @@ public class VisFx extends Application
     {
       View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
-  
+
       if     ( TP == Tile_Pos.RITE_CTR__QTR     ) { v.SetTilePos( Tile_Pos.RITE_HALF ); break; }
       else if( TP == Tile_Pos.TOP__RITE_CTR_8TH ) v.SetTilePos( Tile_Pos.TOP__RITE_QTR );
       else if( TP == Tile_Pos.BOT__RITE_CTR_8TH ) v.SetTilePos( Tile_Pos.BOT__RITE_QTR );
@@ -2815,7 +2919,7 @@ public class VisFx extends Application
     {
       View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
-  
+
       if     ( TP == Tile_Pos.LEFT_QTR      ) { v.SetTilePos( Tile_Pos.LEFT_HALF ); break; }
       else if( TP == Tile_Pos.TOP__LEFT_8TH ) v.SetTilePos( Tile_Pos.TOP__LEFT_QTR );
       else if( TP == Tile_Pos.BOT__LEFT_8TH ) v.SetTilePos( Tile_Pos.BOT__LEFT_QTR );
@@ -2827,7 +2931,7 @@ public class VisFx extends Application
     {
       View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
-  
+
       if     ( TP == Tile_Pos.RITE_QTR      ) { v.SetTilePos( Tile_Pos.RITE_HALF ); break; }
       else if( TP == Tile_Pos.TOP__RITE_8TH ) v.SetTilePos( Tile_Pos.TOP__RITE_QTR );
       else if( TP == Tile_Pos.BOT__RITE_8TH ) v.SetTilePos( Tile_Pos.BOT__RITE_QTR );
@@ -2841,7 +2945,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if( TP == Tile_Pos.TOP__LEFT_CTR_8TH ) { v.SetTilePos( Tile_Pos.TOP__LEFT_QTR ); break; }
       }
     }
@@ -2850,7 +2954,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if( TP == Tile_Pos.BOT__LEFT_8TH ) { v.SetTilePos( Tile_Pos.LEFT_QTR ); break; }
       }
     }
@@ -2863,7 +2967,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if( TP == Tile_Pos.TOP__RITE_CTR_8TH ) { v.SetTilePos( Tile_Pos.TOP__RITE_QTR ); break; }
       }
     }
@@ -2872,7 +2976,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if( TP == Tile_Pos.BOT__RITE_8TH ) { v.SetTilePos( Tile_Pos.RITE_QTR ); break; }
       }
     }
@@ -2885,7 +2989,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if( TP == Tile_Pos.TOP__LEFT_8TH ) { v.SetTilePos( Tile_Pos.TOP__LEFT_QTR ); break; }
       }
     }
@@ -2894,7 +2998,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if( TP == Tile_Pos.BOT__LEFT_CTR_8TH ) { v.SetTilePos( Tile_Pos.LEFT_CTR__QTR ); break; }
       }
     }
@@ -2907,7 +3011,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if( TP == Tile_Pos.TOP__RITE_8TH ) { v.SetTilePos( Tile_Pos.TOP__RITE_QTR ); break; }
       }
     }
@@ -2916,7 +3020,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if( TP == Tile_Pos.BOT__RITE_CTR_8TH ) { v.SetTilePos( Tile_Pos.RITE_CTR__QTR ); break; }
       }
     }
@@ -2929,7 +3033,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if( TP == Tile_Pos.BOT__LEFT_CTR_8TH ) { v.SetTilePos( Tile_Pos.BOT__LEFT_QTR ); break; }
       }
     }
@@ -2938,7 +3042,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if( TP == Tile_Pos.TOP__LEFT_8TH ) { v.SetTilePos( Tile_Pos.LEFT_QTR ); break; }
       }
     }
@@ -2951,7 +3055,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if( TP == Tile_Pos.BOT__RITE_CTR_8TH ) { v.SetTilePos( Tile_Pos.BOT__RITE_QTR ); break; }
       }
     }
@@ -2960,7 +3064,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if( TP == Tile_Pos.TOP__RITE_8TH ) { v.SetTilePos( Tile_Pos.RITE_QTR ); break; }
       }
     }
@@ -2973,7 +3077,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if( TP == Tile_Pos.BOT__LEFT_8TH ) { v.SetTilePos( Tile_Pos.BOT__LEFT_QTR ); break; }
       }
     }
@@ -2982,7 +3086,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if( TP == Tile_Pos.TOP__LEFT_CTR_8TH ) { v.SetTilePos( Tile_Pos.LEFT_CTR__QTR ); break; }
       }
     }
@@ -2995,7 +3099,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if( TP == Tile_Pos.BOT__RITE_8TH ) { v.SetTilePos( Tile_Pos.BOT__RITE_QTR ); break; }
       }
     }
@@ -3004,7 +3108,7 @@ public class VisFx extends Application
       {
         View v = GetView_Win( k );
         final Tile_Pos TP = v.m_tile_pos;
-  
+
         if( TP == Tile_Pos.TOP__RITE_CTR_8TH ) { v.SetTilePos( Tile_Pos.RITE_CTR__QTR ); break; }
       }
     }
@@ -3015,7 +3119,7 @@ public class VisFx extends Application
     {
       View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
-  
+
       if( TP == Tile_Pos.BOT__HALF ) return true;
     }
     return false;
@@ -3026,7 +3130,7 @@ public class VisFx extends Application
     {
       View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
-  
+
       if( TP == Tile_Pos.TOP__HALF ) return true;
     }
     return false;
@@ -3037,7 +3141,7 @@ public class VisFx extends Application
     {
       View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
-  
+
       if( TP == Tile_Pos.BOT__LEFT_QTR ) return true;
     }
     return false;
@@ -3048,7 +3152,7 @@ public class VisFx extends Application
     {
       View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
-  
+
       if( TP == Tile_Pos.TOP__LEFT_QTR ) return true;
     }
     return false;
@@ -3059,7 +3163,7 @@ public class VisFx extends Application
     {
       View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
-  
+
       if( TP == Tile_Pos.BOT__RITE_QTR ) return true;
     }
     return false;
@@ -3070,7 +3174,7 @@ public class VisFx extends Application
     {
       View v = GetView_Win( k );
       final Tile_Pos TP = v.m_tile_pos;
-  
+
       if( TP == Tile_Pos.TOP__RITE_QTR ) return true;
     }
     return false;
@@ -3090,7 +3194,7 @@ public class VisFx extends Application
       View v1 = GetView_Win( 1 );
       FileBuf fb0 = v0.m_fb;
       FileBuf fb1 = v1.m_fb;
- 
+
       boolean ok = true;
       if( !fb0.m_isDir && fb1.m_isDir )
       {
@@ -3590,8 +3694,8 @@ public class VisFx extends Application
 
     View cv = CV();
     final Tile_Pos cv_tp = cv.m_tile_pos;
- 
-    if( m_num_wins < MAX_WINS 
+
+    if( m_num_wins < MAX_WINS
      && ( cv_tp == Tile_Pos.FULL
        || cv_tp == Tile_Pos.TOP__HALF
        || cv_tp == Tile_Pos.BOT__HALF
@@ -3603,14 +3707,14 @@ public class VisFx extends Application
        || cv_tp == Tile_Pos.BOT__RITE_QTR ) )
     {
       m_file_hist[m_num_wins].copy( m_file_hist[m_win] );
- 
+
       View nv = GetView_Win( m_num_wins );
- 
+
       nv.Set_Context( cv );
- 
+
       m_win = m_num_wins;
       m_num_wins++;
- 
+
       if( cv_tp == Tile_Pos.FULL )
       {
         cv.SetTilePos( Tile_Pos.LEFT_HALF );
@@ -3666,7 +3770,7 @@ public class VisFx extends Application
     View cv = CV();
     final Tile_Pos cv_tp = cv.m_tile_pos;
 
-    if( m_num_wins < MAX_WINS 
+    if( m_num_wins < MAX_WINS
      && ( cv_tp == Tile_Pos.FULL
        || cv_tp == Tile_Pos.LEFT_HALF
        || cv_tp == Tile_Pos.RITE_HALF
@@ -3871,7 +3975,7 @@ public class VisFx extends Application
 
     if( CVI == BE_FILE
      || CVI == HELP_FILE
-     || CVI == SLASH_FILE )  
+     || CVI == SLASH_FILE )
     {
       Exe_Colon_NoDiff();
 
@@ -4180,7 +4284,7 @@ public class VisFx extends Application
       for( int f=0; f<m_views[w].size(); f++ )
       {
         View v = m_views[w].get( f );
- 
+
         v.SetViewPos();
       }
     }
@@ -4374,7 +4478,7 @@ public class VisFx extends Application
   public boolean get_diff_mode()
   {
     return m_diff_mode;
-  } 
+  }
   public Diff get_diff()
   {
     return m_diff;

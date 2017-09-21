@@ -487,26 +487,13 @@ class ConsoleFx extends Canvas
   public
   void Set( final int ROW, final int COL, final char C, final Style S )
   {
-    try {
-      if( m_num_rows <= ROW )
-      {
-        throw new Exception( "ConsoleFx::Set(): m_num_rows="+ m_num_rows +", ROW="+ ROW );
-      }
-      else if( m_num_cols <= COL )
-      {
-        throw new Exception( "ConsoleFx::Set(): m_num_cols="+ m_num_cols +", COL="+ COL );
-      }
-      else {
-        m_chars__p[ ROW ][ COL ] = C;
-        m_styles_p[ ROW ][ COL ] = S;
-        m_min_touched[ ROW ] = Math.min( m_min_touched[ ROW ], COL   );
-        m_max_touched[ ROW ] = Math.max( m_max_touched[ ROW ], COL+1 );
-      }
-    }
-    catch( Exception e )
+    if( 0 <= ROW && ROW < m_num_rows
+     && 0 <= COL && COL < m_num_cols )
     {
-      e.printStackTrace( System.err );
-      System.exit( 0 );
+      m_chars__p[ ROW ][ COL ] = C;
+      m_styles_p[ ROW ][ COL ] = S;
+      m_min_touched[ ROW ] = Math.min( m_min_touched[ ROW ], COL   );
+      m_max_touched[ ROW ] = Math.max( m_max_touched[ ROW ], COL+1 );
     }
   }
   public
@@ -868,18 +855,22 @@ class ConsoleFx extends Canvas
   }
   void Print_Cursor()
   {
-    // Print the cursor:
-    PrintC( m_crs_row
-          , m_crs_col
-          , m_chars__w[m_crs_row][m_crs_col]
-          , Style.CURSOR );
+    if( 0 <= m_crs_row && m_crs_row < m_num_rows
+     && 0 <= m_crs_col && m_crs_col < m_num_cols )
+    {
+      // Print the cursor:
+      PrintC( m_crs_row
+            , m_crs_col
+            , m_chars__w[m_crs_row][m_crs_col]
+            , Style.CURSOR );
 
-    m_min_touched[ m_crs_row ] = m_crs_col;   // Cursor
-    m_max_touched[ m_crs_row ] = m_crs_col+1; // touched
+      m_min_touched[ m_crs_row ] = m_crs_col;   // Cursor
+      m_max_touched[ m_crs_row ] = m_crs_col+1; // touched
 
-    // This will cause the old cursor cell to be put back to
-    // its highlighed value on the next call of Update():
-    m_styles_w[m_crs_row][m_crs_col] = Style.CURSOR;
+      // This will cause the old cursor cell to be put back to
+      // its highlighed value on the next call of Update():
+      m_styles_w[m_crs_row][m_crs_col] = Style.CURSOR;
+    }
   }
   public void set_save_2_vis_buf( final boolean save )
   {
@@ -916,9 +907,9 @@ class ConsoleFx extends Canvas
     for( int k=0; k<reg.size(); k++ )
     {
       if( 0<k ) m_sb.append("\n");
-      m_sb.append( reg.get(k).toString() ); 
+      m_sb.append( reg.get(k).toString() );
     }
-    m_cbc.putString( m_sb.toString() ); 
+    m_cbc.putString( m_sb.toString() );
 
     m_cb.setContent( m_cbc );
 
@@ -1010,45 +1001,45 @@ class ConsoleFx extends Canvas
   private Color DIFF_VISUAL_FG  = Color.BLUE   ;
   private Color CURSOR_FG       = Color.BLACK  ;
 
-  private Color NORMAL_BG       = Color.BLACK  ; 
-  private Color STATUS_BG       = Color.BLUE   ; 
-  private Color BORDER_BG       = Color.BLUE   ; 
-  private Color BORDER_HI_BG    = Color.LIME   ; 
-  private Color BANNER_BG       = Color.RED    ; 
-  private Color STAR_BG         = Color.RED    ; 
-  private Color COMMENT_BG      = Color.BLACK  ; 
-  private Color DEFINE_BG       = Color.BLACK  ; 
-  private Color CONST_BG        = Color.BLACK  ; 
-  private Color CONTROL_BG      = Color.BLACK  ; 
-  private Color VARTYPE_BG      = Color.BLACK  ; 
-  private Color VISUAL_BG       = Color.RED    ; 
-  private Color NONASCII_BG     = Color.BLUE   ; 
-  private Color RV_NORMAL_BG    = Color.WHITE  ; 
-  private Color RV_STATUS_BG    = Color.BLUE   ; 
-  private Color RV_BORDER_BG    = Color.WHITE  ; 
-  private Color RV_BORDER_HI_BG = Color.WHITE  ; 
-  private Color RV_BANNER_BG    = Color.WHITE  ; 
-  private Color RV_STAR_BG      = Color.WHITE  ; 
-  private Color RV_COMMENT_BG   = Color.BLUE   ; 
-  private Color RV_DEFINE_BG    = Color.MAGENTA; 
-  private Color RV_CONST_BG     = Color.CYAN   ; 
-  private Color RV_CONTROL_BG   = Color.YELLOW ; 
-  private Color RV_VARTYPE_BG   = Color.LIME   ; 
-  private Color RV_VISUAL_BG    = Color.WHITE  ; 
-  private Color RV_NONASCII_BG  = Color.RED    ; 
+  private Color NORMAL_BG       = Color.BLACK  ;
+  private Color STATUS_BG       = Color.BLUE   ;
+  private Color BORDER_BG       = Color.BLUE   ;
+  private Color BORDER_HI_BG    = Color.LIME   ;
+  private Color BANNER_BG       = Color.RED    ;
+  private Color STAR_BG         = Color.RED    ;
+  private Color COMMENT_BG      = Color.BLACK  ;
+  private Color DEFINE_BG       = Color.BLACK  ;
+  private Color CONST_BG        = Color.BLACK  ;
+  private Color CONTROL_BG      = Color.BLACK  ;
+  private Color VARTYPE_BG      = Color.BLACK  ;
+  private Color VISUAL_BG       = Color.RED    ;
+  private Color NONASCII_BG     = Color.BLUE   ;
+  private Color RV_NORMAL_BG    = Color.WHITE  ;
+  private Color RV_STATUS_BG    = Color.BLUE   ;
+  private Color RV_BORDER_BG    = Color.WHITE  ;
+  private Color RV_BORDER_HI_BG = Color.WHITE  ;
+  private Color RV_BANNER_BG    = Color.WHITE  ;
+  private Color RV_STAR_BG      = Color.WHITE  ;
+  private Color RV_COMMENT_BG   = Color.BLUE   ;
+  private Color RV_DEFINE_BG    = Color.MAGENTA;
+  private Color RV_CONST_BG     = Color.CYAN   ;
+  private Color RV_CONTROL_BG   = Color.YELLOW ;
+  private Color RV_VARTYPE_BG   = Color.LIME   ;
+  private Color RV_VISUAL_BG    = Color.WHITE  ;
+  private Color RV_NONASCII_BG  = Color.RED    ;
   private Color EMPTY_BG        = Color.BLACK  ;
   private Color EOF_BG          = m_d_gray     ;
-  private Color DIFF_DEL_BG     = Color.RED    ; 
-  private Color DIFF_NORMAL_BG  = Color.BLUE   ; 
-  private Color DIFF_STAR_BG    = Color.RED    ; 
-  private Color DIFF_COMMENT_BG = Color.BLUE   ; 
-  private Color DIFF_DEFINE_BG  = Color.BLUE   ; 
-  private Color DIFF_CONST_BG   = Color.BLUE   ; 
-  private Color DIFF_CONTROL_BG = Color.BLUE   ; 
-  private Color DIFF_VARTYPE_BG = Color.BLUE   ; 
-  private Color DIFF_VISUAL_BG  = Color.RED    ; 
-  private Color CURSOR_BG       = Color.PINK   ; 
-  private Color CURSOR_EMPTY_BG = Color.BLACK  ; 
+  private Color DIFF_DEL_BG     = Color.RED    ;
+  private Color DIFF_NORMAL_BG  = Color.BLUE   ;
+  private Color DIFF_STAR_BG    = Color.RED    ;
+  private Color DIFF_COMMENT_BG = Color.BLUE   ;
+  private Color DIFF_DEFINE_BG  = Color.BLUE   ;
+  private Color DIFF_CONST_BG   = Color.BLUE   ;
+  private Color DIFF_CONTROL_BG = Color.BLUE   ;
+  private Color DIFF_VARTYPE_BG = Color.BLUE   ;
+  private Color DIFF_VISUAL_BG  = Color.RED    ;
+  private Color CURSOR_BG       = Color.PINK   ;
+  private Color CURSOR_EMPTY_BG = Color.BLACK  ;
 
   VisFx            m_vis;
   GraphicsContext  m_gc;

@@ -368,28 +368,38 @@ class View
   }
   void PrintCmdLine()
   {
+    final int CMD_LINE_ROW = Cmd__Line_Row();
     int col=0;
     // Draw insert banner if needed
     if( m_inInsertMode )
     {
       col=10; // Strlen of "--INSERT--"
-      m_console.SetS( Cmd__Line_Row(), Col_Win_2_GL( 0 ), "--INSERT--", Style.BANNER );
+      m_console.SetS( CMD_LINE_ROW, Col_Win_2_GL( 0 ), "--INSERT--", Style.BANNER );
     }
     else if( m_inReplaceMode )
     {
       col=11; // Strlen of "--REPLACE--"
-      m_console.SetS( Cmd__Line_Row(), Col_Win_2_GL( 0 ), "--REPLACE--", Style.BANNER );
+      m_console.SetS( CMD_LINE_ROW, Col_Win_2_GL( 0 ), "--REPLACE--", Style.BANNER );
     }
     else if( m_vis.get_run_mode() && m_vis.CV() == this )
     {
       col=11; // Strlen of "--RUNNING--"
-      m_console.SetS( Cmd__Line_Row(), Col_Win_2_GL( 0 ), "--RUNNING--", Style.BANNER );
+      m_console.SetS( CMD_LINE_ROW, Col_Win_2_GL( 0 ), "--RUNNING--", Style.BANNER );
+    }
+    else if( 0 < m_cmd_line_sb.length() )
+    {
+      col = m_cmd_line_sb.length();
+      for( int k=0; k<col; k++ )
+      {
+        final char C =  m_cmd_line_sb.charAt(k);
+        m_console.Set( CMD_LINE_ROW, Col_Win_2_GL( k ), C, Style.NORMAL );
+      }
     }
     final int WC = WorkingCols();
 
     for( ; col<WC; col++ )
     {
-      m_console.Set( Cmd__Line_Row(), Col_Win_2_GL( col ), ' ', Style.NORMAL );
+      m_console.Set( CMD_LINE_ROW, Col_Win_2_GL( col ), ' ', Style.NORMAL );
     }
   }
   void PrintCursor()
@@ -749,6 +759,7 @@ class View
           Set_crsRowCol( NCL - m_topLine, NCP - m_leftChar );
         }
         PrintStsLine();
+        PrintCmdLine();
         PrintCursor();  // Does m_console.Update();
       }
     }
@@ -2710,6 +2721,8 @@ class View
   {
     if( 0<m_fb.NumLines() )
     {
+      Set_Cmd_Line_Msg( '\\' + m_vis.get_regex() );
+
       // Next cursor position
       CrsPos ncp = Do_n_FindNextPattern();
 
@@ -2791,6 +2804,8 @@ class View
   {
     if( 0 < m_fb.NumLines() )
     {
+      Set_Cmd_Line_Msg( '\\' + m_vis.get_regex() );
+
       // Next cursor position
       CrsPos ncp = Do_N_FindPrevPattern();
 
@@ -3619,6 +3634,11 @@ class View
       int T = v_st_char; v_st_char = v_fn_char; v_fn_char = T;
     }
   }
+  void Set_Cmd_Line_Msg( String msg )
+  {
+    m_cmd_line_sb.setLength( 0 );
+    m_cmd_line_sb.append( msg );
+  }
 
   static final char BS  =   8; // Backspace
   static final char ESC =  27; // Escape
@@ -3634,6 +3654,7 @@ class View
   private int m_crsRow;// cursor row    in buffer view. 0 <= m_crsRow < WorkingRows().
   private int m_crsCol;// cursor column in buffer view. 0 <= m_crsCol < WorkingCols().
   StringBuilder m_sb = new StringBuilder();
+  StringBuilder m_cmd_line_sb = new StringBuilder();
   boolean  m_inInsertMode; // true if in insert  mode, else false
   boolean  m_inReplaceMode;
   private

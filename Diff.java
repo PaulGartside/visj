@@ -657,20 +657,30 @@ class Diff
   void PrintCmdLine( View pV )
   {
     // Prints "--INSERT--" banner, and/or clears command line
-    int i=0;
+    final int CMD_LINE_ROW = pV.Cmd__Line_Row();
+    int col=0;
     // Draw insert banner if needed
     if( pV.m_inInsertMode )
     {
-      i=10; // Strlen of "--INSERT--"
-      m_console.SetS( pV.Cmd__Line_Row(), pV.Col_Win_2_GL( 0 ), "--INSERT--", Style.BANNER );
+      col=10; // Strlen of "--INSERT--"
+      m_console.SetS( CMD_LINE_ROW, pV.Col_Win_2_GL( 0 ), "--INSERT--", Style.BANNER );
+    }
+    else if( 0 < m_cmd_line_sb.length() )
+    {
+      col = m_cmd_line_sb.length();
+      for( int k=0; k<col; k++ )
+      {
+        final char C =  m_cmd_line_sb.charAt(k);
+        m_console.Set( CMD_LINE_ROW, pV.Col_Win_2_GL( k ), C, Style.NORMAL );
+      }
     }
     final int WC = WorkingCols( pV );
 
-    for( ; i<WC-7; i++ )
+    for( ; col<WC-7; col++ )
     {
-      m_console.Set( pV.Cmd__Line_Row(), pV.Col_Win_2_GL( i ), ' ', Style.NORMAL );
+      m_console.Set( CMD_LINE_ROW, pV.Col_Win_2_GL( col ), ' ', Style.NORMAL );
     }
-    m_console.SetS( pV.Cmd__Line_Row(), pV.Col_Win_2_GL( WC-8 ), "--DIFF--", Style.BANNER );
+    m_console.SetS( CMD_LINE_ROW, pV.Col_Win_2_GL( WC-8 ), "--DIFF--", Style.BANNER );
   }
 
   Style Get_Style( View  pV
@@ -680,7 +690,9 @@ class Diff
   {
     Style S = Style.EMPTY;
 
-    if( pos < pV.m_fb.LineLen( VL ) )
+    FileBuf fb = pV.m_fb;
+
+    if( VL < fb.NumLines() && pos < fb.LineLen( VL ) )
     {
       S = Style.NORMAL;
 
@@ -1642,6 +1654,7 @@ class Diff
           Set_crsRowCol( NCL - m_topLine, NCP - m_leftChar );
         }
         PrintStsLine( pV );
+        PrintCmdLine( pV );
         PrintCursor();  // Put cursor into position.
       }
     }
@@ -2626,10 +2639,10 @@ class Diff
   {
     View pV = m_vis.CV();
 
-    final int NUM_LINES = pV.m_fb.NumLines();
-
-    if( 0 < NUM_LINES )
+    if( 0 < pV.m_fb.NumLines() )
     {
+      Set_Cmd_Line_Msg( '\\' + m_vis.get_regex() );
+
       CrsPos ncp = new CrsPos( 0, 0 ); // Next cursor position
 
       if( Do_n_FindNextPattern( ncp ) )
@@ -2719,6 +2732,8 @@ class Diff
 
     if( 0 < NUM_LINES )
     {
+      Set_Cmd_Line_Msg("Searching down for diff");
+
       Ptr_Int dl = new Ptr_Int( CrsLine() ); // Diff line, changed by search methods below
 
       View pV = m_vis.CV();
@@ -2848,15 +2863,16 @@ class Diff
   {
     View pV = m_vis.CV();
 
-    final int NUM_LINES = pV.m_fb.NumLines();
-
-    if( NUM_LINES == 0 ) return;
-
-    CrsPos ncp = new CrsPos( 0, 0 ); // Next cursor position
-
-    if( Do_N_FindPrevPattern( ncp ) )
+    if( 0 < pV.m_fb.NumLines() )
     {
-      GoToCrsPos_Write( ncp.crsLine, ncp.crsChar );
+      Set_Cmd_Line_Msg( '\\' + m_vis.get_regex() );
+
+      CrsPos ncp = new CrsPos( 0, 0 ); // Next cursor position
+
+      if( Do_N_FindPrevPattern( ncp ) )
+      {
+        GoToCrsPos_Write( ncp.crsLine, ncp.crsChar );
+      }
     }
   }
 
@@ -2934,6 +2950,8 @@ class Diff
 
     if( 0 < NUM_LINES )
     {
+      Set_Cmd_Line_Msg("Searching up for diff");
+
       Ptr_Int dl = new Ptr_Int( CrsLine() );
 
       View pV = m_vis.CV();
@@ -5836,6 +5854,12 @@ class Diff
     return DI_lists_insert_idx;
   }
 
+  void Set_Cmd_Line_Msg( String msg )
+  {
+    m_cmd_line_sb.setLength( 0 );
+    m_cmd_line_sb.append( msg );
+  }
+
   static final char BS  =   8; // Backspace
   static final char ESC =  27; // Escape
   static final char DEL = 127; // Delete
@@ -5843,6 +5867,7 @@ class Diff
   VisIF     m_vis;
   ConsoleIF m_console;
   StringBuilder m_sb = new StringBuilder();
+  StringBuilder m_cmd_line_sb = new StringBuilder();
 
   private int m_topLine;  // top  of buffer diff line number.
   private int m_leftChar; // left of buffer view character number.
