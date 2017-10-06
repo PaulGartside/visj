@@ -656,6 +656,8 @@ class LineView
   {
     if( 0 == m_fb.NumLines() ) m_fb.PushLine();
 
+    Save_Line();
+
     m_inInsertMode = true;
     Update(); //< Clear any possible message left on command line
 
@@ -1010,6 +1012,8 @@ class LineView
   {
     if( 0 == m_fb.NumLines() ) m_fb.PushLine();
 
+    Save_Line();
+
     m_inReplaceMode = true;
     m_i_EOL_delim = false;
 
@@ -1129,7 +1133,7 @@ class LineView
   {
     m_inInsertMode = false;
 
-    final int CL = m_topLine;
+    final int CL = CrsLine();
     final int LL = m_fb.LineLen( CL ); // Current line length
 
     // 1. Remove current colon command line and copy it into m_vis.m_sb:
@@ -1143,7 +1147,6 @@ class LineView
     {
       m_fb.RemoveLine( NL-1 ); NL--;
     }
-
     // 3. Remove any other lines in colon file that match current colon command:
     for( int ln=0; ln<NL; ln++ )
     {
@@ -1154,14 +1157,15 @@ class LineView
         m_fb.RemoveLine( ln ); NL--; ln--;
       }
     }
-
     // 4. Add current colon command to end of colon file:
+    if( null != m_saved_line && 0 < m_saved_line.length() )
+    {
+      m_fb.PushLine( m_saved_line ); NL++;
+      m_saved_line = null;
+    }
     m_fb.PushLine( lp ); NL++;
 
-    if( 0 < LL )
-    {
-      m_fb.PushLine(); NL++;
-    }
+    if( 0 < LL ) { m_fb.PushLine(); NL++; }
     GoToCrsPos_NoWrite( NL-1, 0 );
 
     m_fb.UpdateCmd();
@@ -1173,6 +1177,7 @@ class LineView
     // If there is nothing to 'x', just return:
     if( 0<m_fb.NumLines() )
     {
+      Save_Line();
       final int CL = CrsLine();
       final int LL = m_fb.LineLen( CL );
 
@@ -1446,6 +1451,8 @@ class LineView
 
   void Do_cw()
   {
+    Save_Line();
+
     final int result = Do_dw();
 
     if     ( result == 1 ) Do_i();
@@ -1496,8 +1503,9 @@ class LineView
   {
     final int NUM_LINES = m_fb.NumLines();
 
-    if( 0< NUM_LINES )
+    if( 0 < NUM_LINES )
     {
+      Save_Line();
       final int st_line = CrsLine();
       final int st_char = CrsChar();
 
@@ -1687,6 +1695,8 @@ class LineView
     // If there is nothing to 'D', just return:
     if( 0<NUM_LINES && 0<OLL && OCP<OLL )
     {
+      Save_Line();
+
       Line lrd = new Line();
 
       for( int k=OCP; k<OLL; k++ )
@@ -1707,6 +1717,7 @@ class LineView
 
   void Do_J()
   {
+    Save_Line();
     final int NUM_LINES = m_fb.NumLines(); // Number of lines
     final int CL        = CrsLine();       // Cursor line
 
@@ -1827,6 +1838,7 @@ class LineView
 
   void Do_s()
   {
+    Save_Line();
     final int CL  = CrsLine();
     final int LL  = m_fb.LineLen( CL );
     final int EOL = 0<LL ? LL-1 : 0;
@@ -1899,6 +1911,7 @@ class LineView
   {
     if( 0==m_fb.NumLines() ) return;
 
+    Save_Line();
     final int CL = CrsLine(); // Old cursor line
     final int CP = CrsChar(); // Old cursor position
     final int LL = m_fb.LineLen( CL );
@@ -2182,6 +2195,7 @@ class LineView
 
   void Do_v()
   {
+    Save_Line();
     m_vis.get_states().addFirst( m_run_v_end );
     m_vis.get_states().addFirst( m_run_v_mid );
     m_vis.get_states().addFirst( m_run_v_beg );
@@ -2621,6 +2635,13 @@ class LineView
       cv.Update();
     }
   }
+  void Save_Line()
+  {
+    if( null == m_saved_line || 0==m_saved_line.length() )
+    {
+      m_saved_line = new Line( m_fb.GetLine( CrsLine() ) );
+    }
+  }
 
   static final char BS  =   8; // Backspace
   static final char ESC =  27; // Escape
@@ -2653,6 +2674,7 @@ class LineView
   boolean  m_i_EOL_delim;
   final
   char     m_banner_delim;
+  Line     m_saved_line;
 
   // Tab file name completion variables:
   FileBuf m_dir_fb;
