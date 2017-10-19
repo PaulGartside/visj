@@ -563,6 +563,7 @@ public class VisFx extends Application
     case ';': L_Handle_SemiColon(); break;
     case ':': L_Handle_Colon();     break;
     case '/': L_Handle_Slash();     break;
+    case '.': L_Handle_Dot();       break;
     case '\n':L_Handle_Return();    break;
     case ESC: L_Handle_Escape();    break;
     }
@@ -776,7 +777,7 @@ public class VisFx extends Application
       }
       if( m_diff_mode )
       {
-        m_diff.Set_Cmd_Line_Msg( '\\' + m_regex );
+        m_diff.Set_Cmd_Line_Msg( '/' + m_regex );
         m_diff.Update();
       }
       else {
@@ -789,7 +790,7 @@ public class VisFx extends Application
 
           if( pV != CV() ) pV.Update();
         }
-        CV().Set_Cmd_Line_Msg( '\\' + m_regex );
+        CV().Set_Cmd_Line_Msg( '/' + m_regex );
         CV().Update();
       }
     }
@@ -869,6 +870,11 @@ public class VisFx extends Application
   }
   void L_Handle_Tilda()
   {
+    if( !m_console.m_get_from_dot_buf )
+    {
+      m_console.m_dot_buf.setLength( 0 );
+      m_console.m_dot_buf.append( '~' );
+    }
     if     ( m_colon_mode ) m_colon_view.Do_Tilda();
     else if( m_slash_mode ) m_slash_view.Do_Tilda();
   }
@@ -891,6 +897,10 @@ public class VisFx extends Application
   }
   void L_Handle_J()
   {
+    if( !m_console.m_get_from_dot_buf )
+    {
+      m_console.m_dot_buf.setLength( 0 );
+    }
     if     ( m_colon_mode ) m_colon_view.Do_J();
     else if( m_slash_mode ) m_slash_view.Do_J();
   }
@@ -954,6 +964,10 @@ public class VisFx extends Application
 
   void L_Handle_o()
   {
+    if( !m_console.m_get_from_dot_buf )
+    {
+      m_console.m_dot_buf.setLength( 0 );
+    }
     m_states.addFirst( m_run_L_Ha_i );
 
     if     ( m_colon_mode ) m_colon_view.Do_o();
@@ -985,6 +999,10 @@ public class VisFx extends Application
 
   void L_Handle_p()
   {
+    if( !m_console.m_get_from_dot_buf )
+    {
+      m_console.m_dot_buf.setLength( 0 );
+    }
     if     ( m_colon_mode ) m_colon_view.Do_p();
     else if( m_slash_mode ) m_slash_view.Do_p();
   }
@@ -1001,6 +1019,10 @@ public class VisFx extends Application
   }
   void L_Handle_P()
   {
+    if( !m_console.m_get_from_dot_buf )
+    {
+      m_console.m_dot_buf.setLength( 0 );
+    }
     if     ( m_colon_mode ) m_colon_view.Do_P();
     else if( m_slash_mode ) m_slash_view.Do_P();
   }
@@ -1033,6 +1055,12 @@ public class VisFx extends Application
   }
   void L_Handle_R()
   {
+    if( !m_console.m_get_from_dot_buf )
+    {
+      m_console.m_dot_buf.setLength( 0 );
+      m_console.m_dot_buf.append( 'R' );
+      m_console.m_save_2_dot_buf = true;
+    }
     m_states.addFirst( m_run_L_Ha_i );
 
     if     ( m_colon_mode ) m_colon_view.Do_R();
@@ -1052,6 +1080,12 @@ public class VisFx extends Application
   }
   void L_Handle_s()
   {
+    if( !m_console.m_get_from_dot_buf )
+    {
+      m_console.m_dot_buf.setLength( 0 );
+      m_console.m_dot_buf.append( 's' );
+      m_console.m_save_2_dot_buf = true;
+    }
     if     ( m_colon_mode ) m_colon_view.Do_s();
     else if( m_slash_mode ) m_slash_view.Do_s();
   }
@@ -1080,6 +1114,12 @@ public class VisFx extends Application
   }
   void L_Handle_v()
   {
+    if( !m_console.m_get_from_dot_buf )
+    {
+      m_console.m_vis_buf.setLength( 0 );
+      m_console.m_vis_buf.append( 'v' );
+      m_console.m_save_2_vis_buf = true;
+    }
     if     ( m_colon_mode ) m_colon_view.Do_v();
     else if( m_slash_mode ) m_slash_view.Do_v();
   }
@@ -1159,11 +1199,22 @@ public class VisFx extends Application
 
       if( C == 'w' )
       {
+        if( !m_console.m_get_from_dot_buf )
+        {
+          m_console.m_dot_buf.setLength( 0 );
+          m_console.m_dot_buf.append( 'c' );
+          m_console.m_dot_buf.append( 'w' );
+          m_console.m_save_2_dot_buf = true;
+        }
         if     ( m_colon_mode ) m_colon_view.Do_cw();
         else if( m_slash_mode ) m_slash_view.Do_cw();
       }
       else if( C == '$' )
       {
+        if( !m_console.m_get_from_dot_buf )
+        {
+          m_console.m_dot_buf.setLength( 0 );
+        }
         if( m_colon_mode )
         {
           m_colon_view.Do_D();
@@ -1252,11 +1303,21 @@ public class VisFx extends Application
 
       if( C == 'd' )
       {
+        if( !m_console.m_get_from_dot_buf )
+        {
+          m_console.m_dot_buf.setLength( 0 );
+        }
         if     ( m_colon_mode ) m_colon_view.Do_dd();
         else if( m_slash_mode ) m_slash_view.Do_dd();
       }
       else if( C == 'w' )
       {
+        if( !m_console.m_get_from_dot_buf )
+        {
+          m_console.m_dot_buf.setLength( 0 );
+          m_console.m_dot_buf.append( 'd' );
+          m_console.m_dot_buf.append( 'w' );
+        }
         if     ( m_colon_mode ) m_colon_view.Do_dw();
         else if( m_slash_mode ) m_slash_view.Do_dw();
       }
@@ -1275,6 +1336,10 @@ public class VisFx extends Application
   }
   void L_Handle_D()
   {
+    if( !m_console.m_get_from_dot_buf )
+    {
+      m_console.m_dot_buf.setLength( 0 );
+    }
     if     ( m_colon_mode ) m_colon_view.Do_D();
     else if( m_slash_mode ) m_slash_view.Do_D();
   }
@@ -1315,6 +1380,12 @@ public class VisFx extends Application
 
   void L_Handle_i()
   {
+    if( !m_console.m_get_from_dot_buf )
+    {
+      m_console.m_dot_buf.setLength( 0 );
+      m_console.m_dot_buf.append( 'i' );
+      m_console.m_save_2_dot_buf = true;
+    }
     m_states.addFirst( m_run_L_Ha_i );
 
     if     ( m_colon_mode ) m_colon_view.Do_i();
@@ -1368,6 +1439,12 @@ public class VisFx extends Application
 
   void L_Handle_a()
   {
+    if( !m_console.m_get_from_dot_buf )
+    {
+      m_console.m_dot_buf.setLength( 0 );
+      m_console.m_dot_buf.append( 'a' );
+      m_console.m_save_2_dot_buf = true;
+    }
     m_states.addFirst( m_run_L_Ha_i );
 
     if     ( m_colon_mode ) m_colon_view.Do_a();
@@ -1387,6 +1464,10 @@ public class VisFx extends Application
   }
   void L_Handle_A()
   {
+    if( !m_console.m_get_from_dot_buf )
+    {
+      m_console.m_dot_buf.setLength( 0 );
+    }
     m_states.addFirst( m_run_L_Ha_i );
 
     if     ( m_colon_mode ) m_colon_view.Do_A();
@@ -2316,6 +2397,11 @@ public class VisFx extends Application
   }
   void L_Handle_x()
   {
+    if( !m_console.m_get_from_dot_buf )
+    {
+      m_console.m_dot_buf.setLength( 0 );
+      m_console.m_dot_buf.append( 'x' );
+    }
     if     ( m_colon_mode ) m_colon_view.Do_x();
     else if( m_slash_mode ) m_slash_view.Do_x();
   }
@@ -2496,6 +2582,16 @@ public class VisFx extends Application
     }
   }
 
+  void L_Handle_Dot()
+  {
+    if( 0<m_console.m_dot_buf.length() )
+    {
+      m_console.m_get_from_dot_buf = true;
+
+      m_states.addFirst( m_run_L_dot );
+    }
+  }
+
   void Handle_Return()
   {
     if( m_diff_mode ) m_diff.GoToBegOfNextLine();
@@ -2520,6 +2616,28 @@ public class VisFx extends Application
       else {
         // Dont update until after all the commands have been executed:
         CV().m_fb.Update();
+      }
+    }
+  }
+  void run_L_dot()
+  {
+    if( m_console.m_get_from_dot_buf )
+    {
+      final char CC = m_console.GetKey();
+
+      Handle_Cmd( CC );
+    }
+    else {
+      // Done running dot:
+      m_states.removeFirst();
+
+      if( m_diff_mode ) {
+        // Diff does its own update every time a command is run
+      }
+      else {
+        // Dont update until after all the commands have been executed:
+        if     ( m_colon_mode ) m_colon_view.Update();
+        else if( m_slash_mode ) m_slash_view.Update();
       }
     }
   }
@@ -4511,6 +4629,7 @@ public class VisFx extends Application
   Thread             m_run_y      = new Thread() { public void run() { run_y     (); Give(); } };
   Thread             m_run_L_y    = new Thread() { public void run() { run_L_y   (); Give(); } };
   Thread             m_run_dot    = new Thread() { public void run() { run_dot   (); Give(); } };
+  Thread             m_run_L_dot  = new Thread() { public void run() { run_L_dot (); Give(); } };
   Thread             m_run_map    = new Thread() { public void run() { run_map   (); Give(); } };
   Thread             m_run_Q      = new Thread() { public void run() { run_Q     (); Give(); } };
   Thread             m_run_L_Ha_i = new Thread() { public void run() { run_L_Ha_i(); Give(); } };

@@ -2721,7 +2721,7 @@ class View
   {
     if( 0<m_fb.NumLines() )
     {
-      Set_Cmd_Line_Msg( '\\' + m_vis.get_regex() );
+      Set_Cmd_Line_Msg( '/' + m_vis.get_regex() );
 
       // Next cursor position
       CrsPos ncp = Do_n_FindNextPattern();
@@ -2804,7 +2804,7 @@ class View
   {
     if( 0 < m_fb.NumLines() )
     {
-      Set_Cmd_Line_Msg( '\\' + m_vis.get_regex() );
+      Set_Cmd_Line_Msg( '/' + m_vis.get_regex() );
 
       // Next cursor position
       CrsPos ncp = Do_N_FindPrevPattern();
