@@ -31,6 +31,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 class Utils
 {
@@ -96,7 +98,7 @@ class Utils
                                , final int p )
   {
     if( p == LL-1 ) return true; // p is on line end
-  
+
     if( p < LL-1 )
     {
       // At this point p should always be less than LL-1,
@@ -325,9 +327,9 @@ class Utils
       Path       fpath = fs.getPath( path, fname );
       File       file  = fpath.toFile();
     //File file = Paths.get( path, fname ).toFile();
- 
+
       String full_fname = file.toString();
- 
+
       if( file.isDirectory() )
       {
         if( false == full_fname.endsWith( Utils.DIR_DELIM_STR ) )
@@ -456,15 +458,15 @@ class Utils
         try {
           FileInputStream     fis_s = new FileInputStream( file_s );
           BufferedInputStream bis_s = new BufferedInputStream( fis_s, 512 );
-        
+
           FileInputStream     fis_l = new FileInputStream( file_l );
           BufferedInputStream bis_l = new BufferedInputStream( fis_l, 512 );
-        
+
           for( boolean done = false; !done; )
           {
             final int C_s = bis_s.read();
             final int C_l = bis_l.read();
-        
+
             if( -1 == C_s && -1 == C_l )
             {
               done = true;
@@ -485,6 +487,50 @@ class Utils
       }
     }
     return files_are_same;
+  }
+
+  public static
+  boolean Have_Regex_In_File( Pattern pattern
+                            , String  fname
+                            , Line    line_buf )
+  {
+    Path path = FileSystems.getDefault().getPath( fname );
+
+    if( Files.isRegularFile( path ) )
+    {
+      File file = path.toFile();
+
+      try {
+        FileInputStream     fis = new FileInputStream( file );
+        BufferedInputStream bis = new BufferedInputStream( fis, 512 );
+
+        line_buf.setLength( 0 );
+
+        for( boolean done = false; !done; )
+        {
+          final int C = bis.read();
+          if( -1 == C)
+          {
+            done = true;
+          }
+          else if( '\n' == C)
+          {
+            Matcher matcher = pattern.matcher( line_buf.toString() );
+
+            if( matcher.find() ) return true;
+            else {
+              line_buf.setLength( 0 );
+            }
+          }
+          else {
+            line_buf.append_c( (char)C);
+          }
+        }
+        fis.close();
+      }
+      catch( Exception e ) {}
+    }
+    return false;
   }
 
   public static

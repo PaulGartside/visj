@@ -72,6 +72,7 @@ interface VisIF
 
   ConsoleIF       get_Console();
   FileBuf         get_FileBuf( final int file_num );
+  FileBuf         get_FileBuf( String file_name );
   int             get_num_wins();
   String          get_regex();
   Deque<Thread>   get_states();

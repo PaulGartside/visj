@@ -4540,6 +4540,19 @@ public class VisFx extends Application
   {
     return m_files.get( file_num );
   }
+  public FileBuf get_FileBuf( String file_name )
+  {
+    for( int k=0; k<m_files.size(); k++ )
+    {
+      FileBuf fb_k = m_files.get( k );
+
+      if( fb_k.m_fname.equals( file_name ) )
+      {
+        return fb_k;
+      }
+    }
+    return null;
+  }
   public String get_regex()
   {
     return m_regex;

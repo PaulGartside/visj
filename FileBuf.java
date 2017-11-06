@@ -757,7 +757,7 @@ class FileBuf
       {
         ok = Write_p( m_lines, m_LF_at_EOF );
       }
-      else { // m_lines to 
+      else { // m_lines to
         final long file_size = GetSize();
         // Going from WIN_1252 or UTF_8 to NONE
         CharBuffer cbuf = File_2_char_buf( file_size );
@@ -1074,13 +1074,24 @@ class FileBuf
 
   void Check_4_New_Regex()
   {
-    if( m_regex != m_vis.get_regex() )
+    boolean have_new_regex = false;
+
+    if( null == m_regex )
+    {
+      have_new_regex = true;
+    }
+    else if( !m_regex.equals( m_vis.get_regex() ) )
     {
       // Invalidate all regexes
       for( int k=0; k<m_lineRegexsValid.size(); k++ )
       {
         m_lineRegexsValid.set(k, false);
       }
+      have_new_regex = true;
+    }
+
+    if( have_new_regex )
+    {
       m_regex = m_vis.get_regex();
 
       try {
@@ -1108,8 +1119,16 @@ class FileBuf
       {
         ClearStarStyle( line_num, pos );
       }
-      if( null != m_pattern )
+      if( null != m_pattern && 0<m_regex.length() )
       {
+        if( m_file_type == File_Type.BUFFER_EDITOR
+         || m_file_type == File_Type.DIR )
+        {
+          if( File_Has_Regex( lr ) )
+          {
+            for( int k=0; k<LL; k++ ) SetStarStyle( line_num, k );
+          }
+        }
         Matcher matcher = m_pattern.matcher( lr.toString() );
 
         while( matcher.find() )
@@ -1119,9 +1138,152 @@ class FileBuf
             SetStarStyle( line_num, pos );
           }
         }
-        m_lineRegexsValid.set(line_num, true);
+      }
+      m_lineRegexsValid.set(line_num, true);
+    }
+  }
+
+  boolean File_Has_Regex( Line file_name )
+  {
+    if( m_file_type == File_Type.DIR )
+    {
+      String hname = file_name.toString();
+      String fname = m_pname + hname;
+
+      if( Filename_Is_Relevant( hname ) )
+      {
+        return Utils.Have_Regex_In_File( m_pattern, fname, m_line_buf );
       }
     }
+    else if( m_file_type == File_Type.BUFFER_EDITOR )
+    {
+      String fname = file_name.toString();
+
+      if( !fname.equals( VisIF. EDIT_BUF_NAME )
+       && !fname.equals( VisIF. EDIT_BUF_NAME )
+       && !fname.equals( VisIF. HELP_BUF_NAME )
+       && !fname.equals( VisIF. MSG__BUF_NAME )
+       && !fname.equals( VisIF.SHELL_BUF_NAME )
+       && !fname.equals( VisIF.COLON_BUF_NAME )
+       && !fname.equals( VisIF.SLASH_BUF_NAME )
+       && !fname.endsWith( Utils.DIR_DELIM_STR ) )
+      {
+        FileBuf fb = m_vis.get_FileBuf( fname );
+        if( fb != null )
+        {
+          return fb.Has_Pattern( m_pattern );
+        }
+      }
+    }
+    return false;
+  }
+  boolean Filename_Is_Relevant( String fname )
+  {
+    return fname.endsWith(".txt")
+        || fname.endsWith(".txt.new")
+        || fname.endsWith(".txt.old")
+        || fname.endsWith(".sh")
+        || fname.endsWith(".sh.new"  )
+        || fname.endsWith(".sh.old"  )
+        || fname.endsWith(".bash"    )
+        || fname.endsWith(".bash.new")
+        || fname.endsWith(".bash.old")
+        || fname.endsWith(".alias"   )
+        || fname.endsWith(".bash_profile")
+        || fname.endsWith(".bash_logout")
+        || fname.endsWith(".bashrc" )
+        || fname.endsWith(".profile")
+        || fname.endsWith(".h"      )
+        || fname.endsWith(".h.new"  )
+        || fname.endsWith(".h.old"  )
+        || fname.endsWith(".c"      )
+        || fname.endsWith(".c.new"  )
+        || fname.endsWith(".c.old"  )
+        || fname.endsWith(".hh"     )
+        || fname.endsWith(".hh.new" )
+        || fname.endsWith(".hh.old" )
+        || fname.endsWith(".cc"     )
+        || fname.endsWith(".cc.new" )
+        || fname.endsWith(".cc.old" )
+        || fname.endsWith(".hpp"    )
+        || fname.endsWith(".hpp.new")
+        || fname.endsWith(".hpp.old")
+        || fname.endsWith(".cpp"    )
+        || fname.endsWith(".cpp.new")
+        || fname.endsWith(".cpp.old")
+        || fname.endsWith(".cxx"    )
+        || fname.endsWith(".cxx.new")
+        || fname.endsWith(".cxx.old")
+        || fname.endsWith(".idl"    )
+        || fname.endsWith(".idl.new")
+        || fname.endsWith(".idl.old")
+        || fname.endsWith(".html"    )
+        || fname.endsWith(".html.new")
+        || fname.endsWith(".html.old")
+        || fname.endsWith(".htm"     )
+        || fname.endsWith(".htm.new" )
+        || fname.endsWith(".htm.old" )
+        || fname.endsWith(".java"    )
+        || fname.endsWith(".java.new")
+        || fname.endsWith(".java.old")
+        || fname.endsWith(".js"    )
+        || fname.endsWith(".js.new")
+        || fname.endsWith(".js.old")
+        || fname.endsWith(".Make"    )
+        || fname.endsWith(".make"    )
+        || fname.endsWith(".Make.new")
+        || fname.endsWith(".make.new")
+        || fname.endsWith(".Make.old")
+        || fname.endsWith(".make.old")
+        || fname.endsWith("Makefile" )
+        || fname.endsWith("makefile" )
+        || fname.endsWith("Makefile.new")
+        || fname.endsWith("makefile.new")
+        || fname.endsWith("Makefile.old")
+        || fname.endsWith("makefile.old")
+        || fname.endsWith(".stl"    )
+        || fname.endsWith(".stl.new")
+        || fname.endsWith(".stl.old")
+        || fname.endsWith(".ste"    )
+        || fname.endsWith(".ste.new")
+        || fname.endsWith(".ste.old")
+        || fname.endsWith(".py"    )
+        || fname.endsWith(".py.new")
+        || fname.endsWith(".py.old")
+        || fname.endsWith(".sql"    )
+        || fname.endsWith(".sql.new")
+        || fname.endsWith(".sql.old")
+        || fname.endsWith(".xml"     )
+        || fname.endsWith(".xml.new" )
+        || fname.endsWith(".xml.old" )
+        || fname.endsWith(".xml.in"    )
+        || fname.endsWith(".xml.in.new")
+        || fname.endsWith(".xml.in.old")
+        || fname.endsWith(".cmake"     )
+        || fname.endsWith(".cmake.new" )
+        || fname.endsWith(".cmake.old" )
+        || fname.endsWith(".cmake"     )
+        || fname.endsWith(".cmake.new" )
+        || fname.endsWith(".cmake.old" )
+        || fname.endsWith("CMakeLists.txt")
+        || fname.endsWith("CMakeLists.txt.old")
+        || fname.endsWith("CMakeLists.txt.new");
+  }
+  // Returns true if this FileBuf has pattern
+  boolean Has_Pattern( Pattern pattern )
+  {
+    for( int k=0; k<NumLines(); k++ )
+    {
+      Line l_k = GetLine( k );
+
+      if( 0 < l_k.length() )
+      {
+        Matcher matcher = pattern.matcher( l_k.toString() );
+
+        if( matcher.find() ) return true;
+      }
+    }
+    return false;
   }
 
   Line GetLine( final int l_num )
@@ -1983,5 +2145,6 @@ class FileBuf
   String                m_regex;
   Pattern               m_pattern; // Will hold compiled regex pattern
   ArrayList<Boolean>    m_lineRegexsValid = new ArrayList<>();
+  Line                  m_line_buf = new Line();
 }
 
