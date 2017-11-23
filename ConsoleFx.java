@@ -50,9 +50,10 @@ class ConsoleFx extends Canvas
     {
       if( m_input.add( m_C ) ) //< Should always be true
       {
-        if( m_save_2_map_buf ) m_map_buf.append( m_C );
-        if( m_save_2_dot_buf ) m_dot_buf.append( m_C );
-        if( m_save_2_vis_buf ) m_vis_buf.append( m_C );
+        if( m_save_2_map_buf   ) m_map_buf.append( m_C );
+        if( m_save_2_dot_buf_n ) m_dot_buf_n.append( m_C );
+        if( m_save_2_dot_buf_l ) m_dot_buf_l.append( m_C );
+        if( m_save_2_vis_buf   ) m_vis_buf.append( m_C );
       }
     }
   }
@@ -411,11 +412,22 @@ class ConsoleFx extends Canvas
   }
   public int KeysIn()
   {
-    if( m_get_from_dot_buf )
+    if( m_get_from_dot_buf_n )
     {
       // If there is something to process, process it right away,
       // else sleep to avoid hogging CPU:
-      final int num_keys_in = m_dot_buf.length();
+      final int num_keys_in = m_dot_buf_n.length();
+      if( num_keys_in <= 0 )
+      {
+        Utils.Sleep( m_vis.KEY_REPEAT_PERIOD );
+      }
+      return num_keys_in;
+    }
+    if( m_get_from_dot_buf_l )
+    {
+      // If there is something to process, process it right away,
+      // else sleep to avoid hogging CPU:
+      final int num_keys_in = m_dot_buf_l.length();
       if( num_keys_in <= 0 )
       {
         Utils.Sleep( m_vis.KEY_REPEAT_PERIOD );
@@ -440,23 +452,38 @@ class ConsoleFx extends Canvas
   public char GetKey()
   {
     char C = 0;
-    if     ( m_get_from_dot_buf ) C = In_DotBuf();
-    else if( m_get_from_map_buf ) C = In_MapBuf();
-    else                          C = m_input.remove();
+    if     ( m_get_from_dot_buf_n ) C = In_DotBuf_n();
+    else if( m_get_from_dot_buf_l ) C = In_DotBuf_l();
+    else if( m_get_from_map_buf   ) C = In_MapBuf();
+    else                            C = m_input.remove();
 
     return C;
   }
   private
-  char In_DotBuf()
+  char In_DotBuf_n()
   {
-    final int DOT_BUF_LEN = m_dot_buf.length();
+    final int DOT_BUF_LEN = m_dot_buf_n.length();
 
-    final char C = m_dot_buf.charAt( m_dot_buf_index++ );
+    final char C = m_dot_buf_n.charAt( m_dot_buf_index++ );
 
     if( DOT_BUF_LEN <= m_dot_buf_index )
     {
-      m_get_from_dot_buf = false;
-      m_dot_buf_index    = 0;
+      m_get_from_dot_buf_n = false;
+      m_dot_buf_index      = 0;
+    }
+    return C;
+  }
+  private
+  char In_DotBuf_l()
+  {
+    final int DOT_BUF_LEN = m_dot_buf_l.length();
+
+    final char C = m_dot_buf_l.charAt( m_dot_buf_index++ );
+
+    if( DOT_BUF_LEN <= m_dot_buf_index )
+    {
+      m_get_from_dot_buf_l = false;
+      m_dot_buf_index      = 0;
     }
     return C;
   }
@@ -822,7 +849,8 @@ class ConsoleFx extends Canvas
   {
     boolean output_something = false;
 
-    if( !m_get_from_dot_buf )
+    if( !m_get_from_dot_buf_n
+     && !m_get_from_dot_buf_l )
     {
       for( int row=0; row<m_num_rows; row++ )
       {
@@ -876,19 +904,31 @@ class ConsoleFx extends Canvas
   {
     m_save_2_vis_buf = save;
   }
-  public StringBuilder get_dot_buf()
+  public StringBuilder get_dot_buf_n()
   {
-    return m_dot_buf;
+    return m_dot_buf_n;
+  }
+  public StringBuilder get_dot_buf_l()
+  {
+    return m_dot_buf_l;
   }
   public boolean get_from_dot_buf()
   {
-    return m_get_from_dot_buf;
+    return m_get_from_dot_buf_n || m_get_from_dot_buf_l;
+  }
+  public boolean get_from_dot_buf_n()
+  {
+    return m_get_from_dot_buf_n;
+  }
+  public boolean get_from_dot_buf_l()
+  {
+    return m_get_from_dot_buf_l;
   }
   public void copy_vis_buf_2_dot_buf()
   {
     // setLength( 0 ) followed by append() accomplishes copy:
-    m_dot_buf.setLength( 0 );
-    m_dot_buf.append( m_vis_buf );
+    m_dot_buf_n.setLength( 0 );
+    m_dot_buf_n.append( m_vis_buf );
   }
   public void copy_paste_buf_2_system_clipboard()
   {
@@ -1059,17 +1099,20 @@ class ConsoleFx extends Canvas
   int[]            m_min_touched;
   int[]            m_max_touched;
 
-  boolean          m_save_2_dot_buf;
+  boolean          m_save_2_dot_buf_n; // Normal view
+  boolean          m_save_2_dot_buf_l; // Line view
   boolean          m_save_2_vis_buf;
   boolean          m_save_2_map_buf;
-  boolean          m_get_from_dot_buf;
+  boolean          m_get_from_dot_buf_n; // Normal view
+  boolean          m_get_from_dot_buf_l; // Line view
   boolean          m_get_from_map_buf;
   String[]         m_text_chars;
   char             m_C;
   boolean          m_caps_on;
   Queue<Character> m_input   = new ArrayDeque<Character>();
 
-  StringBuilder    m_dot_buf = new StringBuilder();
+  StringBuilder    m_dot_buf_n = new StringBuilder(); // Dot buf for normal view
+  StringBuilder    m_dot_buf_l = new StringBuilder(); // Dot buf for line view
   StringBuilder    m_vis_buf = new StringBuilder();
   StringBuilder    m_map_buf = new StringBuilder();
   private int      m_dot_buf_index;

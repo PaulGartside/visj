@@ -476,7 +476,8 @@ public class VisFx extends Application
 
       // Done running all command states and back to m_run_idle,
       // so turn off saving to dot buf:
-      m_console.m_save_2_dot_buf = false;
+      m_console.m_save_2_dot_buf_n = false;
+      m_console.m_save_2_dot_buf_l = false;
 
       if( 0 < m_console.KeysIn() )
       {
@@ -860,20 +861,20 @@ public class VisFx extends Application
 
   void Handle_Tilda()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_n )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( '~' );
+      m_console.m_dot_buf_n.setLength( 0 );
+      m_console.m_dot_buf_n.append( '~' );
     }
     if( m_diff_mode ) m_diff.Do_Tilda();
     else                CV().Do_Tilda();
   }
   void L_Handle_Tilda()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_l )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( '~' );
+      m_console.m_dot_buf_l.setLength( 0 );
+      m_console.m_dot_buf_l.append( '~' );
     }
     if     ( m_colon_mode ) m_colon_view.Do_Tilda();
     else if( m_slash_mode ) m_slash_view.Do_Tilda();
@@ -887,19 +888,19 @@ public class VisFx extends Application
 
   void Handle_J()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_n )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 'J' );
+      m_console.m_dot_buf_n.setLength( 0 );
+      m_console.m_dot_buf_n.append( 'J' );
     }
     if( m_diff_mode ) m_diff.Do_J();
     else                CV().Do_J();
   }
   void L_Handle_J()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_l )
     {
-      m_console.m_dot_buf.setLength( 0 );
+      m_console.m_dot_buf_l.setLength( 0 );
     }
     if     ( m_colon_mode ) m_colon_view.Do_J();
     else if( m_slash_mode ) m_slash_view.Do_J();
@@ -952,11 +953,11 @@ public class VisFx extends Application
 
   void Handle_o()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_n )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 'o' );
-      m_console.m_save_2_dot_buf = true;
+      m_console.m_dot_buf_n.setLength( 0 );
+      m_console.m_dot_buf_n.append( 'o' );
+      m_console.m_save_2_dot_buf_n = true;
     }
     if( m_diff_mode ) m_diff.Do_o();
     else                CV().Do_o();
@@ -964,9 +965,9 @@ public class VisFx extends Application
 
   void L_Handle_o()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_l )
     {
-      m_console.m_dot_buf.setLength( 0 );
+      m_console.m_dot_buf_l.setLength( 0 );
     }
     m_states.addFirst( m_run_L_Ha_i );
 
@@ -976,11 +977,11 @@ public class VisFx extends Application
 
   void Handle_O()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_n )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 'O' );
-      m_console.m_save_2_dot_buf = true;
+      m_console.m_dot_buf_n.setLength( 0 );
+      m_console.m_dot_buf_n.append( 'O' );
+      m_console.m_save_2_dot_buf_n = true;
     }
     if( m_diff_mode ) m_diff.Do_O();
     else                CV().Do_O();
@@ -988,10 +989,10 @@ public class VisFx extends Application
 
   void Handle_p()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_n )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 'p' );
+      m_console.m_dot_buf_n.setLength( 0 );
+      m_console.m_dot_buf_n.append( 'p' );
     }
     if( m_diff_mode ) m_diff.Do_p();
     else                CV().Do_p();
@@ -999,9 +1000,9 @@ public class VisFx extends Application
 
   void L_Handle_p()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_l )
     {
-      m_console.m_dot_buf.setLength( 0 );
+      m_console.m_dot_buf_l.setLength( 0 );
     }
     if     ( m_colon_mode ) m_colon_view.Do_p();
     else if( m_slash_mode ) m_slash_view.Do_p();
@@ -1009,19 +1010,19 @@ public class VisFx extends Application
 
   void Handle_P()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_n )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 'P' );
+      m_console.m_dot_buf_n.setLength( 0 );
+      m_console.m_dot_buf_n.append( 'P' );
     }
     if( m_diff_mode ) m_diff.Do_P();
     else                CV().Do_P();
   }
   void L_Handle_P()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_l )
     {
-      m_console.m_dot_buf.setLength( 0 );
+      m_console.m_dot_buf_l.setLength( 0 );
     }
     if     ( m_colon_mode ) m_colon_view.Do_P();
     else if( m_slash_mode ) m_slash_view.Do_P();
@@ -1044,22 +1045,22 @@ public class VisFx extends Application
 
   void Handle_R()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_n )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 'R' );
-      m_console.m_save_2_dot_buf = true;
+      m_console.m_dot_buf_n.setLength( 0 );
+      m_console.m_dot_buf_n.append( 'R' );
+      m_console.m_save_2_dot_buf_n = true;
     }
     if( m_diff_mode ) m_diff.Do_R();
     else                CV().Do_R();
   }
   void L_Handle_R()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_l )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 'R' );
-      m_console.m_save_2_dot_buf = true;
+      m_console.m_dot_buf_l.setLength( 0 );
+      m_console.m_dot_buf_l.append( 'R' );
+      m_console.m_save_2_dot_buf_l = true;
     }
     m_states.addFirst( m_run_L_Ha_i );
 
@@ -1069,22 +1070,22 @@ public class VisFx extends Application
 
   void Handle_s()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_n )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 's' );
-      m_console.m_save_2_dot_buf = true;
+      m_console.m_dot_buf_n.setLength( 0 );
+      m_console.m_dot_buf_n.append( 's' );
+      m_console.m_save_2_dot_buf_n = true;
     }
     if( m_diff_mode ) m_diff.Do_s();
     else                CV().Do_s();
   }
   void L_Handle_s()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_l )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 's' );
-      m_console.m_save_2_dot_buf = true;
+      m_console.m_dot_buf_l.setLength( 0 );
+      m_console.m_dot_buf_l.append( 's' );
+      m_console.m_save_2_dot_buf_l = true;
     }
     if     ( m_colon_mode ) m_colon_view.Do_s();
     else if( m_slash_mode ) m_slash_view.Do_s();
@@ -1103,7 +1104,7 @@ public class VisFx extends Application
 
   void Handle_v()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_n )
     {
       m_console.m_vis_buf.setLength( 0 );
       m_console.m_vis_buf.append( 'v' );
@@ -1114,19 +1115,19 @@ public class VisFx extends Application
   }
   void L_Handle_v()
   {
-    if( !m_console.m_get_from_dot_buf )
-    {
-      m_console.m_vis_buf.setLength( 0 );
-      m_console.m_vis_buf.append( 'v' );
-      m_console.m_save_2_vis_buf = true;
-    }
+  //if( !m_console.m_get_from_dot_buf_l )
+  //{
+  //  m_console.m_vis_buf.setLength( 0 );
+  //  m_console.m_vis_buf.append( 'v' );
+  //  m_console.m_save_2_vis_buf = true;
+  //}
     if     ( m_colon_mode ) m_colon_view.Do_v();
     else if( m_slash_mode ) m_slash_view.Do_v();
   }
 
   void Handle_V()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_n )
     {
       m_console.m_vis_buf.setLength( 0 );
       m_console.m_vis_buf.append( 'V' );
@@ -1160,24 +1161,24 @@ public class VisFx extends Application
 
       if( C == 'w' )
       {
-        if( !m_console.m_get_from_dot_buf )
+        if( !m_console.m_get_from_dot_buf_n )
         {
-          m_console.m_dot_buf.setLength( 0 );
-          m_console.m_dot_buf.append( 'c' );
-          m_console.m_dot_buf.append( 'w' );
-          m_console.m_save_2_dot_buf = true;
+          m_console.m_dot_buf_n.setLength( 0 );
+          m_console.m_dot_buf_n.append( 'c' );
+          m_console.m_dot_buf_n.append( 'w' );
+          m_console.m_save_2_dot_buf_n = true;
         }
         if( m_diff_mode ) m_diff.Do_cw();
         else                CV().Do_cw();
       }
       else if( C == '$' )
       {
-        if( !m_console.m_get_from_dot_buf )
+        if( !m_console.m_get_from_dot_buf_n )
         {
-          m_console.m_dot_buf.setLength( 0 );
-          m_console.m_dot_buf.append( 'c' );
-          m_console.m_dot_buf.append( '$' );
-          m_console.m_save_2_dot_buf = true;
+          m_console.m_dot_buf_n.setLength( 0 );
+          m_console.m_dot_buf_n.append( 'c' );
+          m_console.m_dot_buf_n.append( '$' );
+          m_console.m_save_2_dot_buf_n = true;
         }
         if( m_diff_mode ) { m_diff.Do_D(); m_diff.Do_a(); }
         else              {   CV().Do_D();   CV().Do_a(); }
@@ -1199,21 +1200,21 @@ public class VisFx extends Application
 
       if( C == 'w' )
       {
-        if( !m_console.m_get_from_dot_buf )
+        if( !m_console.m_get_from_dot_buf_l )
         {
-          m_console.m_dot_buf.setLength( 0 );
-          m_console.m_dot_buf.append( 'c' );
-          m_console.m_dot_buf.append( 'w' );
-          m_console.m_save_2_dot_buf = true;
+          m_console.m_dot_buf_l.setLength( 0 );
+          m_console.m_dot_buf_l.append( 'c' );
+          m_console.m_dot_buf_l.append( 'w' );
+          m_console.m_save_2_dot_buf_l = true;
         }
         if     ( m_colon_mode ) m_colon_view.Do_cw();
         else if( m_slash_mode ) m_slash_view.Do_cw();
       }
       else if( C == '$' )
       {
-        if( !m_console.m_get_from_dot_buf )
+        if( !m_console.m_get_from_dot_buf_l )
         {
-          m_console.m_dot_buf.setLength( 0 );
+          m_console.m_dot_buf_l.setLength( 0 );
         }
         if( m_colon_mode )
         {
@@ -1266,22 +1267,22 @@ public class VisFx extends Application
 
       if( C == 'd' )
       {
-        if( !m_console.m_get_from_dot_buf )
+        if( !m_console.m_get_from_dot_buf_n )
         {
-          m_console.m_dot_buf.setLength( 0 );
-          m_console.m_dot_buf.append( 'd' );
-          m_console.m_dot_buf.append( 'd' );
+          m_console.m_dot_buf_n.setLength( 0 );
+          m_console.m_dot_buf_n.append( 'd' );
+          m_console.m_dot_buf_n.append( 'd' );
         }
         if( m_diff_mode ) m_diff.Do_dd();
         else                CV().Do_dd();
       }
       else if( C == 'w' )
       {
-        if( !m_console.m_get_from_dot_buf )
+        if( !m_console.m_get_from_dot_buf_n )
         {
-          m_console.m_dot_buf.setLength( 0 );
-          m_console.m_dot_buf.append( 'd' );
-          m_console.m_dot_buf.append( 'w' );
+          m_console.m_dot_buf_n.setLength( 0 );
+          m_console.m_dot_buf_n.append( 'd' );
+          m_console.m_dot_buf_n.append( 'w' );
         }
         if( m_diff_mode ) m_diff.Do_dw();
         else                CV().Do_dw();
@@ -1303,20 +1304,20 @@ public class VisFx extends Application
 
       if( C == 'd' )
       {
-        if( !m_console.m_get_from_dot_buf )
+        if( !m_console.m_get_from_dot_buf_l )
         {
-          m_console.m_dot_buf.setLength( 0 );
+          m_console.m_dot_buf_l.setLength( 0 );
         }
         if     ( m_colon_mode ) m_colon_view.Do_dd();
         else if( m_slash_mode ) m_slash_view.Do_dd();
       }
       else if( C == 'w' )
       {
-        if( !m_console.m_get_from_dot_buf )
+        if( !m_console.m_get_from_dot_buf_l )
         {
-          m_console.m_dot_buf.setLength( 0 );
-          m_console.m_dot_buf.append( 'd' );
-          m_console.m_dot_buf.append( 'w' );
+          m_console.m_dot_buf_l.setLength( 0 );
+          m_console.m_dot_buf_l.append( 'd' );
+          m_console.m_dot_buf_l.append( 'w' );
         }
         if     ( m_colon_mode ) m_colon_view.Do_dw();
         else if( m_slash_mode ) m_slash_view.Do_dw();
@@ -1326,19 +1327,19 @@ public class VisFx extends Application
 
   void Handle_D()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_n )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 'D' );
+      m_console.m_dot_buf_n.setLength( 0 );
+      m_console.m_dot_buf_n.append( 'D' );
     }
     if( m_diff_mode ) m_diff.Do_D();
     else                CV().Do_D();
   }
   void L_Handle_D()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_n )
     {
-      m_console.m_dot_buf.setLength( 0 );
+      m_console.m_dot_buf_n.setLength( 0 );
     }
     if     ( m_colon_mode ) m_colon_view.Do_D();
     else if( m_slash_mode ) m_slash_view.Do_D();
@@ -1368,11 +1369,11 @@ public class VisFx extends Application
 
   void Handle_i()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_n )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 'i' );
-      m_console.m_save_2_dot_buf = true;
+      m_console.m_dot_buf_n.setLength( 0 );
+      m_console.m_dot_buf_n.append( 'i' );
+      m_console.m_save_2_dot_buf_n = true;
     }
     if( m_diff_mode ) m_diff.Do_i();
     else                CV().Do_i();
@@ -1380,11 +1381,11 @@ public class VisFx extends Application
 
   void L_Handle_i()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_l )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 'i' );
-      m_console.m_save_2_dot_buf = true;
+      m_console.m_dot_buf_l.setLength( 0 );
+      m_console.m_dot_buf_l.append( 'i' );
+      m_console.m_save_2_dot_buf_l = true;
     }
     m_states.addFirst( m_run_L_Ha_i );
 
@@ -1427,11 +1428,11 @@ public class VisFx extends Application
 
   void Handle_a()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_n )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 'a' );
-      m_console.m_save_2_dot_buf = true;
+      m_console.m_dot_buf_n.setLength( 0 );
+      m_console.m_dot_buf_n.append( 'a' );
+      m_console.m_save_2_dot_buf_n = true;
     }
     if( m_diff_mode ) m_diff.Do_a();
     else                CV().Do_a();
@@ -1439,11 +1440,11 @@ public class VisFx extends Application
 
   void L_Handle_a()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_l )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 'a' );
-      m_console.m_save_2_dot_buf = true;
+      m_console.m_dot_buf_l.setLength( 0 );
+      m_console.m_dot_buf_l.append( 'a' );
+      m_console.m_save_2_dot_buf_l = true;
     }
     m_states.addFirst( m_run_L_Ha_i );
 
@@ -1453,20 +1454,20 @@ public class VisFx extends Application
 
   void Handle_A()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_n )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 'A' );
-      m_console.m_save_2_dot_buf = true;
+      m_console.m_dot_buf_n.setLength( 0 );
+      m_console.m_dot_buf_n.append( 'A' );
+      m_console.m_save_2_dot_buf_n = true;
     }
     if( m_diff_mode ) m_diff.Do_A();
     else                CV().Do_A();
   }
   void L_Handle_A()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_l )
     {
-      m_console.m_dot_buf.setLength( 0 );
+      m_console.m_dot_buf_l.setLength( 0 );
     }
     m_states.addFirst( m_run_L_Ha_i );
 
@@ -2387,20 +2388,20 @@ public class VisFx extends Application
 
   void Handle_x()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_n )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 'x' );
+      m_console.m_dot_buf_n.setLength( 0 );
+      m_console.m_dot_buf_n.append( 'x' );
     }
     if( m_diff_mode ) m_diff.Do_x();
     else                CV().Do_x();
   }
   void L_Handle_x()
   {
-    if( !m_console.m_get_from_dot_buf )
+    if( !m_console.m_get_from_dot_buf_l )
     {
-      m_console.m_dot_buf.setLength( 0 );
-      m_console.m_dot_buf.append( 'x' );
+      m_console.m_dot_buf_l.setLength( 0 );
+      m_console.m_dot_buf_l.append( 'x' );
     }
     if     ( m_colon_mode ) m_colon_view.Do_x();
     else if( m_slash_mode ) m_slash_view.Do_x();
@@ -2567,7 +2568,7 @@ public class VisFx extends Application
 
   void Handle_Dot()
   {
-    if( 0<m_console.m_dot_buf.length() )
+    if( 0<m_console.m_dot_buf_n.length() )
     {
       if( m_console.m_save_2_map_buf )
       {
@@ -2576,7 +2577,7 @@ public class VisFx extends Application
         StringBuilder map_buf = m_console.m_map_buf;
         if( 0<map_buf.length() ) map_buf.deleteCharAt( map_buf.length()-1 );
       }
-      m_console.m_get_from_dot_buf = true;
+      m_console.m_get_from_dot_buf_n = true;
 
       m_states.addFirst( m_run_dot );
     }
@@ -2584,9 +2585,9 @@ public class VisFx extends Application
 
   void L_Handle_Dot()
   {
-    if( 0<m_console.m_dot_buf.length() )
+    if( 0<m_console.m_dot_buf_l.length() )
     {
-      m_console.m_get_from_dot_buf = true;
+      m_console.m_get_from_dot_buf_l = true;
 
       m_states.addFirst( m_run_L_dot );
     }
@@ -2600,7 +2601,8 @@ public class VisFx extends Application
 
   void run_dot()
   {
-    if( m_console.m_get_from_dot_buf )
+    if( m_console.m_get_from_dot_buf_n
+     || m_console.m_get_from_dot_buf_l )
     {
       final char CC = m_console.GetKey();
 
@@ -2621,7 +2623,7 @@ public class VisFx extends Application
   }
   void run_L_dot()
   {
-    if( m_console.m_get_from_dot_buf )
+    if( m_console.m_get_from_dot_buf_l )
     {
       final char CC = m_console.GetKey();
 

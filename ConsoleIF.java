@@ -45,7 +45,8 @@ interface ConsoleIF
   void    copy_paste_buf_2_system_clipboard();
   void    copy_system_clipboard_2_paste_buf();
 
-  StringBuilder get_dot_buf();
+  StringBuilder get_dot_buf_n();
+  StringBuilder get_dot_buf_l();
   boolean       get_from_dot_buf();
   void          set_save_2_vis_buf( final boolean save );
 }
