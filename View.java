@@ -3559,6 +3559,16 @@ class View
     m_crsRow   = vr.m_crsRow  ;
     m_crsCol   = vr.m_crsCol  ;
   }
+  void Set_Context( final int topLine
+                  , final int leftChar
+                  , final int crsRow
+                  , final int crsCol )
+  {
+    m_topLine  = topLine ;
+    m_leftChar = leftChar;
+    m_crsRow   = crsRow  ;
+    m_crsCol   = crsCol  ;
+  }
   void Clear_Context()
   {
     m_topLine  = 0;

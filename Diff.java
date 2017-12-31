@@ -106,6 +106,16 @@ class Diff
     m_crsRow   = diff_crsRow;
     m_crsCol   = pV.CrsCol();
   }
+  void Set_Remaining_ViewContext_2_DiffContext()
+  {
+    View cV = m_vis.CV();
+    View remaining_view = cV == m_vL ? m_vS : m_vL;
+
+    remaining_view.Set_Context( GetTopLine( remaining_view )
+                              , GetLeftChar()
+                              , GetCrsRow()
+                              , GetCrsCol() );
+  }
 
   void CleanDiff()
   {
@@ -623,36 +633,38 @@ class Diff
                  ? ( 0 < fb.NumLines() ? fb.LineLen( CLv ) : 0 )
                  : 0;
     final int WC = WorkingCols( pV );
-
-    String str = "";
-    // When inserting text at the end of a line, CrsChar() == LL
-    if( 0 < LL && CC < LL ) // Print current char info:
+    if( 0 < WC )
     {
-      final char c = fb.Get( CLv, CC );
+      String str = "";
+      // When inserting text at the end of a line, CrsChar() == LL
+      if( 0 < LL && CC < LL ) // Print current char info:
+      {
+        final int C = fb.Get( CLv, CC );
 
-      if     (  9 == c ) str = String.valueOf( c ) + "\\t";
-      else if( 13 == c ) str = String.valueOf( c ) + "\\r";
-      else               str = String.valueOf( c ) +","+ (char)c;
+        if     (  9 == C ) str = String.valueOf( C ) + ",\\t";
+        else if( 13 == C ) str = String.valueOf( C ) + ",\\r";
+        else               str = String.valueOf( C ) +","+ (char)C;
+      }
+      final int fileSize = fb.GetSize();
+      final int  crsByte = fb.GetCursorByte( CLv, CC );
+      int percent = (char)(100*(double)crsByte/(double)fileSize + 0.5);
+      // Screen width so far
+      m_sb.setLength( 0 );
+      m_sb.append( "Pos=("+(CLv+1)+","+(CC+1)+")"
+                 + "  ("+percent+"%, "+crsByte
+                 + Utils.DIR_DELIM_STR + fb.GetSize()+")"
+                 + "  Char=("+str+")  ");
+
+      final int SW = m_sb.length(); // Screen width so far
+
+      if     ( SW < WC ) { for( int k=SW; k<WC; k++ ) m_sb.append(' '); }
+      else if( WC < SW ) { m_sb.setLength( WC ); } //< Truncate extra part
+
+      m_console.SetS( pV.Sts__Line_Row()
+                    , pV.Col_Win_2_GL( 0 )
+                    , m_sb.toString()
+                    , Style.STATUS );
     }
-    final int fileSize = fb.GetSize();
-    final int  crsByte = fb.GetCursorByte( CLv, CC );
-    int percent = (char)(100*(double)crsByte/(double)fileSize + 0.5);
-    // Screen width so far
-    m_sb.setLength( 0 );
-    m_sb.append( "Pos=("+(CLv+1)+","+(CC+1)+")"
-               + "  ("+percent+"%, "+crsByte
-               + Utils.DIR_DELIM_STR + fb.GetSize()+")"
-               + "  Char=("+str+")  ");
-
-    final int SW = m_sb.length(); // Screen width so far
-
-    if     ( SW < WC ) { for( int k=SW; k<WC; k++ ) m_sb.append(' '); }
-    else if( WC < SW ) { m_sb.setLength( WC ); } //< Truncate extra part
-
-    m_console.SetS( pV.Sts__Line_Row()
-                  , pV.Col_Win_2_GL( 0 )
-                  , m_sb.toString()
-                  , Style.STATUS );
   }
   void PrintCmdLine( View pV )
   {

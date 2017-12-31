@@ -481,9 +481,23 @@ public class VisFx extends Application
 
       if( 0 < m_console.KeysIn() )
       {
-        final char c1 = m_console.GetKey();
+        final char CC = m_console.GetKey();
 
-        Handle_Cmd( c1 );
+        if( ('1' <= CC && CC <= '9')
+         || ('0' == CC && 0 < m_repeat_buf.length()) ) //< Dont override 0 movement
+        {
+          m_repeat_buf.append( CC );
+        }
+        else {
+          if( 0 < m_repeat_buf.length() )
+          {
+            m_repeat = Integer.valueOf( m_repeat_buf.toString() );
+          }
+          Handle_Cmd( CC );
+
+          m_repeat = 1;
+          m_repeat_buf.setLength(0);
+        }
       }
       else if( m_console.Resized() )
       {
@@ -631,94 +645,46 @@ public class VisFx extends Application
 
   void Handle_j()
   {
-    int num = 1;
-    while( m_console.FirstKeyIs('j') )
-    {
-      m_console.GetKey();
-      num++;
-    }
-    if( m_diff_mode ) m_diff.GoDown( num );
-    else                CV().GoDown( num );
+    if( m_diff_mode ) m_diff.GoDown( m_repeat );
+    else                CV().GoDown( m_repeat );
   }
   void L_Handle_j()
   {
-    int num = 1;
-    while( m_console.FirstKeyIs('j') )
-    {
-      m_console.GetKey();
-      num++;
-    }
-    if     ( m_colon_mode ) m_colon_view.GoDown( num );
-    else if( m_slash_mode ) m_slash_view.GoDown( num );
+    if     ( m_colon_mode ) m_colon_view.GoDown( m_repeat );
+    else if( m_slash_mode ) m_slash_view.GoDown( m_repeat );
   }
 
   void Handle_k()
   {
-    int num = 1;
-    while( m_console.FirstKeyIs('k') )
-    {
-      m_console.GetKey();
-      num++;
-    }
-    if( m_diff_mode ) m_diff.GoUp( num );
-    else                CV().GoUp( num );
+    if( m_diff_mode ) m_diff.GoUp( m_repeat );
+    else                CV().GoUp( m_repeat );
   }
   void L_Handle_k()
   {
-    int num = 1;
-    while( m_console.FirstKeyIs('k') )
-    {
-      m_console.GetKey();
-      num++;
-    }
-    if     ( m_colon_mode ) m_colon_view.GoUp( num );
-    else if( m_slash_mode ) m_slash_view.GoUp( num );
+    if     ( m_colon_mode ) m_colon_view.GoUp( m_repeat );
+    else if( m_slash_mode ) m_slash_view.GoUp( m_repeat );
   }
 
   void Handle_h()
   {
-    int num = 1;
-    while( m_console.FirstKeyIs('h') )
-    {
-      m_console.GetKey();
-      num++;
-    }
-    if( m_diff_mode ) m_diff.GoLeft( num );
-    else                CV().GoLeft( num );
+    if( m_diff_mode ) m_diff.GoLeft( m_repeat );
+    else                CV().GoLeft( m_repeat );
   }
   void L_Handle_h()
   {
-    int num = 1;
-    while( m_console.FirstKeyIs('h') )
-    {
-      m_console.GetKey();
-      num++;
-    }
-    if     ( m_colon_mode ) m_colon_view.GoLeft( num );
-    else if( m_slash_mode ) m_slash_view.GoLeft( num );
+    if     ( m_colon_mode ) m_colon_view.GoLeft( m_repeat );
+    else if( m_slash_mode ) m_slash_view.GoLeft( m_repeat );
   }
 
   void Handle_l()
   {
-    int num = 1;
-    while( m_console.FirstKeyIs('l') )
-    {
-      m_console.GetKey();
-      num++;
-    }
-    if( m_diff_mode ) m_diff.GoRight(num);
-    else                CV().GoRight(num);
+    if( m_diff_mode ) m_diff.GoRight( m_repeat );
+    else                CV().GoRight( m_repeat );
   }
   void L_Handle_l()
   {
-    int num = 1;
-    while( m_console.FirstKeyIs('l') )
-    {
-      m_console.GetKey();
-      num++;
-    }
-    if     ( m_colon_mode ) m_colon_view.GoRight(num);
-    else if( m_slash_mode ) m_slash_view.GoRight(num);
+    if     ( m_colon_mode ) m_colon_view.GoRight( m_repeat );
+    else if( m_slash_mode ) m_slash_view.GoRight( m_repeat );
   }
 
   void Handle_0()
@@ -2776,6 +2742,10 @@ public class VisFx extends Application
 
     if( m_num_wins <= 1 ) Exe_Colon_qa();
     else {
+      if( m_diff_mode )
+      {
+        m_diff.Set_Remaining_ViewContext_2_DiffContext();
+      }
       m_diff_mode = false;
 
       if( m_win < m_num_wins-1 )
@@ -4673,5 +4643,7 @@ public class VisFx extends Application
   Paste_Mode         m_paste_mode;
   String             m_cwd = Utils.GetCWD();
   Shell              m_shell;
+  int                m_repeat;
+  StringBuilder      m_repeat_buf= new StringBuilder();
 }
 

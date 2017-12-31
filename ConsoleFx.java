@@ -45,7 +45,6 @@ class ConsoleFx extends Canvas
 {
   void Key_Pressed( KeyEvent ke )
   {
-    final KeyCode CODE  = ke.getCode();
     if( Add_Key_Char( ke ) )
     {
       if( m_input.add( m_C ) ) //< Should always be true
