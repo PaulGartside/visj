@@ -2644,7 +2644,8 @@ public class VisFx extends Application
     else if( m_sb.toString().equals("rediff"))Exe_Colon_ReDiff();
     else if( m_sb.toString().equals("hi") )   Exe_Colon_hi();
     else if( m_sb.toString().equals("vsp") )  Exe_Colon_vsp();
-    else if( m_sb.toString().equals("sp") )   Exe_Colon_sp();
+    else if( m_sb.toString().equals("sp") )   Exe_Colon_hsp();
+    else if( m_sb.toString().equals("3sp") )  Exe_Colon_3sp();
     else if( m_sb.toString().equals("se") )   Exe_Colon_se();
     else if( m_sb.toString().equals("sh")
           || m_sb.toString().equals("shell")) Exe_Colon_shell();
@@ -2716,7 +2717,7 @@ public class VisFx extends Application
     {
       Do_Star_Update_Search_Editor();
     }
-    if( MOVE_TO_FIRST_PATTERN )
+    if( MOVE_TO_FIRST_PATTERN && 0<pattern.length() )
     {
       if( m_diff_mode ) m_diff.Do_n();
       else                CV().Do_n();
@@ -2805,7 +2806,12 @@ public class VisFx extends Application
     else if( TP == Tile_Pos.BOT__LEFT_8TH )     Quit_JoinTiles_BOT__LEFT_8TH();
     else if( TP == Tile_Pos.BOT__RITE_8TH )     Quit_JoinTiles_BOT__RITE_8TH();
     else if( TP == Tile_Pos.BOT__LEFT_CTR_8TH ) Quit_JoinTiles_BOT__LEFT_CTR_8TH();
-    else /*( TP == Tile_Pos.BOT__RITE_CTR_8TH*/ Quit_JoinTiles_BOT__RITE_CTR_8TH();
+    else if( TP == Tile_Pos.BOT__RITE_CTR_8TH ) Quit_JoinTiles_BOT__RITE_CTR_8TH();
+    else if( TP == Tile_Pos.LEFT_THIRD )        Quit_JoinTiles_LEFT_THIRD();
+    else if( TP == Tile_Pos.CTR__THIRD )        Quit_JoinTiles_CTR__THIRD();
+    else if( TP == Tile_Pos.RITE_THIRD )        Quit_JoinTiles_RITE_THIRD();
+    else if( TP == Tile_Pos.LEFT_TWO_THIRDS )   Quit_JoinTiles_LEFT_TWO_THIRDS();
+    else if( TP == Tile_Pos.RITE_TWO_THIRDS )   Quit_JoinTiles_RITE_TWO_THIRDS();
   }
   void Quit_JoinTiles_LEFT_HALF()
   {
@@ -3203,6 +3209,59 @@ public class VisFx extends Application
       }
     }
   }
+  void Quit_JoinTiles_LEFT_THIRD()
+  {
+    for( int k=0; k<m_num_wins; k++ )
+    {
+      View v = GetView_Win( k );
+      final Tile_Pos TP = v.m_tile_pos;
+
+      if     ( TP == Tile_Pos.CTR__THIRD      ) v.SetTilePos( Tile_Pos.LEFT_TWO_THIRDS );
+      else if( TP == Tile_Pos.RITE_TWO_THIRDS ) v.SetTilePos( Tile_Pos.FULL );
+    }
+  }
+  void Quit_JoinTiles_CTR__THIRD()
+  {
+    for( int k=0; k<m_num_wins; k++ )
+    {
+      View v = GetView_Win( k );
+      final Tile_Pos TP = v.m_tile_pos;
+
+      if( TP == Tile_Pos.RITE_THIRD ) v.SetTilePos( Tile_Pos.RITE_TWO_THIRDS );
+    }
+  }
+  void Quit_JoinTiles_RITE_THIRD()
+  {
+    for( int k=0; k<m_num_wins; k++ )
+    {
+      View v = GetView_Win( k );
+      final Tile_Pos TP = v.m_tile_pos;
+
+      if     ( TP == Tile_Pos.CTR__THIRD      ) v.SetTilePos( Tile_Pos.RITE_TWO_THIRDS );
+      else if( TP == Tile_Pos.LEFT_TWO_THIRDS ) v.SetTilePos( Tile_Pos.FULL );
+    }
+  }
+  void Quit_JoinTiles_LEFT_TWO_THIRDS()
+  {
+    for( int k=0; k<m_num_wins; k++ )
+    {
+      View v = GetView_Win( k );
+      final Tile_Pos TP = v.m_tile_pos;
+
+      if( TP == Tile_Pos.RITE_THIRD ) v.SetTilePos( Tile_Pos.FULL );
+    }
+  }
+  void Quit_JoinTiles_RITE_TWO_THIRDS()
+  {
+    for( int k=0; k<m_num_wins; k++ )
+    {
+      View v = GetView_Win( k );
+      final Tile_Pos TP = v.m_tile_pos;
+
+      if( TP == Tile_Pos.LEFT_THIRD ) v.SetTilePos( Tile_Pos.FULL );
+    }
+  }
+
   boolean Have_BOT__HALF()
   {
     for( int k=0; k<m_num_wins; k++ )
@@ -3851,9 +3910,34 @@ public class VisFx extends Application
         nv.SetTilePos( Tile_Pos.BOT__RITE_8TH );
       }
     }
+    else if( m_num_wins+1 < MAX_WINS
+          && ( cv_tp == Tile_Pos.LEFT_TWO_THIRDS
+            || cv_tp == Tile_Pos.RITE_TWO_THIRDS ) )
+    {
+      m_file_hist[m_num_wins] = m_file_hist[m_win];
+
+      // Copy current view context into new view
+      View nv = GetView_Win( m_num_wins );
+
+      nv.Set_Context( cv );
+
+      m_num_wins += 1;
+
+      // Set the new tile positions.
+      if( cv_tp == Tile_Pos.LEFT_TWO_THIRDS )
+      {
+        cv.SetTilePos( Tile_Pos.LEFT_THIRD );
+        nv.SetTilePos( Tile_Pos.CTR__THIRD );
+      }
+      else //( cv_tp == Tile_Pos.RITE_TWO_THIRDS )
+      {
+        cv.SetTilePos( Tile_Pos.CTR__THIRD );
+        nv.SetTilePos( Tile_Pos.RITE_THIRD );
+      }
+    }
     UpdateViews();
   }
-  void Exe_Colon_sp()
+  void Exe_Colon_hsp()
   {
     Exe_Colon_NoDiff();
 
@@ -3913,6 +3997,38 @@ public class VisFx extends Application
         cv.SetTilePos( Tile_Pos.TOP__RITE_CTR_8TH );
         nv.SetTilePos( Tile_Pos.BOT__RITE_CTR_8TH );
       }
+    }
+    UpdateViews();
+  }
+  void Exe_Colon_3sp()
+  {
+    Exe_Colon_NoDiff();
+
+    View cv = CV();
+    final Tile_Pos cv_tp = cv.m_tile_pos;
+
+    if( m_num_wins+1 < MAX_WINS
+     && ( cv_tp == Tile_Pos.FULL ) )
+    {
+      // New windows will be m_num_wins, and m_num_wins+1.
+      // Duplicate file hist of current window into new windows.
+      m_file_hist[m_num_wins  ].copy( m_file_hist[m_win] );
+      m_file_hist[m_num_wins+1].copy( m_file_hist[m_win] );
+
+      // Copy current view context into new views
+      View nv1 = GetView_Win( m_num_wins );
+      View nv2 = GetView_Win( m_num_wins+1 );
+
+      nv1.Set_Context( cv );
+      nv2.Set_Context( cv );
+
+      // Current window, does not change, but there are 2 new windows:
+      m_num_wins += 2;
+
+      // Set the new tile positions.
+      cv .SetTilePos( Tile_Pos.LEFT_THIRD );
+      nv1.SetTilePos( Tile_Pos.CTR__THIRD );
+      nv2.SetTilePos( Tile_Pos.RITE_THIRD );
     }
     UpdateViews();
   }

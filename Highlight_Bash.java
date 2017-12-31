@@ -94,7 +94,7 @@ class Highlight_Bash extends Highlight_Base
   }
   boolean OneVarType( final char c0 )
   {
-    return c0=='&'
+    return c0=='&' || c0=='#'
         || c0=='.' || c0=='*'
         || c0=='[' || c0==']';
   }
@@ -137,8 +137,9 @@ class Highlight_Bash extends Highlight_Base
         final char c2 = (1<m_p) ? m_fb.Get( m_l, m_p-2 ) : 0;
         final char c1 = (0<m_p) ? m_fb.Get( m_l, m_p-1 ) : 0;
         final char c0 =           m_fb.Get( m_l, m_p );
+        final boolean comment = c0=='#' && (0==m_p || c1!='$');
 
-        if     ( c0=='#'                    ) { m_state = Hi_State.In_Comment; }
+        if     ( comment )                    { m_state = Hi_State.In_Comment; }
         else if( Quote_Start('\'',c2,c1,c0) ) { m_state = Hi_State.In_SingleQuote; }
         else if( Quote_Start('\"',c2,c1,c0) ) { m_state = Hi_State.In_DoubleQuote; }
         else if( !Utils.IsIdent(c1)

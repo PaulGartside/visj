@@ -47,5 +47,11 @@ enum Tile_Pos
   BOT__RITE_8TH,
   BOT__LEFT_CTR_8TH,
   BOT__RITE_CTR_8TH,
+  // 1 x 3 tiles:
+  LEFT_THIRD,
+  CTR__THIRD,
+  RITE_THIRD,
+  LEFT_TWO_THIRDS,
+  RITE_TWO_THIRDS
 };
 

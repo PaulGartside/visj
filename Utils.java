@@ -539,24 +539,8 @@ class Utils
     if( !condition ) throw new AssertionError( msg, null );
   }
 
-  private static
-  String Get_Dir_Delim_Str()
-  {
-    String file_sep_s = System.getProperty("file.separator");
-
-    if( null != file_sep_s )
-    {
-      return file_sep_s;
-    }
-    return "/";
-  }
-  private static
-  char Get_Dir_Delim()
-  {
-    return DIR_DELIM_STR.charAt( 0 );
-  }
-  static final String DIR_DELIM_STR = Get_Dir_Delim_Str();
-  static final char   DIR_DELIM     = Get_Dir_Delim();
+  static final String DIR_DELIM_STR = File.separator;
+  static final char   DIR_DELIM     = File.separatorChar;
   static private boolean m_determined_os = false;
   static private OS_Type m_os_type       = OS_Type.Unknown;
 }

@@ -1111,13 +1111,85 @@ class View
     TilePos_2_nCols();
   }
 
-  void TilePos_2_x()
+  int Cols_Left_Half()
   {
     final int CON_COLS = m_console.Num_Cols();
 
+    return ( 0 != CON_COLS%2 )
+           ? CON_COLS/2+1 //< Left side gets extra column
+           : CON_COLS/2;  //< Both sides get equal
+  }
+
+  int Cols_Rite_Half()
+  {
+    final int CON_COLS = m_console.Num_Cols();
+
+    return CON_COLS - Cols_Left_Half();
+  }
+
+  int Cols_Left_Far_Qtr()
+  {
+    final int COLS_LEFT_HALF = Cols_Left_Half();
+
+    return ( 0 != COLS_LEFT_HALF%2 )
+           ? COLS_LEFT_HALF/2  //< Left ctr qtr gets extra column
+           : COLS_LEFT_HALF/2; //< Both qtrs get equal
+  }
+
+  int Cols_Left_Ctr_Qtr()
+  {
+    return Cols_Left_Half() - Cols_Left_Far_Qtr();
+  }
+
+  int Cols_Rite_Far_Qtr()
+  {
+    final int COLS_RITE_HALF = Cols_Rite_Half();
+
+    return ( 0 != COLS_RITE_HALF%2 )
+           ? COLS_RITE_HALF/2  //< Rite ctr qtr gets extra column
+           : COLS_RITE_HALF/2; //< Both sides get equal
+  }
+
+  int Cols_Rite_Ctr_Qtr()
+  {
+    return Cols_Rite_Half() - Cols_Rite_Far_Qtr();
+  }
+
+  int Cols_Left_Third()
+  {
+    final int CON_COLS = m_console.Num_Cols();
+
+    return ( 0 != CON_COLS%3 )
+           ? ( (CON_COLS%3==1)
+             ? CON_COLS/3     // Ctr third gets extra column
+             : CON_COLS/3+1 ) // Ctr and left get extra column
+           : CON_COLS/3; // All thirds equal
+  }
+
+  int Cols_Ctr__Third()
+  {
+    final int CON_COLS = m_console.Num_Cols();
+
+    return ( 0 != CON_COLS%3 )
+           ? ( (CON_COLS%3==1)
+             ? CON_COLS/3+1   // Ctr third gets extra column
+             : CON_COLS/3+1 ) // Ctr and left get extra column
+           : CON_COLS/3; // All thirds equal
+  }
+
+  int Cols_Rite_Third()
+  {
+    final int CON_COLS = m_console.Num_Cols();
+
+    return CON_COLS - Cols_Left_Third() - Cols_Ctr__Third();
+  }
+
+  void TilePos_2_x()
+  {
     // FULL     , BOT__HALF    , LEFT_QTR
     // LEFT_HALF, TOP__LEFT_QTR, TOP__LEFT_8TH
     // TOP__HALF, BOT__LEFT_QTR, BOT__LEFT_8TH
+    // TP_LEFT_THIRD, TP_LEFT_TWO_THIRDS
     m_x = 0;
 
     if( Tile_Pos.RITE_HALF         == m_tile_pos
@@ -1127,19 +1199,28 @@ class View
      || Tile_Pos.TOP__RITE_CTR_8TH == m_tile_pos
      || Tile_Pos.BOT__RITE_CTR_8TH == m_tile_pos )
     {
-      m_x = CON_COLS/2;
+      m_x = Cols_Left_Half();
     }
     else if( Tile_Pos.LEFT_CTR__QTR     == m_tile_pos
           || Tile_Pos.TOP__LEFT_CTR_8TH == m_tile_pos
           || Tile_Pos.BOT__LEFT_CTR_8TH == m_tile_pos )
     {
-      m_x = CON_COLS/4;
+      m_x = Cols_Left_Far_Qtr();
     }
     else if( Tile_Pos.RITE_QTR      == m_tile_pos
           || Tile_Pos.TOP__RITE_8TH == m_tile_pos
           || Tile_Pos.BOT__RITE_8TH == m_tile_pos )
     {
-      m_x = CON_COLS*3/4;
+      m_x = Cols_Left_Half() + Cols_Rite_Ctr_Qtr();
+    }
+    else if( Tile_Pos.CTR__THIRD      == m_tile_pos
+          || Tile_Pos.RITE_TWO_THIRDS == m_tile_pos )
+    {
+      m_x = Cols_Left_Third();
+    }
+    else if( Tile_Pos.RITE_THIRD == m_tile_pos )
+    {
+      m_x = Cols_Left_Third() + Cols_Ctr__Third();
     }
   }
 
@@ -1154,6 +1235,8 @@ class View
     // TOP__LEFT_QTR, TOP__LEFT_CTR_8TH
     // TOP__RITE_QTR, TOP__RITE_CTR_8TH
     // LEFT_QTR     , TOP__RITE_8TH
+    // LEFT_THIRD   , CTR__THIRD, RITE_THIRD
+    // LEFT_TWO_THIRDS, RITE_TWO_THIRDS
     m_y = 0;
 
     if( Tile_Pos.BOT__HALF         == m_tile_pos
@@ -1182,13 +1265,18 @@ class View
     // TOP__RITE_8TH    , BOT__RITE_8TH    ,
     m_num_rows = CON_ROWS/2;
 
-    if( Tile_Pos.FULL          == m_tile_pos
-     || Tile_Pos.LEFT_HALF     == m_tile_pos
-     || Tile_Pos.RITE_HALF     == m_tile_pos
-     || Tile_Pos.LEFT_QTR      == m_tile_pos
-     || Tile_Pos.LEFT_CTR__QTR == m_tile_pos
-     || Tile_Pos.RITE_CTR__QTR == m_tile_pos
-     || Tile_Pos.RITE_QTR      == m_tile_pos )
+    if( Tile_Pos.FULL            == m_tile_pos
+     || Tile_Pos.LEFT_HALF       == m_tile_pos
+     || Tile_Pos.RITE_HALF       == m_tile_pos
+     || Tile_Pos.LEFT_QTR        == m_tile_pos
+     || Tile_Pos.LEFT_CTR__QTR   == m_tile_pos
+     || Tile_Pos.RITE_CTR__QTR   == m_tile_pos
+     || Tile_Pos.RITE_QTR        == m_tile_pos
+     || Tile_Pos.LEFT_THIRD      == m_tile_pos
+     || Tile_Pos.CTR__THIRD      == m_tile_pos
+     || Tile_Pos.RITE_THIRD      == m_tile_pos
+     || Tile_Pos.LEFT_TWO_THIRDS == m_tile_pos
+     || Tile_Pos.RITE_TWO_THIRDS == m_tile_pos )
     {
       m_num_rows = CON_ROWS;
     }
@@ -1206,47 +1294,67 @@ class View
 
   void TilePos_2_nCols()
   {
-    final int CON_COLS = m_console.Num_Cols();
-    final int ODD_COLS = CON_COLS%4;
-
-    // LEFT_QTR     , TOP__LEFT_8TH    , BOT__LEFT_8TH    ,
-    // LEFT_CTR__QTR, TOP__LEFT_CTR_8TH, BOT__LEFT_CTR_8TH,
-    // RITE_CTR__QTR, TOP__RITE_CTR_8TH, BOT__RITE_CTR_8TH,
-    // RITE_QTR     , TOP__RITE_8TH    , BOT__RITE_8TH    ,
-    m_num_cols = CON_COLS/4;
-
     if( Tile_Pos.FULL      == m_tile_pos
      || Tile_Pos.TOP__HALF == m_tile_pos
      || Tile_Pos.BOT__HALF == m_tile_pos )
     {
-      m_num_cols = CON_COLS;
+      m_num_cols = m_console.Num_Cols();
     }
     else if( Tile_Pos.LEFT_HALF     == m_tile_pos
-          || Tile_Pos.RITE_HALF     == m_tile_pos
           || Tile_Pos.TOP__LEFT_QTR == m_tile_pos
+          || Tile_Pos.BOT__LEFT_QTR == m_tile_pos )
+    {
+      m_num_cols = Cols_Left_Half();
+    }
+    else if( Tile_Pos.RITE_HALF     == m_tile_pos
           || Tile_Pos.TOP__RITE_QTR == m_tile_pos
-          || Tile_Pos.BOT__LEFT_QTR == m_tile_pos
           || Tile_Pos.BOT__RITE_QTR == m_tile_pos )
     {
-      m_num_cols = CON_COLS/2;
+      m_num_cols = Cols_Rite_Half();
     }
-    if( ((Tile_Pos.RITE_HALF         == m_tile_pos) && (ODD_COLS==1 || ODD_COLS==3))
-     || ((Tile_Pos.TOP__RITE_QTR     == m_tile_pos) && (ODD_COLS==1 || ODD_COLS==3))
-     || ((Tile_Pos.BOT__RITE_QTR     == m_tile_pos) && (ODD_COLS==1 || ODD_COLS==3))
-
-     || ((Tile_Pos.RITE_QTR          == m_tile_pos) && (ODD_COLS==1 || ODD_COLS==2 || ODD_COLS==3))
-     || ((Tile_Pos.TOP__RITE_8TH     == m_tile_pos) && (ODD_COLS==1 || ODD_COLS==2 || ODD_COLS==3))
-     || ((Tile_Pos.BOT__RITE_8TH     == m_tile_pos) && (ODD_COLS==1 || ODD_COLS==2 || ODD_COLS==3))
-
-     || ((Tile_Pos.LEFT_CTR__QTR     == m_tile_pos) && (ODD_COLS==2 || ODD_COLS==3))
-     || ((Tile_Pos.TOP__LEFT_CTR_8TH == m_tile_pos) && (ODD_COLS==2 || ODD_COLS==3))
-     || ((Tile_Pos.BOT__LEFT_CTR_8TH == m_tile_pos) && (ODD_COLS==2 || ODD_COLS==3))
-
-     || ((Tile_Pos.RITE_CTR__QTR     == m_tile_pos) && (ODD_COLS==3))
-     || ((Tile_Pos.TOP__RITE_CTR_8TH == m_tile_pos) && (ODD_COLS==3))
-     || ((Tile_Pos.BOT__RITE_CTR_8TH == m_tile_pos) && (ODD_COLS==3)) )
+    else if( Tile_Pos.LEFT_QTR      == m_tile_pos
+          || Tile_Pos.TOP__LEFT_8TH == m_tile_pos
+          || Tile_Pos.BOT__LEFT_8TH == m_tile_pos )
     {
-      m_num_cols++;
+      m_num_cols = Cols_Left_Far_Qtr();
+    }
+    else if( Tile_Pos.LEFT_CTR__QTR     == m_tile_pos
+          || Tile_Pos.TOP__LEFT_CTR_8TH == m_tile_pos
+          || Tile_Pos.BOT__LEFT_CTR_8TH == m_tile_pos )
+    {
+      m_num_cols = Cols_Left_Ctr_Qtr();
+    }
+    else if( Tile_Pos.RITE_CTR__QTR     == m_tile_pos
+          || Tile_Pos.TOP__RITE_CTR_8TH == m_tile_pos
+          || Tile_Pos.BOT__RITE_CTR_8TH == m_tile_pos )
+    {
+      m_num_cols = Cols_Rite_Ctr_Qtr();
+    }
+    else if( Tile_Pos.RITE_QTR      == m_tile_pos
+          || Tile_Pos.TOP__RITE_8TH == m_tile_pos
+          || Tile_Pos.BOT__RITE_8TH == m_tile_pos )
+    {
+      m_num_cols = Cols_Rite_Far_Qtr();
+    }
+    else if( Tile_Pos.LEFT_THIRD == m_tile_pos )
+    {
+      m_num_cols = Cols_Left_Third();
+    }
+    else if( Tile_Pos.CTR__THIRD == m_tile_pos )
+    {
+      m_num_cols = Cols_Ctr__Third();
+    }
+    else if( Tile_Pos.RITE_THIRD == m_tile_pos )
+    {
+      m_num_cols = Cols_Rite_Third();
+    }
+    else if( Tile_Pos.LEFT_TWO_THIRDS == m_tile_pos )
+    {
+      m_num_cols = Cols_Left_Third() + Cols_Ctr__Third();
+    }
+    else if( Tile_Pos.RITE_TWO_THIRDS == m_tile_pos )
+    {
+      m_num_cols = Cols_Ctr__Third() + Cols_Rite_Third();
     }
   }
 
