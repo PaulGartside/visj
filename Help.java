@@ -134,7 +134,7 @@ class Help
 + "  :detab=tab_size = Remove tabs. Tabs are tab_size\n"
 + "  :diff= Enter diff mode\n"
 + "  :nodiff= Exit diff mode\n"
-+ "  :full = Full screen\n"
++ "  :full = Full across multiple screens\n"
 + "  :nofull = Partial screen\n"
 + "  :hi  = Re-syntax-highlight file\n"
 + "  :help= Go to help buffer\n"

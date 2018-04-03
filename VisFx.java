@@ -23,6 +23,7 @@
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -116,6 +117,19 @@ public class VisFx extends Application
 
     m_stage.setTitle("visj");
     m_stage.setScene( m_scene );
+
+    // Get m_total_width and m_visual_height:
+    ObservableList<Screen> screenList = Screen.getScreens();
+    for( Screen screen : screenList )
+    {
+      Rectangle2D bounds = screen.getVisualBounds();
+
+      final double W = bounds.getWidth();
+      m_total_width += W;
+
+      final double H = bounds.getHeight();
+      if( 0 == m_visual_height || H < m_visual_height ) m_visual_height = H;
+    }
   }
   void Key_Pressed( KeyEvent ke )
   {
@@ -2659,6 +2673,8 @@ public class VisFx extends Application
     else if( m_sb.toString().equals("cs2") )   m_console.Set_Color_Scheme_2();
     else if( m_sb.toString().equals("cs3") )   m_console.Set_Color_Scheme_3();
     else if( m_sb.toString().equals("cs4") )   m_console.Set_Color_Scheme_4();
+    else if( m_sb.toString().equals(  "full")) Exe_Colon_Full();
+    else if( m_sb.toString().equals("nofull")) Exe_Colon_NoFull();
     else if( m_sb.toString().equals("dos2unix")) Exe_dos2unix();
     else if( m_sb.toString().equals("unix2dos")) Exe_unix2dos();
     else if( m_sb.toString().startsWith("cd"))Exe_Colon_cd();
@@ -2729,7 +2745,7 @@ public class VisFx extends Application
       // in the current window.
       for( int w=0; w<m_num_wins; w++ )
       {
-        final View pV = GetView_Win( 0 );
+        final View pV = GetView_Win( w );
 
         if( pV != CV() ) pV.Update();
       }
@@ -3684,25 +3700,43 @@ public class VisFx extends Application
     m_colon_view.Do_Cover();
   }
 
-//void Exe_Colon_Full()
-//{
-//  m_old_loc = m_frame.getLocationOnScreen();
-//  m_old_sz  = m_frame.getSize();
-//  m_frame.setLocation( 0, 0 );
-//  m_frame.setSize( m_screen_sz.width, m_screen_sz.height );
-//}
-//void Exe_Colon_NoFull()
-//{
-//  if( null == m_old_loc || null == m_old_sz )
-//  {
-//    m_frame.setSize( (int)(m_screen_sz.width*0.9)
-//                   , (int)(m_screen_sz.height*0.9) );
-//  }
-//  else {
-//    m_frame.setLocation( m_old_loc );
-//    m_frame.setSize( m_old_sz  );
-//  }
-//}
+  void Exe_Colon_Full()
+  {
+    if( m_stage.isMaximized() ) m_stage.setMaximized( false );
+
+    m_old_X = m_stage.getX();
+    m_old_Y = m_stage.getY();
+    m_old_W = m_stage.getWidth();
+    m_old_H = m_stage.getHeight();
+
+    m_stage.setX( 0 );
+    m_stage.setY( 0 );
+    m_stage.setWidth ( m_total_width );
+    m_stage.setHeight( m_visual_height );
+  }
+
+  void Exe_Colon_NoFull()
+  {
+    if( 0 == m_old_W || 0 == m_old_H )
+    {
+      Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+
+      final double W = bounds.getWidth ();
+      final double H = bounds.getHeight();
+
+      m_stage.setX( bounds.getMinX() + W*0.05 );
+      m_stage.setY( bounds.getMinY() + H*0.05 );
+      m_stage.setWidth ( W*0.9 );
+      m_stage.setHeight( H*0.9 );
+    }
+    else {
+      m_stage.setX( m_old_X );
+      m_stage.setY( m_old_Y );
+      m_stage.setWidth ( m_old_W );
+      m_stage.setHeight( m_old_H );
+    }
+  }
+
 //void Exe_Colon_Border()
 //{
 //  m_frame.dispose();
@@ -4761,5 +4795,13 @@ public class VisFx extends Application
   Shell              m_shell;
   int                m_repeat;
   StringBuilder      m_repeat_buf= new StringBuilder();
+
+  // Stage size and position variables:
+  double m_old_X;
+  double m_old_Y;
+  double m_old_W;
+  double m_old_H;
+  double m_total_width;   // Sum of screen widths side by side
+  double m_visual_height; // Visual height of screen with task bar
 }
 
