@@ -186,7 +186,7 @@ public class VisFx extends Application
   void run_init()
   {
     run_init_files();
-    UpdateViews();
+    UpdateViews( false );
 
     m_console.Update();
 
@@ -211,7 +211,6 @@ public class VisFx extends Application
     if( run_diff )
     {
       // User supplied: "-d file1 file2", so run diff:
-      m_diff_mode = true;
       m_num_wins = 2;
       m_file_hist[ 0 ].set( 0, USER_FILE );
       m_file_hist[ 1 ].set( 0, USER_FILE+1 );
@@ -536,7 +535,7 @@ public class VisFx extends Application
       m_console.Init_RowsCols();
       m_console.Init_Clear();
       UpdateViewsPositions();
-      UpdateViews();
+      UpdateViews( false );
       m_console.Update();
 
       m_states.removeFirst();
@@ -659,8 +658,10 @@ public class VisFx extends Application
 
   void Handle_j()
   {
-    if( m_diff_mode ) m_diff.GoDown( m_repeat );
-    else                CV().GoDown( m_repeat );
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoDown( m_repeat );
+    else                   cv.GoDown( m_repeat );
   }
   void L_Handle_j()
   {
@@ -670,8 +671,10 @@ public class VisFx extends Application
 
   void Handle_k()
   {
-    if( m_diff_mode ) m_diff.GoUp( m_repeat );
-    else                CV().GoUp( m_repeat );
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoUp( m_repeat );
+    else                   cv.GoUp( m_repeat );
   }
   void L_Handle_k()
   {
@@ -681,8 +684,10 @@ public class VisFx extends Application
 
   void Handle_h()
   {
-    if( m_diff_mode ) m_diff.GoLeft( m_repeat );
-    else                CV().GoLeft( m_repeat );
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoLeft( m_repeat );
+    else                   cv.GoLeft( m_repeat );
   }
   void L_Handle_h()
   {
@@ -692,8 +697,10 @@ public class VisFx extends Application
 
   void Handle_l()
   {
-    if( m_diff_mode ) m_diff.GoRight( m_repeat );
-    else                CV().GoRight( m_repeat );
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoRight( m_repeat );
+    else                   cv.GoRight( m_repeat );
   }
   void L_Handle_l()
   {
@@ -703,8 +710,10 @@ public class VisFx extends Application
 
   void Handle_0()
   {
-    if( m_diff_mode )  m_diff.GoToBegOfLine();
-    else                 CV().GoToBegOfLine();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoToBegOfLine();
+    else                   cv.GoToBegOfLine();
   }
   void L_Handle_0()
   {
@@ -714,8 +723,10 @@ public class VisFx extends Application
 
   void Handle_Dollar()
   {
-    if( m_diff_mode )  m_diff.GoToEndOfLine();
-    else                 CV().GoToEndOfLine();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoToEndOfLine();
+    else                   cv.GoToEndOfLine();
   }
   void L_Handle_Dollar()
   {
@@ -725,8 +736,10 @@ public class VisFx extends Application
 
   void Handle_Percent()
   {
-    if( m_diff_mode ) m_diff.GoToOppositeBracket();
-    else                CV().GoToOppositeBracket();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoToOppositeBracket();
+    else                   cv.GoToOppositeBracket();
   }
   void L_Handle_Percent()
   {
@@ -736,18 +749,24 @@ public class VisFx extends Application
 
   void Handle_LeftSquigglyBracket()
   {
-    if( m_diff_mode ) m_diff.GoToLeftSquigglyBracket();
-    else                CV().GoToLeftSquigglyBracket();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoToLeftSquigglyBracket();
+    else                   cv.GoToLeftSquigglyBracket();
   }
   void Handle_RightSquigglyBracket()
   {
-    if( m_diff_mode ) m_diff.GoToRightSquigglyBracket();
-    else                CV().GoToRightSquigglyBracket();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoToRightSquigglyBracket();
+    else                   cv.GoToRightSquigglyBracket();
   }
   void Handle_Star()
   {
-    String pattern = m_diff_mode ? m_diff.Do_Star_GetNewPattern()
-                                 :   CV().Do_Star_GetNewPattern();
+    View cv = CV();
+
+    String pattern = cv.m_in_diff ? m_diff.Do_Star_GetNewPattern()
+                                  :     cv.Do_Star_GetNewPattern();
     if( ! pattern.equals( m_regex ) )
     {
       m_regex = pattern;
@@ -756,24 +775,8 @@ public class VisFx extends Application
       {
         Do_Star_Update_Search_Editor();
       }
-      if( m_diff_mode )
-      {
-        m_diff.Set_Cmd_Line_Msg( '/' + m_regex );
-        m_diff.Update();
-      }
-      else {
-        // Show new star patterns for all windows currently displayed,
-        // but update current window last, so that the cursor ends up
-        // in the current window.
-        for( int w=0; w<m_num_wins; w++ )
-        {
-          View pV = GetView_Win( w );
-
-          if( pV != CV() ) pV.Update();
-        }
-        CV().Set_Cmd_Line_Msg( '/' + m_regex );
-        CV().Update();
-      }
+      // Show new star pattern for all windows currently displayed:
+      UpdateViews( true );
     }
   }
   void Do_Star_PrintPatterns( final boolean HIGHLIGHT )
@@ -846,8 +849,10 @@ public class VisFx extends Application
       m_console.m_dot_buf_n.setLength( 0 );
       m_console.m_dot_buf_n.append( '~' );
     }
-    if( m_diff_mode ) m_diff.Do_Tilda();
-    else                CV().Do_Tilda();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_Tilda();
+    else                   cv.Do_Tilda();
   }
   void L_Handle_Tilda()
   {
@@ -862,8 +867,10 @@ public class VisFx extends Application
 
   void Handle_H()
   {
-    if( m_diff_mode ) m_diff.GoToTopLineInView();
-    else                CV().GoToTopLineInView();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoToTopLineInView();
+    else                   cv.GoToTopLineInView();
   }
 
   void Handle_J()
@@ -873,8 +880,10 @@ public class VisFx extends Application
       m_console.m_dot_buf_n.setLength( 0 );
       m_console.m_dot_buf_n.append( 'J' );
     }
-    if( m_diff_mode ) m_diff.Do_J();
-    else                CV().Do_J();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_J();
+    else                   cv.Do_J();
   }
   void L_Handle_J()
   {
@@ -888,8 +897,10 @@ public class VisFx extends Application
 
   void Handle_L()
   {
-    if( m_diff_mode ) m_diff.GoToBotLineInView();
-    else                CV().GoToBotLineInView();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoToBotLineInView();
+    else                   cv.GoToBotLineInView();
   }
   void Handle_m()
   {
@@ -905,14 +916,18 @@ public class VisFx extends Application
   }
   void Handle_M()
   {
-    if( m_diff_mode ) m_diff.GoToMidLineInView();
-    else                CV().GoToMidLineInView();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoToMidLineInView();
+    else                   cv.GoToMidLineInView();
   }
 
   void Handle_n()
   {
-    if( m_diff_mode ) m_diff.Do_n();
-    else                CV().Do_n();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_n();
+    else                   cv.Do_n();
   }
   void L_Handle_n()
   {
@@ -922,8 +937,10 @@ public class VisFx extends Application
 
   void Handle_N()
   {
-    if( m_diff_mode ) m_diff.Do_N();
-    else                CV().Do_N();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_N();
+    else                   cv.Do_N();
   }
   void L_Handle_N()
   {
@@ -939,8 +956,10 @@ public class VisFx extends Application
       m_console.m_dot_buf_n.append( 'o' );
       m_console.m_save_2_dot_buf_n = true;
     }
-    if( m_diff_mode ) m_diff.Do_o();
-    else                CV().Do_o();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_o();
+    else                   cv.Do_o();
   }
 
   void L_Handle_o()
@@ -963,8 +982,10 @@ public class VisFx extends Application
       m_console.m_dot_buf_n.append( 'O' );
       m_console.m_save_2_dot_buf_n = true;
     }
-    if( m_diff_mode ) m_diff.Do_O();
-    else                CV().Do_O();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_O();
+    else                   cv.Do_O();
   }
 
   void Handle_p()
@@ -974,8 +995,10 @@ public class VisFx extends Application
       m_console.m_dot_buf_n.setLength( 0 );
       m_console.m_dot_buf_n.append( 'p' );
     }
-    if( m_diff_mode ) m_diff.Do_p();
-    else                CV().Do_p();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_p();
+    else                   cv.Do_p();
   }
 
   void L_Handle_p()
@@ -995,8 +1018,10 @@ public class VisFx extends Application
       m_console.m_dot_buf_n.setLength( 0 );
       m_console.m_dot_buf_n.append( 'P' );
     }
-    if( m_diff_mode ) m_diff.Do_P();
-    else                CV().Do_P();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_P();
+    else                   cv.Do_P();
   }
   void L_Handle_P()
   {
@@ -1031,8 +1056,10 @@ public class VisFx extends Application
       m_console.m_dot_buf_n.append( 'R' );
       m_console.m_save_2_dot_buf_n = true;
     }
-    if( m_diff_mode ) m_diff.Do_R();
-    else                CV().Do_R();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_R();
+    else                   cv.Do_R();
   }
   void L_Handle_R()
   {
@@ -1056,8 +1083,10 @@ public class VisFx extends Application
       m_console.m_dot_buf_n.append( 's' );
       m_console.m_save_2_dot_buf_n = true;
     }
-    if( m_diff_mode ) m_diff.Do_s();
-    else                CV().Do_s();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_s();
+    else                   cv.Do_s();
   }
   void L_Handle_s()
   {
@@ -1073,13 +1102,17 @@ public class VisFx extends Application
 
   void Handle_u()
   {
-    if( m_diff_mode ) m_diff.Do_u();
-    else                CV().Do_u();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_u();
+    else                   cv.Do_u();
   }
   void Handle_U()
   {
-    if( m_diff_mode ) m_diff.Do_U();
-    else                CV().Do_U();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_U();
+    else                   cv.Do_U();
   }
 
   void Handle_v()
@@ -1090,8 +1123,10 @@ public class VisFx extends Application
       m_console.m_vis_buf.append( 'v' );
       m_console.m_save_2_vis_buf = true;
     }
-    if( m_diff_mode ) m_diff.Do_v();
-    else                CV().Do_v();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_v();
+    else                   cv.Do_v();
   }
   void L_Handle_v()
   {
@@ -1113,18 +1148,24 @@ public class VisFx extends Application
       m_console.m_vis_buf.append( 'V' );
       m_console.m_save_2_vis_buf = true;
     }
-    if( m_diff_mode ) m_diff.Do_V();
-    else                CV().Do_V();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_V();
+    else                   cv.Do_V();
   }
   void Handle_F()
   {
-    if( m_diff_mode ) m_diff.PageDown();
-    else                CV().PageDown();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.PageDown();
+    else                   cv.PageDown();
   }
   void Handle_B()
   {
-    if( m_diff_mode ) m_diff.PageUp();
-    else                CV().PageUp();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.PageUp();
+    else                   cv.PageUp();
   }
 
   void Handle_c()
@@ -1148,8 +1189,10 @@ public class VisFx extends Application
           m_console.m_dot_buf_n.append( 'w' );
           m_console.m_save_2_dot_buf_n = true;
         }
-        if( m_diff_mode ) m_diff.Do_cw();
-        else                CV().Do_cw();
+        View cv = CV();
+
+        if( cv.m_in_diff ) m_diff.Do_cw();
+        else                   cv.Do_cw();
       }
       else if( C == '$' )
       {
@@ -1160,8 +1203,10 @@ public class VisFx extends Application
           m_console.m_dot_buf_n.append( '$' );
           m_console.m_save_2_dot_buf_n = true;
         }
-        if( m_diff_mode ) { m_diff.Do_D(); m_diff.Do_a(); }
-        else              {   CV().Do_D();   CV().Do_a(); }
+        View cv = CV();
+
+        if( cv.m_in_diff ) { m_diff.Do_D(); m_diff.Do_a(); }
+        else               {     cv.Do_D();     cv.Do_a(); }
       }
     }
   }
@@ -1253,8 +1298,10 @@ public class VisFx extends Application
           m_console.m_dot_buf_n.append( 'd' );
           m_console.m_dot_buf_n.append( 'd' );
         }
-        if( m_diff_mode ) m_diff.Do_dd();
-        else                CV().Do_dd();
+        View cv = CV();
+
+        if( cv.m_in_diff ) m_diff.Do_dd();
+        else                   cv.Do_dd();
       }
       else if( C == 'w' )
       {
@@ -1264,8 +1311,10 @@ public class VisFx extends Application
           m_console.m_dot_buf_n.append( 'd' );
           m_console.m_dot_buf_n.append( 'w' );
         }
-        if( m_diff_mode ) m_diff.Do_dw();
-        else                CV().Do_dw();
+        View cv = CV();
+
+        if( cv.m_in_diff ) m_diff.Do_dw();
+        else                   cv.Do_dw();
       }
     }
   }
@@ -1312,8 +1361,10 @@ public class VisFx extends Application
       m_console.m_dot_buf_n.setLength( 0 );
       m_console.m_dot_buf_n.append( 'D' );
     }
-    if( m_diff_mode ) m_diff.Do_D();
-    else                CV().Do_D();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_D();
+    else                   cv.Do_D();
   }
   void L_Handle_D()
   {
@@ -1327,8 +1378,10 @@ public class VisFx extends Application
 
   void Handle_e()
   {
-    if( m_diff_mode ) m_diff.GoToEndOfWord();
-    else                CV().GoToEndOfWord();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoToEndOfWord();
+    else                   cv.GoToEndOfWord();
   }
   void L_Handle_e()
   {
@@ -1338,8 +1391,10 @@ public class VisFx extends Application
 
   void Handle_f()
   {
-    if( m_diff_mode ) m_diff.Do_f();
-    else                CV().Do_f();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_f();
+    else                   cv.Do_f();
   }
   void L_Handle_f()
   {
@@ -1355,8 +1410,10 @@ public class VisFx extends Application
       m_console.m_dot_buf_n.append( 'i' );
       m_console.m_save_2_dot_buf_n = true;
     }
-    if( m_diff_mode ) m_diff.Do_i();
-    else                CV().Do_i();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_i();
+    else                   cv.Do_i();
   }
 
   void L_Handle_i()
@@ -1414,8 +1471,10 @@ public class VisFx extends Application
       m_console.m_dot_buf_n.append( 'a' );
       m_console.m_save_2_dot_buf_n = true;
     }
-    if( m_diff_mode ) m_diff.Do_a();
-    else                CV().Do_a();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_a();
+    else                   cv.Do_a();
   }
 
   void L_Handle_a()
@@ -1440,8 +1499,10 @@ public class VisFx extends Application
       m_console.m_dot_buf_n.append( 'A' );
       m_console.m_save_2_dot_buf_n = true;
     }
-    if( m_diff_mode ) m_diff.Do_A();
-    else                CV().Do_A();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_A();
+    else                   cv.Do_A();
   }
   void L_Handle_A()
   {
@@ -1457,8 +1518,10 @@ public class VisFx extends Application
 
   void Handle_b()
   {
-    if( m_diff_mode ) m_diff.GoToPrevWord();
-    else                CV().GoToPrevWord();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoToPrevWord();
+    else                   cv.GoToPrevWord();
   }
   void L_Handle_b()
   {
@@ -1476,27 +1539,28 @@ public class VisFx extends Application
     {
       m_states.removeFirst();
 
+      final View cv = CV();
       final char c2 = m_console.GetKey();
 
       if( c2 == 'g' )
       {
-        if( m_diff_mode ) m_diff.GoToTopOfFile();
-        else                CV().GoToTopOfFile();
+        if( cv.m_in_diff ) m_diff.GoToTopOfFile();
+        else                   cv.GoToTopOfFile();
       }
       else if( c2 == '0' )
       {
-        if( m_diff_mode ) m_diff.GoToStartOfRow();
-        else                CV().GoToStartOfRow();
+        if( cv.m_in_diff ) m_diff.GoToStartOfRow();
+        else                   cv.GoToStartOfRow();
       }
       else if( c2 == '$' )
       {
-        if( m_diff_mode ) m_diff.GoToEndOfRow();
-        else                CV().GoToEndOfRow();
+        if( cv.m_in_diff ) m_diff.GoToEndOfRow();
+        else                   cv.GoToEndOfRow();
       }
       else if( c2 == 'f' )
       {
-        if( m_diff_mode ) m_diff.GoToFile();
-        else                CV().GoToFile();
+        if( cv.m_in_diff ) m_diff.GoToFile();
+        else                   cv.GoToFile();
       }
     }
   }
@@ -1533,8 +1597,10 @@ public class VisFx extends Application
 
   void Handle_G()
   {
-    if( m_diff_mode ) m_diff.GoToEndOfFile();
-    else                CV().GoToEndOfFile();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoToEndOfFile();
+    else                   cv.GoToEndOfFile();
   }
   void L_Handle_G()
   {
@@ -1546,8 +1612,10 @@ public class VisFx extends Application
   {
     if( 0 <= m_fast_char )
     {
-      if( m_diff_mode ) m_diff.Do_semicolon( m_fast_char );
-      else                CV().Do_semicolon( m_fast_char );
+      View cv = CV();
+
+      if( cv.m_in_diff ) m_diff.Do_semicolon( m_fast_char );
+      else                   cv.Do_semicolon( m_fast_char );
     }
   }
   void L_Handle_SemiColon()
@@ -1561,8 +1629,10 @@ public class VisFx extends Application
 
   void Handle_w()
   {
-    if( m_diff_mode ) m_diff.GoToNextWord();
-    else                CV().GoToNextWord();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoToNextWord();
+    else                   cv.GoToNextWord();
   }
   void L_Handle_w()
   {
@@ -1609,7 +1679,9 @@ public class VisFx extends Application
   }
   void MoveCursor( View pV_new, View pV_old )
   {
-    if( m_diff_mode )
+    View cv = CV();
+
+    if( cv.m_in_diff )
     {
       m_diff.Set_Console_CrsCell( pV_new );
     }
@@ -2248,44 +2320,6 @@ public class VisFx extends Application
     return found;
   }
 
-//void FlipWindows()
-//{
-//  if( 1 < m_num_wins )
-//  {
-//    boolean split_vertically = false;
-//
-//    for( int k=0; !split_vertically && k<m_num_wins; k++ )
-//    {
-//      // pV is View of displayed window k
-//      View pV = GetView_Win( k );
-//
-//      split_vertically = pV.m_tile_pos == Tile_Pos.LEFT_HALF
-//                      || pV.m_tile_pos == Tile_Pos.RITE_HALF
-//                      || pV.m_tile_pos == Tile_Pos.RITE_QTR
-//                      || pV.m_tile_pos == Tile_Pos.LEFT_QTR
-//                      || pV.m_tile_pos == Tile_Pos.RITE_CTR__QTR
-//                      || pV.m_tile_pos == Tile_Pos.LEFT_CTR__QTR;
-//    }
-//    for( int k=0; k<m_num_wins; k++ )
-//    {
-//      // pV is View of displayed window k
-//      final View     pV = GetView_Win( k );
-//      final Tile_Pos OTP = pV.m_tile_pos; // Old tile position
-//
-//      // New tile position:
-//      final Tile_Pos NTP = split_vertically
-//                         ? FlipWindows_Horizontally( OTP )
-//                         : FlipWindows_Vertically( OTP );
-//
-//      if( NTP != Tile_Pos.NONE )
-//      {
-//        pV.SetTilePos( NTP );
-//      }
-//    }
-//    UpdateViews();
-//  }
-//}
-
   void FlipWindows()
   {
     if( 1 < m_num_wins )
@@ -2316,7 +2350,7 @@ public class VisFx extends Application
           pV.SetTilePos( NTP );
         }
       }
-      UpdateViews();
+      UpdateViews( false );
     }
   }
   Tile_Pos FlipWindows_Horizontally( final Tile_Pos OTP )
@@ -2373,8 +2407,10 @@ public class VisFx extends Application
       m_console.m_dot_buf_n.setLength( 0 );
       m_console.m_dot_buf_n.append( 'x' );
     }
-    if( m_diff_mode ) m_diff.Do_x();
-    else                CV().Do_x();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_x();
+    else                   cv.Do_x();
   }
   void L_Handle_x()
   {
@@ -2397,17 +2433,18 @@ public class VisFx extends Application
     {
       m_states.removeFirst();
 
+      final View cv = CV();
       final char c2 = m_console.GetKey();
 
       if( c2 == 'y' )
       {
-        if( m_diff_mode ) m_diff.Do_yy();
-        else                CV().Do_yy();
+        if( cv.m_in_diff ) m_diff.Do_yy();
+        else                   cv.Do_yy();
       }
       else if( c2 == 'w' )
       {
-        if( m_diff_mode ) m_diff.Do_yw();
-        else                CV().Do_yw();
+        if( cv.m_in_diff ) m_diff.Do_yw();
+        else                   cv.Do_yw();
       }
     }
   }
@@ -2439,8 +2476,10 @@ public class VisFx extends Application
 
   void Handle_z()
   {
-    if( m_diff_mode ) m_diff.Do_z();
-    else                CV().Do_z();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_z();
+    else                   cv.Do_z();
   }
 
   void Handle_Colon()
@@ -2475,8 +2514,10 @@ public class VisFx extends Application
   {
     m_colon_mode = false;
 
-    if( m_diff_mode ) m_diff.PrintCursor();
-    else                CV().PrintCursor();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.PrintCursor();
+    else                   cv.PrintCursor();
   }
 
   void L_Handle_Escape()
@@ -2542,8 +2583,10 @@ public class VisFx extends Application
   {
     m_slash_mode = false;
 
-    if( m_diff_mode ) m_diff.PrintCursor();
-    else                CV().PrintCursor();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.PrintCursor();
+    else                   cv.PrintCursor();
   }
 
   void Handle_Dot()
@@ -2575,8 +2618,10 @@ public class VisFx extends Application
 
   void Handle_Return()
   {
-    if( m_diff_mode ) m_diff.GoToBegOfNextLine();
-    else                CV().GoToBegOfNextLine();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.GoToBegOfNextLine();
+    else                   cv.GoToBegOfNextLine();
   }
 
   void run_dot()
@@ -2592,12 +2637,14 @@ public class VisFx extends Application
       // Done running dot:
       m_states.removeFirst();
 
-      if( m_diff_mode ) {
+      View cv = CV();
+
+      if( cv.m_in_diff ) {
         // Diff does its own update every time a command is run
       }
       else {
         // Dont update until after all the commands have been executed:
-        CV().m_fb.Update();
+        cv.m_fb.Update();
       }
     }
   }
@@ -2613,7 +2660,9 @@ public class VisFx extends Application
       // Done running dot:
       m_states.removeFirst();
 
-      if( m_diff_mode ) {
+      View cv = CV();
+
+      if( cv.m_in_diff ) {
         // Diff does its own update every time a command is run
       }
       else {
@@ -2635,12 +2684,14 @@ public class VisFx extends Application
       // Done running map:
       m_states.removeFirst();
 
-      if( m_diff_mode ) {
+      View cv = CV();
+
+      if( cv.m_in_diff ) {
         // Diff does its own update every time a command is run
       }
       else {
         // Dont update until after all the commands have been executed:
-        CV().m_fb.Update();
+        cv.m_fb.Update();
       }
     }
   }
@@ -2715,8 +2766,10 @@ public class VisFx extends Application
     // Remove cursor from command line row:
     m_console.Set( ROW, COL, ' ', Style.NORMAL );
     // Put cursor back in window:
-    if( m_diff_mode ) m_diff.PrintCursor();
-    else                CV().PrintCursor();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.PrintCursor();
+    else                   cv.PrintCursor();
   }
 
   void Exe_Slash()
@@ -2733,38 +2786,33 @@ public class VisFx extends Application
     {
       Do_Star_Update_Search_Editor();
     }
+    View cv = CV();
+
     if( MOVE_TO_FIRST_PATTERN && 0<pattern.length() )
     {
-      if( m_diff_mode ) m_diff.Do_n();
-      else                CV().Do_n();
+      if( cv.m_in_diff ) m_diff.Do_n();
+      else                   cv.Do_n();
     }
-    if( m_diff_mode ) m_diff.Update();
-    else {
-      // Show new slash patterns for all windows currently displayed,
-      // but update current window last, so that the cursor ends up
-      // in the current window.
-      for( int w=0; w<m_num_wins; w++ )
-      {
-        final View pV = GetView_Win( w );
-
-        if( pV != CV() ) pV.Update();
-      }
-      CV().Update();
-    }
+    // Show new slash pattern for all windows currently displayed:
+    UpdateViews( true );
   }
 
   void Exe_Colon_q()
   {
-    final Tile_Pos TP = CV().m_tile_pos;
-
     if( m_num_wins <= 1 ) Exe_Colon_qa();
     else {
-      if( m_diff_mode )
-      {
-        m_diff.Set_Remaining_ViewContext_2_DiffContext();
-      }
-      m_diff_mode = false;
+      View cv = CV();
 
+      // Save original time position
+      final Tile_Pos TP = cv.m_tile_pos;
+
+      if( cv.m_in_diff )
+      {
+        m_diff.m_vS.m_in_diff = false;
+        m_diff.m_vL.m_in_diff = false;
+        m_diff.Set_Remaining_ViewContext_2_DiffContext();
+        m_diff_mode = false;
+      }
       if( m_win < m_num_wins-1 )
       {
         Quit_ShiftDown();
@@ -2774,7 +2822,7 @@ public class VisFx extends Application
 
       Quit_JoinTiles( TP );
 
-      UpdateViews();
+      UpdateViews( false );
 
       CV().PrintCursor();
     }
@@ -2785,9 +2833,9 @@ public class VisFx extends Application
   }
   void Quit_ShiftDown()
   {
-    // Make copy of m_win's list of views and view history:
-    ViewList win_views     = new ViewList( m_views    [m_win] );
-     IntList win_view_hist = new  IntList( m_file_hist[m_win] );
+    // Save of m_win's list of views and view history:
+    ViewList win_views     = m_views    [m_win];
+     IntList win_file_hist = m_file_hist[m_win];
 
     // Shift everything down
     for( int w=m_win+1; w<m_num_wins; w++ )
@@ -2798,7 +2846,7 @@ public class VisFx extends Application
     // Put m_win's list of m_views at end of m_views:
     // Put m_win's view history at end of view historys:
     m_views    [m_num_wins-1] = win_views;
-    m_file_hist[m_num_wins-1] = win_view_hist;
+    m_file_hist[m_num_wins-1] = win_file_hist;
   }
   void Quit_JoinTiles( final Tile_Pos TP )
   {
@@ -3352,11 +3400,11 @@ public class VisFx extends Application
 
   void Exe_Colon_DoDiff()
   {
-    // Must be exactly 2 buffers to do diff:
-    if( 2 == m_num_wins )
+    final int d_win = DoDiff_Find_Win_2_Diff(); // Diff win number
+    if( 0 <= d_win )
     {
-      View v0 = GetView_Win( 0 );
-      View v1 = GetView_Win( 1 );
+      View v0 = GetView_Win( m_win );
+      View v1 = GetView_Win( d_win );
       FileBuf fb0 = v0.m_fb;
       FileBuf fb1 = v1.m_fb;
 
@@ -3387,10 +3435,70 @@ public class VisFx extends Application
         ok = m_diff.Run( v0, v1 );
         if( ok ) {
           m_diff_mode = true;
+          m_diff.m_vS.m_in_diff = true;
+          m_diff.m_vL.m_in_diff = true;
           m_diff.Update();
         }
       }
     }
+  }
+  int DoDiff_Find_Win_2_Diff()
+  {
+    int diff_win_num = -1; // Failure value
+
+    // Must be not already doing a diff and at least 2 buffers to do diff:
+    if( !m_diff_mode && 2 <= m_num_wins )
+    {
+      View      v_c = GetView_Win( m_win ); // Current View
+      Tile_Pos tp_c = v_c.m_tile_pos;       // Current Tile_Pos
+
+      // tp_m = matching Tile_Pos to tp_c
+      final Tile_Pos tp_m = DoDiff_Find_Matching_Tile_Pos( tp_c );
+
+      if( null != tp_m )
+      {
+        // See if one of the other views is in tp_m
+        for( int k=0; -1 == diff_win_num && k<m_num_wins; k++ )
+        {
+          if( k != m_win )
+          {
+            View v_k = GetView_Win( k );
+            if( tp_m == v_k.m_tile_pos )
+            {
+              diff_win_num = k;
+            }
+          }
+        }
+      }
+    }
+    return diff_win_num;
+  }
+  Tile_Pos DoDiff_Find_Matching_Tile_Pos( final Tile_Pos tp_c )
+  {
+    Tile_Pos tp_m = null; // Matching tile pos
+
+    if     ( tp_c == Tile_Pos.LEFT_HALF         ) tp_m = Tile_Pos.RITE_HALF;
+    else if( tp_c == Tile_Pos.RITE_HALF         ) tp_m = Tile_Pos.LEFT_HALF;
+    else if( tp_c == Tile_Pos.TOP__HALF         ) tp_m = Tile_Pos.BOT__HALF;
+    else if( tp_c == Tile_Pos.BOT__HALF         ) tp_m = Tile_Pos.TOP__HALF;
+    else if( tp_c == Tile_Pos.TOP__LEFT_QTR     ) tp_m = Tile_Pos.TOP__RITE_QTR;
+    else if( tp_c == Tile_Pos.TOP__RITE_QTR     ) tp_m = Tile_Pos.TOP__LEFT_QTR;
+    else if( tp_c == Tile_Pos.BOT__LEFT_QTR     ) tp_m = Tile_Pos.BOT__RITE_QTR;
+    else if( tp_c == Tile_Pos.BOT__RITE_QTR     ) tp_m = Tile_Pos.BOT__LEFT_QTR;
+    else if( tp_c == Tile_Pos.LEFT_QTR          ) tp_m = Tile_Pos.LEFT_CTR__QTR;
+    else if( tp_c == Tile_Pos.LEFT_CTR__QTR     ) tp_m = Tile_Pos.LEFT_QTR;
+    else if( tp_c == Tile_Pos.RITE_CTR__QTR     ) tp_m = Tile_Pos.RITE_QTR;
+    else if( tp_c == Tile_Pos.RITE_QTR          ) tp_m = Tile_Pos.RITE_CTR__QTR;
+    else if( tp_c == Tile_Pos.TOP__LEFT_8TH     ) tp_m = Tile_Pos.TOP__LEFT_CTR_8TH;
+    else if( tp_c == Tile_Pos.TOP__LEFT_CTR_8TH ) tp_m = Tile_Pos.TOP__LEFT_8TH;
+    else if( tp_c == Tile_Pos.TOP__RITE_CTR_8TH ) tp_m = Tile_Pos.TOP__RITE_8TH;
+    else if( tp_c == Tile_Pos.TOP__RITE_8TH     ) tp_m = Tile_Pos.TOP__RITE_CTR_8TH;
+    else if( tp_c == Tile_Pos.BOT__LEFT_8TH     ) tp_m = Tile_Pos.BOT__LEFT_CTR_8TH;
+    else if( tp_c == Tile_Pos.BOT__LEFT_CTR_8TH ) tp_m = Tile_Pos.BOT__LEFT_8TH;
+    else if( tp_c == Tile_Pos.BOT__RITE_CTR_8TH ) tp_m = Tile_Pos.BOT__RITE_8TH;
+    else if( tp_c == Tile_Pos.BOT__RITE_8TH     ) tp_m = Tile_Pos.BOT__RITE_CTR_8TH;
+
+    return tp_m;
   }
   View DoDiff_FindRegFileView( final FileBuf pfb_reg
                              , final FileBuf pfb_dir
@@ -3460,7 +3568,9 @@ public class VisFx extends Application
 
   void Exe_Colon_NoDiff()
   {
-    if( true == m_diff_mode )
+    View cv = CV();
+
+    if( cv.m_in_diff )
     {
       m_diff_mode = false;
 
@@ -3470,6 +3580,7 @@ public class VisFx extends Application
       // Set the view contexts to similar values as the diff contexts:
       if( null != pvS )
       {
+        pvS.m_in_diff = false;
         pvS.SetTopLine ( m_diff.GetTopLine ( pvS ) );
         pvS.SetLeftChar( m_diff.GetLeftChar() );
         pvS.SetCrsRow  ( m_diff.GetCrsRow  () );
@@ -3477,12 +3588,13 @@ public class VisFx extends Application
       }
       if( null != pvL )
       {
+        pvL.m_in_diff = false;
         pvL.SetTopLine ( m_diff.GetTopLine ( pvL ) );
         pvL.SetLeftChar( m_diff.GetLeftChar() );
         pvL.SetCrsRow  ( m_diff.GetCrsRow  () );
         pvL.SetCrsCol  ( m_diff.GetCrsCol  () );
       }
-      UpdateViews();
+      UpdateViews( false );
     }
   }
 
@@ -3496,10 +3608,12 @@ public class VisFx extends Application
 
   void Exe_Colon_hi()
   {
-    CV().m_fb.m_hi_touched_line = 0;
+    View cv = CV();
 
-    if( m_diff_mode ) m_diff.Update();
-    else                CV().Update();
+    cv.m_fb.m_hi_touched_line = 0;
+
+    if( cv.m_in_diff ) m_diff.Update();
+    else                   cv.Update();
   }
 
   void Exe_Colon_run()
@@ -3631,8 +3745,10 @@ public class VisFx extends Application
     m_console.m_map_buf.setLength( 0 );
     m_console.m_save_2_map_buf = true;
 
-    if( m_diff_mode ) m_diff.DisplayMapping();
-    else                CV().DisplayMapping();
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.DisplayMapping();
+    else                   cv.DisplayMapping();
   }
   void Exe_Colon_MapEnd()
   {
@@ -3647,10 +3763,10 @@ public class VisFx extends Application
   }
   void Exe_Colon_MapShow()
   {
-    final View V = CV();
-    final int ROW = V.Cmd__Line_Row();
-    final int ST  = V.Col_Win_2_GL( 0 );
-    final int WC  = V.WorkingCols();
+    final View cv = CV();
+    final int ROW = cv.Cmd__Line_Row();
+    final int ST  = cv.Col_Win_2_GL( 0 );
+    final int WC  = cv.WorkingCols();
     final int MAP_LEN = m_console.m_map_buf.length();
 
     // Print :
@@ -3685,8 +3801,8 @@ public class VisFx extends Application
     {
       m_console.Set( ROW, ST+offset+k, ' ', Style.NORMAL );
     }
-    if( m_diff_mode ) m_diff.PrintCursor();
-    else                   V.PrintCursor();
+    if( cv.m_in_diff ) m_diff.PrintCursor();
+    else                   cv.PrintCursor();
   }
 
   void Exe_Colon_CoverKey()
@@ -3765,25 +3881,25 @@ public class VisFx extends Application
 
   void Exe_Colon_w()
   {
-    final View V = CV();
+    final View cv = CV();
 
     boolean file_written = false;
 
     if( m_sb.toString().equals("w")   // :w
      || m_sb.toString().equals("wq")) // :wq
     {
-      if( V == m_views[ m_win ].get( SHELL_FILE ) )
+      if( cv == m_views[ m_win ].get( SHELL_FILE ) )
       {
         // Dont allow SHELL_BUFFER to be saved with :w.
         // Require :w filename.
-        V.PrintCursor();
+        cv.PrintCursor();
       }
       else {
         // If the file gets written, CmdLineMessage will be called,
         // which will put the cursor back in position,
         // else Window_Message will be called
         // which will put the cursor back in the message window
-        file_written = V.m_fb.Write();
+        file_written = cv.m_fb.Write();
       }
       if( m_sb.toString().equals("wq") )
       {
@@ -3795,7 +3911,7 @@ public class VisFx extends Application
       // Write file of supplied file name:
       String fname = new String( m_sb.substring(1) );
 
-      fname = CV().m_fb.Relative_2_FullFname( fname );
+      fname = cv.m_fb.Relative_2_FullFname( fname );
 
       Ptr_Int file_index = new Ptr_Int( 0 );
       if( HaveFile( fname, file_index ) )
@@ -3815,8 +3931,8 @@ public class VisFx extends Application
     {
       if( Update_Change_Statuses() )
       {
-        if( m_diff_mode ) m_diff.PrintCursor(); // Does m_console.Update()
-        else              m_console.Update();
+        if( cv.m_in_diff ) m_diff.PrintCursor(); // Does m_console.Update()
+        else               m_console.Update();
       }
     }
   }
@@ -3969,7 +4085,7 @@ public class VisFx extends Application
         nv.SetTilePos( Tile_Pos.RITE_THIRD );
       }
     }
-    UpdateViews();
+    UpdateViews( false );
   }
   void Exe_Colon_hsp()
   {
@@ -4032,7 +4148,7 @@ public class VisFx extends Application
         nv.SetTilePos( Tile_Pos.BOT__RITE_CTR_8TH );
       }
     }
-    UpdateViews();
+    UpdateViews( false );
   }
   void Exe_Colon_3sp()
   {
@@ -4064,7 +4180,7 @@ public class VisFx extends Application
       nv1.SetTilePos( Tile_Pos.CTR__THIRD );
       nv2.SetTilePos( Tile_Pos.RITE_THIRD );
     }
-    UpdateViews();
+    UpdateViews( false );
   }
   void Exe_Colon_se()
   {
@@ -4282,7 +4398,8 @@ public class VisFx extends Application
     }
     else {
       boolean went_back_to_prev_dir_diff = false;
-      if( m_diff_mode )
+
+      if( CV().m_in_diff )
       {
         went_back_to_prev_dir_diff = WentBackToPrevDirDiff();
 
@@ -4385,6 +4502,8 @@ public class VisFx extends Application
             went_back = m_diff.Run( cV_prev, oV_prev );
             if( went_back ) {
               m_diff_mode = true;
+              m_diff.m_vS.m_in_diff = true;
+              m_diff.m_vL.m_in_diff = true;
               m_diff.Update();
             }
           }
@@ -4468,8 +4587,10 @@ public class VisFx extends Application
     {
       final int line_num = ptr_int.val;
 
-      if( m_diff_mode ) m_diff.GoToLine( line_num );
-      else                CV().GoToLine( line_num );
+      View cv = CV();
+
+      if( cv.m_in_diff ) m_diff.GoToLine( line_num );
+      else                   cv.GoToLine( line_num );
     }
   }
 
@@ -4511,6 +4632,8 @@ public class VisFx extends Application
       ok = m_diff.Run( nv_c, nv_o );
       if( ok ) {
         m_diff_mode = true;
+        m_diff.m_vS.m_in_diff = true;
+        m_diff.m_vL.m_in_diff = true;
         m_diff.Update();
       }
     }
@@ -4529,19 +4652,32 @@ public class VisFx extends Application
       }
     }
   }
-  void UpdateViews()
+  void UpdateViews( final boolean show_search )
   {
+    for( int w=0; w<m_num_wins; w++ )
+    {
+      View V = GetView_Win( w );
+
+      if( ! V.m_in_diff )
+      {
+        if( show_search )
+        {
+          V.Set_Cmd_Line_Msg( '/' + m_regex );
+        }
+        V.Update_DoNot_PrintCursor();
+      }
+    }
     if( m_diff_mode )
     {
+      if( show_search )
+      {
+        m_diff.Set_Cmd_Line_Msg( '/' + m_regex );
+      }
       m_diff.Update();
     }
-    else {
-      for( int w=0; w<m_num_wins; w++ )
-      {
-        GetView_Win( w ).Update_DoNot_PrintCursor();
-      }
-      CV().PrintCursor();
-    }
+    View cv = CV();
+
+    if( !cv.m_in_diff ) cv.PrintCursor();
   }
   // This ensures that proper change status is displayed around each window:
   // '+++' for unsaved changes, and
@@ -4575,11 +4711,11 @@ public class VisFx extends Application
   {
     final int MSG_LEN = msg.length();
 
-    View v = CV();
+    View cv = CV();
 
-    final int WC  = v.WorkingCols();
-    final int ROW = v.Cmd__Line_Row();
-    final int COL = v.Col_Win_2_GL( 0 );
+    final int WC  = cv.WorkingCols();
+    final int ROW = cv.Cmd__Line_Row();
+    final int COL = cv.Col_Win_2_GL( 0 );
 
     if( WC < msg.length() )
     {
@@ -4592,11 +4728,11 @@ public class VisFx extends Application
 
       for( int k=0; k<(WC-MSG_LEN); k++ )
       {
-        m_console.Set( ROW, v.Col_Win_2_GL( k+MSG_LEN ), ' ', Style.NORMAL );
+        m_console.Set( ROW, cv.Col_Win_2_GL( k+MSG_LEN ), ' ', Style.NORMAL );
       }
     }
-    if( m_diff_mode ) m_diff.PrintCursor();
-    else                   v.PrintCursor();
+    if( cv.m_in_diff ) m_diff.PrintCursor();
+    else                   cv.PrintCursor();
   }
 
   public void Window_Message( String msg )
@@ -4605,7 +4741,6 @@ public class VisFx extends Application
     FileBuf fb = v.m_fb;
 
     fb.ClearLines();
-    fb.m_views.clear();
 
      v.Clear_Context();
 

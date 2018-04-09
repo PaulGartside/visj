@@ -44,35 +44,25 @@ class Diff
       final Tile_Pos tp0 = v0.m_tile_pos;
       final Tile_Pos tp1 = v1.m_tile_pos;
 
-      // Buffers must be vertically split to do diff:
-      if( (Tile_Pos.LEFT_HALF == tp0 && Tile_Pos.RITE_HALF == tp1)
-       || (Tile_Pos.LEFT_HALF == tp1 && Tile_Pos.RITE_HALF == tp0) )
+      final boolean same_as_prev = DiffSameAsPrev( v0, v1 );
+
+      Set_ShortLong_ViewfileMod_Vars( v0, v1 );
+
+      if( same_as_prev )
       {
-        if( DiffSameAsPrev( v0, v1 ) )
-        { // Dont need to re-run the diff, just display the results:
-          Update();
-        }
-        else {
-          CleanDiff(); //< Start over with clean slate
-
-          final int nLines_0 = v0.m_fb.NumLines();
-          final int nLines_1 = v1.m_fb.NumLines();
-
-          m_vS = nLines_0 < nLines_1 ? v0 : v1; // Short view
-          m_vL = nLines_0 < nLines_1 ? v1 : v0; // Long  view
-          m_fS = m_vS.m_fb;
-          m_fL = m_vL.m_fb;
-          m_mod_time_s = m_fS.m_mod_time;
-          m_mod_time_l = m_fL.m_mod_time;
-
-          // All lines in both files:
-          DiffArea CA = new DiffArea( 0, m_fS.NumLines(), 0, m_fL.NumLines() );
-
-          RunDiff( CA );
-          Set_DiffContext_2_ViewContext();
-        }
-        return true;
+        // Dont need to re-run the diff, just display the results:
+        Update();
       }
+      else {
+        CleanDiff(); //< Start over with clean slate
+
+        // All lines in both files:
+        DiffArea CA = new DiffArea( 0, m_fS.NumLines(), 0, m_fL.NumLines() );
+
+        RunDiff( CA );
+        Set_DiffContext_2_ViewContext();
+      }
+      return true;
     }
     return false;
   }
@@ -160,6 +150,19 @@ class Diff
     }
     return FILES_SAME_AS_BEFORE
         && DATES_SAME_AS_BEFORE;
+  }
+
+  void Set_ShortLong_ViewfileMod_Vars( View v0, View v1 )
+  {
+    final int nLines_0 = v0.m_fb.NumLines();
+    final int nLines_1 = v1.m_fb.NumLines();
+
+    m_vS = nLines_0 < nLines_1 ? v0 : v1; // Short view
+    m_vL = nLines_0 < nLines_1 ? v1 : v0; // Long  view
+    m_fS = m_vS.m_fb;
+    m_fL = m_vL.m_fb;
+    m_mod_time_s = m_fS.m_mod_time;
+    m_mod_time_l = m_fL.m_mod_time;
   }
 
   void Update()
@@ -2653,7 +2656,7 @@ class Diff
 
     if( 0 < pV.m_fb.NumLines() )
     {
-      Set_Cmd_Line_Msg( '\\' + m_vis.get_regex() );
+      Set_Cmd_Line_Msg( '/' + m_vis.get_regex() );
 
       CrsPos ncp = new CrsPos( 0, 0 ); // Next cursor position
 
@@ -2877,7 +2880,7 @@ class Diff
 
     if( 0 < pV.m_fb.NumLines() )
     {
-      Set_Cmd_Line_Msg( '\\' + m_vis.get_regex() );
+      Set_Cmd_Line_Msg( '/' + m_vis.get_regex() );
 
       CrsPos ncp = new CrsPos( 0, 0 ); // Next cursor position
 

@@ -606,7 +606,7 @@ class ConsoleFx extends Canvas
     m_gc.setFont( m_font_plain );
 
     Init_Clear();
-    m_vis.UpdateViews();
+    m_vis.UpdateViews( false );
     m_vis.CV().PrintCursor();  // Does m_console.Update();
   }
   void Set_Color_Scheme_2()
@@ -653,7 +653,7 @@ class ConsoleFx extends Canvas
     m_gc.setFont( m_font_plain );
 
     Init_Clear();
-    m_vis.UpdateViews();
+    m_vis.UpdateViews( false );
     m_vis.CV().PrintCursor();  // Does m_console.Update();
   }
   void Set_Color_Scheme_3()
@@ -700,7 +700,7 @@ class ConsoleFx extends Canvas
     m_gc.setFont( m_font_bold );
 
     Init_Clear();
-    m_vis.UpdateViews();
+    m_vis.UpdateViews( false );
     m_vis.CV().PrintCursor();  // Does m_console.Update();
   }
   void Set_Color_Scheme_4()
@@ -747,7 +747,7 @@ class ConsoleFx extends Canvas
     m_gc.setFont( m_font_bold );
 
     Init_Clear();
-    m_vis.UpdateViews();
+    m_vis.UpdateViews( false );
     m_vis.CV().PrintCursor();  // Does m_console.Update();
   }
 

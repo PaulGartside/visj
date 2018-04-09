@@ -529,18 +529,24 @@ class FileBuf
   }
   boolean ReReadFile()
   {
-    ClearLines();
+    boolean ok = true;
 
-    m_save_history = false; //< Gets turned back on in ReadFile()
-
-    boolean ok = ReadFile();
-
-    // To be safe, put cursor at top,left of each view of this file:
-    for( int w=0; ok && w<VisIF.MAX_WINS; w++ )
+    // Can only re-read user files
+    if( m_vis.USER_FILE <= m_vis.Curr_FileNum() )
     {
-      View v = m_views.get( w );
+      ClearLines();
 
-      v.Check_Context();
+      m_save_history = false; //< Gets turned back on in ReadFile()
+
+      ok = ReadFile();
+
+      // To be safe, put cursor at top,left of each view of this file:
+      for( int w=0; ok && w<VisIF.MAX_WINS; w++ )
+      {
+        View v = m_views.get( w );
+
+        v.Check_Context();
+      }
     }
     return ok;
   }

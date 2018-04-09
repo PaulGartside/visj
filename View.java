@@ -3781,6 +3781,7 @@ class View
   boolean  m_copy_vis_buf_2_dot_buf;
   boolean  m_unsaved_changes;
   boolean  m_undo_v;
+  boolean  m_in_diff;  // True if this view is being diffed
   int      v_st_line;  // Visual start line number
   int      v_st_char;  // Visual start char number on line
   int      v_fn_line;  // Visual ending line number
