@@ -47,6 +47,7 @@ GENERIC_SOURCES = ChangeHist \
                   Highlight_CMAKE \
                   Highlight_Code \
                   Highlight_CPP \
+                  Highlight_CS \
                   Highlight_Dir \
                   Highlight_HTML \
                   Highlight_IDL \

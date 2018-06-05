@@ -136,6 +136,7 @@ class FileBuf
     else if( Find_File_Type_Bash()
           || Find_File_Type_CMAKE()
           || Find_File_Type_CPP ()
+          || Find_File_Type_CS  ()
           || Find_File_Type_IDL ()
           || Find_File_Type_HTML()
           || Find_File_Type_Java()
@@ -199,6 +200,18 @@ class FileBuf
     {
       m_file_type = File_Type.CPP;
       m_Hi = new Highlight_CPP( this );
+      return true;
+    }
+    return false;
+  }
+  boolean Find_File_Type_CS()
+  {
+    if( m_fname.endsWith(".cs"    )
+     || m_fname.endsWith(".cs.new")
+     || m_fname.endsWith(".cs.old") )
+    {
+      m_file_type = File_Type.CS;
+      m_Hi = new Highlight_CS( this );
       return true;
     }
     return false;
@@ -400,6 +413,11 @@ class FileBuf
       {
         m_file_type = File_Type.CPP;
         m_Hi = new Highlight_CPP( this );
+      }
+      else if( syn.equals("cs") )
+      {
+        m_file_type = File_Type.CS;
+        m_Hi = new Highlight_CS( this );
       }
       else if( syn.equals("idl") )
       {
@@ -1220,6 +1238,9 @@ class FileBuf
         || fname.endsWith(".cxx"    )
         || fname.endsWith(".cxx.new")
         || fname.endsWith(".cxx.old")
+        || fname.endsWith(".cs"     )
+        || fname.endsWith(".cs.new" )
+        || fname.endsWith(".cs.old" )
         || fname.endsWith(".idl"    )
         || fname.endsWith(".idl.new")
         || fname.endsWith(".idl.old")
@@ -1265,9 +1286,6 @@ class FileBuf
         || fname.endsWith(".xml.in"    )
         || fname.endsWith(".xml.in.new")
         || fname.endsWith(".xml.in.old")
-        || fname.endsWith(".cmake"     )
-        || fname.endsWith(".cmake.new" )
-        || fname.endsWith(".cmake.old" )
         || fname.endsWith(".cmake"     )
         || fname.endsWith(".cmake.new" )
         || fname.endsWith(".cmake.old" )

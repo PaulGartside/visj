@@ -497,7 +497,7 @@ public class VisFx extends Application
         final char CC = m_console.GetKey();
 
         if( ('1' <= CC && CC <= '9')
-         || ('0' == CC && 0 < m_repeat_buf.length()) ) //< Dont override 0 movement
+         || ('0' == CC && 0 < m_repeat_buf.length()) ) //< Dont override [1-9]0 movement
         {
           m_repeat_buf.append( CC );
         }
@@ -2660,9 +2660,7 @@ public class VisFx extends Application
       // Done running dot:
       m_states.removeFirst();
 
-      View cv = CV();
-
-      if( cv.m_in_diff ) {
+      if( CV().m_in_diff ) {
         // Diff does its own update every time a command is run
       }
       else {
@@ -3568,9 +3566,7 @@ public class VisFx extends Application
 
   void Exe_Colon_NoDiff()
   {
-    View cv = CV();
-
-    if( cv.m_in_diff )
+    if( CV().m_in_diff )
     {
       m_diff_mode = false;
 
@@ -3920,7 +3916,7 @@ public class VisFx extends Application
       }
       else if( Utils.DIR_DELIM != fname.charAt( fname.length()-1 ) )
       {
-        FileBuf fb = new FileBuf( this, fname, CV().m_fb );
+        FileBuf fb = new FileBuf( this, fname, cv.m_fb );
 
         Add_FileBuf_2_Lists_Create_Views( fb, fname );
 
@@ -4363,30 +4359,6 @@ public class VisFx extends Application
   //-------------------------
   //| 5 | 4 | 3 | 2 | 1 | 0 |
   //-------------------------
-//void GoToPrevBuffer()
-//{
-//  final int FILE_HIST_LEN = m_file_hist[ m_win ].size();
-//
-//  if( FILE_HIST_LEN <= 1 )
-//  {
-//    // Nothing to do, so just put cursor back
-//    CV().PrintCursor();
-//  }
-//  else {
-//    Exe_Colon_NoDiff();
-//
-//    View     pV_old = CV();
-//    Tile_Pos tp_old = pV_old.m_tile_pos;
-//
-//    // Move view index at front to back of m_file_hist
-//    int view_index_old = m_file_hist[ m_win ].remove( 0 );
-//    m_file_hist[ m_win ].add( view_index_old );
-//
-//    // Redisplay current window with new view:
-//    CV().SetTilePos( tp_old );
-//    CV().Update();
-//  }
-//}
   void GoToPrevBuffer()
   {
     final int FILE_HIST_LEN = m_file_hist[ m_win ].size();

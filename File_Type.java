@@ -28,6 +28,7 @@ enum File_Type
   BUFFER_EDITOR,
   CMAKE,
   CPP,
+  CS,
   DIR,
   HTML,
   IDL,

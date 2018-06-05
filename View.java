@@ -369,6 +369,7 @@ class View
   void PrintCmdLine()
   {
     final int CMD_LINE_ROW = Cmd__Line_Row();
+    final int WC = WorkingCols();
     int col=0;
     // Draw insert banner if needed
     if( m_inInsertMode )
@@ -389,13 +390,12 @@ class View
     else if( 0 < m_cmd_line_sb.length() )
     {
       col = m_cmd_line_sb.length();
-      for( int k=0; k<col; k++ )
+      for( int k=0; k<col && k<WC; k++ )
       {
-        final char C =  m_cmd_line_sb.charAt(k);
+        final char C = m_cmd_line_sb.charAt(k);
         m_console.Set( CMD_LINE_ROW, Col_Win_2_GL( k ), C, Style.NORMAL );
       }
     }
-    final int WC = WorkingCols();
 
     for( ; col<WC; col++ )
     {
