@@ -54,6 +54,7 @@ GENERIC_SOURCES = ChangeHist \
                   Highlight_Java \
                   Highlight_JS \
                   Highlight_Make \
+                  Highlight_MIB \
                   Highlight_Python \
                   Highlight_SQL \
                   Highlight_STL \

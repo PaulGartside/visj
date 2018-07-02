@@ -36,9 +36,11 @@ import javafx.geometry.VPos;
 import javafx.scene.text.Text;
 import javafx.geometry.Bounds;
 
-import java.util.Queue;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Queue;
 
 class ConsoleFx extends Canvas
              implements ConsoleIF
@@ -148,17 +150,18 @@ class ConsoleFx extends Canvas
     m_siz_rows = 0;
     m_siz_cols = 0;
 
-    m_font_plain = Font.font( GetFontName(), FontWeight.NORMAL, m_font_size );
-    m_font_bold  = Font.font( GetFontName(), FontWeight.BOLD  , m_font_size );
+    m_font_name  = GetDefaultFontName();
+    m_font_plain = Font.font( m_font_name, FontWeight.NORMAL, m_font_size );
+    m_font_bold  = Font.font( m_font_name, FontWeight.BOLD  , m_font_size );
 
+    Init_TextChars();
     Init_FontMetrics();
     Init_Graphics();
-    Init_TextChars();
     Init_RowsCols();
     Init_Clear();
   }
 
-  String GetFontName()
+  String GetDefaultFontName()
   {
     String font_name = "Courier";
   //String font_name = "Courier New";
@@ -176,6 +179,10 @@ class ConsoleFx extends Canvas
   }
   void Init_FontMetrics()
   {
+    if( null == m_x_p_o )
+    {
+      m_x_p_o = new Integer[Character.MAX_VALUE+1];
+    }
     Ptr_Double max_w = new Ptr_Double();
     Ptr_Double max_h = new Ptr_Double();
 
@@ -184,128 +191,163 @@ class ConsoleFx extends Canvas
   //m_text_W = (int)(FONT_SIZE*0.6 + 0.5);
   //m_text_H = FONT_SIZE;
 
+    final int avg_W = (int)(m_avg_W/m_cnt_W + 0.5);
+
     // Works better if m_text_W and m_text_H are integers
-    m_text_W = (int)(max_w.val + 0.8);
+  //m_text_W = (int)(max_w.val + 0.8);
+    m_text_W = (int)(avg_W*1.1 + 0.8);
     m_text_H = (int)(max_h.val + 0.8);
 
-//Utils.Log("m_text_W ="+ m_text_W);
+//Utils.Log("m_text_W ="+ m_text_W+", avg_W="+avg_W);
 //Utils.Log("m_text_H ="+ m_text_H);
+
+    for( int k=0; k<Character.MAX_VALUE+1; k++ )
+    {
+      if( null != m_x_p_o[ k ] )
+      {
+        Calc_X_Point_Offset( (char)k );
+      }
+    }
   }
   void Find_Font_Bounds( Font f, Ptr_Double max_w, Ptr_Double max_h )
   {
-    Text t = new Text();
+    m_avg_W = 0;
+    m_cnt_W = 0;
 
-    Get_Bounds("A", f, t, max_w, max_h );
-    Get_Bounds("B", f, t, max_w, max_h );
-    Get_Bounds("C", f, t, max_w, max_h );
-    Get_Bounds("D", f, t, max_w, max_h );
-    Get_Bounds("E", f, t, max_w, max_h );
-    Get_Bounds("F", f, t, max_w, max_h );
-    Get_Bounds("G", f, t, max_w, max_h );
-    Get_Bounds("H", f, t, max_w, max_h );
-    Get_Bounds("I", f, t, max_w, max_h );
-    Get_Bounds("J", f, t, max_w, max_h );
-    Get_Bounds("K", f, t, max_w, max_h );
-    Get_Bounds("L", f, t, max_w, max_h );
-    Get_Bounds("M", f, t, max_w, max_h );
-    Get_Bounds("N", f, t, max_w, max_h );
-    Get_Bounds("O", f, t, max_w, max_h );
-    Get_Bounds("P", f, t, max_w, max_h );
-    Get_Bounds("Q", f, t, max_w, max_h );
-    Get_Bounds("R", f, t, max_w, max_h );
-    Get_Bounds("S", f, t, max_w, max_h );
-    Get_Bounds("T", f, t, max_w, max_h );
-    Get_Bounds("U", f, t, max_w, max_h );
-    Get_Bounds("V", f, t, max_w, max_h );
-    Get_Bounds("W", f, t, max_w, max_h );
-    Get_Bounds("X", f, t, max_w, max_h );
-    Get_Bounds("Y", f, t, max_w, max_h );
-    Get_Bounds("Z", f, t, max_w, max_h );
+    Get_Bounds("A", f, max_w, max_h );
+    Get_Bounds("B", f, max_w, max_h );
+    Get_Bounds("C", f, max_w, max_h );
+    Get_Bounds("D", f, max_w, max_h );
+    Get_Bounds("E", f, max_w, max_h );
+    Get_Bounds("F", f, max_w, max_h );
+    Get_Bounds("G", f, max_w, max_h );
+    Get_Bounds("H", f, max_w, max_h );
+    Get_Bounds("I", f, max_w, max_h );
+    Get_Bounds("J", f, max_w, max_h );
+    Get_Bounds("K", f, max_w, max_h );
+    Get_Bounds("L", f, max_w, max_h );
+    Get_Bounds("M", f, max_w, max_h );
+    Get_Bounds("N", f, max_w, max_h );
+    Get_Bounds("O", f, max_w, max_h );
+    Get_Bounds("P", f, max_w, max_h );
+    Get_Bounds("Q", f, max_w, max_h );
+    Get_Bounds("R", f, max_w, max_h );
+    Get_Bounds("S", f, max_w, max_h );
+    Get_Bounds("T", f, max_w, max_h );
+    Get_Bounds("U", f, max_w, max_h );
+    Get_Bounds("V", f, max_w, max_h );
+    Get_Bounds("W", f, max_w, max_h );
+    Get_Bounds("X", f, max_w, max_h );
+    Get_Bounds("Y", f, max_w, max_h );
+    Get_Bounds("Z", f, max_w, max_h );
 
-    Get_Bounds("a", f, t, max_w, max_h );
-    Get_Bounds("b", f, t, max_w, max_h );
-    Get_Bounds("c", f, t, max_w, max_h );
-    Get_Bounds("d", f, t, max_w, max_h );
-    Get_Bounds("e", f, t, max_w, max_h );
-    Get_Bounds("f", f, t, max_w, max_h );
-    Get_Bounds("g", f, t, max_w, max_h );
-    Get_Bounds("h", f, t, max_w, max_h );
-    Get_Bounds("i", f, t, max_w, max_h );
-    Get_Bounds("j", f, t, max_w, max_h );
-    Get_Bounds("k", f, t, max_w, max_h );
-    Get_Bounds("l", f, t, max_w, max_h );
-    Get_Bounds("m", f, t, max_w, max_h );
-    Get_Bounds("n", f, t, max_w, max_h );
-    Get_Bounds("o", f, t, max_w, max_h );
-    Get_Bounds("p", f, t, max_w, max_h );
-    Get_Bounds("q", f, t, max_w, max_h );
-    Get_Bounds("r", f, t, max_w, max_h );
-    Get_Bounds("s", f, t, max_w, max_h );
-    Get_Bounds("t", f, t, max_w, max_h );
-    Get_Bounds("u", f, t, max_w, max_h );
-    Get_Bounds("v", f, t, max_w, max_h );
-    Get_Bounds("w", f, t, max_w, max_h );
-    Get_Bounds("x", f, t, max_w, max_h );
-    Get_Bounds("y", f, t, max_w, max_h );
-    Get_Bounds("z", f, t, max_w, max_h );
+    Get_Bounds("a", f, max_w, max_h );
+    Get_Bounds("b", f, max_w, max_h );
+    Get_Bounds("c", f, max_w, max_h );
+    Get_Bounds("d", f, max_w, max_h );
+    Get_Bounds("e", f, max_w, max_h );
+    Get_Bounds("f", f, max_w, max_h );
+    Get_Bounds("g", f, max_w, max_h );
+    Get_Bounds("h", f, max_w, max_h );
+    Get_Bounds("i", f, max_w, max_h );
+    Get_Bounds("j", f, max_w, max_h );
+    Get_Bounds("k", f, max_w, max_h );
+    Get_Bounds("l", f, max_w, max_h );
+    Get_Bounds("m", f, max_w, max_h );
+    Get_Bounds("n", f, max_w, max_h );
+    Get_Bounds("o", f, max_w, max_h );
+    Get_Bounds("p", f, max_w, max_h );
+    Get_Bounds("q", f, max_w, max_h );
+    Get_Bounds("r", f, max_w, max_h );
+    Get_Bounds("s", f, max_w, max_h );
+    Get_Bounds("t", f, max_w, max_h );
+    Get_Bounds("u", f, max_w, max_h );
+    Get_Bounds("v", f, max_w, max_h );
+    Get_Bounds("w", f, max_w, max_h );
+    Get_Bounds("x", f, max_w, max_h );
+    Get_Bounds("y", f, max_w, max_h );
+    Get_Bounds("z", f, max_w, max_h );
 
-    Get_Bounds("`", f, t, max_w, max_h );
-    Get_Bounds("1", f, t, max_w, max_h );
-    Get_Bounds("2", f, t, max_w, max_h );
-    Get_Bounds("3", f, t, max_w, max_h );
-    Get_Bounds("4", f, t, max_w, max_h );
-    Get_Bounds("5", f, t, max_w, max_h );
-    Get_Bounds("6", f, t, max_w, max_h );
-    Get_Bounds("7", f, t, max_w, max_h );
-    Get_Bounds("8", f, t, max_w, max_h );
-    Get_Bounds("9", f, t, max_w, max_h );
-    Get_Bounds("0", f, t, max_w, max_h );
-    Get_Bounds("-", f, t, max_w, max_h );
-    Get_Bounds("=", f, t, max_w, max_h );
-    Get_Bounds("[", f, t, max_w, max_h );
-    Get_Bounds("]", f, t, max_w, max_h );
-    Get_Bounds("\\",f, t, max_w, max_h );
-    Get_Bounds(";", f, t, max_w, max_h );
-    Get_Bounds("'", f, t, max_w, max_h );
-    Get_Bounds(",", f, t, max_w, max_h );
-    Get_Bounds(".", f, t, max_w, max_h );
-    Get_Bounds("/", f, t, max_w, max_h );
-    Get_Bounds(" ", f, t, max_w, max_h );
+    Get_Bounds("`", f, max_w, max_h );
+    Get_Bounds("1", f, max_w, max_h );
+    Get_Bounds("2", f, max_w, max_h );
+    Get_Bounds("3", f, max_w, max_h );
+    Get_Bounds("4", f, max_w, max_h );
+    Get_Bounds("5", f, max_w, max_h );
+    Get_Bounds("6", f, max_w, max_h );
+    Get_Bounds("7", f, max_w, max_h );
+    Get_Bounds("8", f, max_w, max_h );
+    Get_Bounds("9", f, max_w, max_h );
+    Get_Bounds("0", f, max_w, max_h );
+    Get_Bounds("-", f, max_w, max_h );
+    Get_Bounds("=", f, max_w, max_h );
+    Get_Bounds("[", f, max_w, max_h );
+    Get_Bounds("]", f, max_w, max_h );
+    Get_Bounds("\\",f, max_w, max_h );
+    Get_Bounds(";", f, max_w, max_h );
+    Get_Bounds("'", f, max_w, max_h );
+    Get_Bounds(",", f, max_w, max_h );
+    Get_Bounds(".", f, max_w, max_h );
+    Get_Bounds("/", f, max_w, max_h );
+    Get_Bounds(" ", f, max_w, max_h );
 
-    Get_Bounds("~", f, t, max_w, max_h );
-    Get_Bounds("@", f, t, max_w, max_h );
-    Get_Bounds("#", f, t, max_w, max_h );
-    Get_Bounds("$", f, t, max_w, max_h );
-    Get_Bounds("%", f, t, max_w, max_h );
-    Get_Bounds("^", f, t, max_w, max_h );
-    Get_Bounds("&", f, t, max_w, max_h );
-    Get_Bounds("*", f, t, max_w, max_h );
-    Get_Bounds("(", f, t, max_w, max_h );
-    Get_Bounds(")", f, t, max_w, max_h );
-    Get_Bounds("_", f, t, max_w, max_h );
-    Get_Bounds("+", f, t, max_w, max_h );
-    Get_Bounds("{", f, t, max_w, max_h );
-    Get_Bounds("}", f, t, max_w, max_h );
-    Get_Bounds("|", f, t, max_w, max_h );
-    Get_Bounds(":", f, t, max_w, max_h );
-    Get_Bounds("\"",f, t, max_w, max_h );
-    Get_Bounds("<", f, t, max_w, max_h );
-    Get_Bounds(">", f, t, max_w, max_h );
-    Get_Bounds("?", f, t, max_w, max_h );
+    Get_Bounds("~", f, max_w, max_h );
+    Get_Bounds("@", f, max_w, max_h );
+    Get_Bounds("#", f, max_w, max_h );
+    Get_Bounds("$", f, max_w, max_h );
+    Get_Bounds("%", f, max_w, max_h );
+    Get_Bounds("^", f, max_w, max_h );
+    Get_Bounds("&", f, max_w, max_h );
+    Get_Bounds("*", f, max_w, max_h );
+    Get_Bounds("(", f, max_w, max_h );
+    Get_Bounds(")", f, max_w, max_h );
+    Get_Bounds("_", f, max_w, max_h );
+    Get_Bounds("+", f, max_w, max_h );
+    Get_Bounds("{", f, max_w, max_h );
+    Get_Bounds("}", f, max_w, max_h );
+    Get_Bounds("|", f, max_w, max_h );
+    Get_Bounds(":", f, max_w, max_h );
+    Get_Bounds("\"",f, max_w, max_h );
+    Get_Bounds("<", f, max_w, max_h );
+    Get_Bounds(">", f, max_w, max_h );
+    Get_Bounds("?", f, max_w, max_h );
   }
 
   void Get_Bounds( String C
                  , Font f
-                 , Text t
                  , Ptr_Double max_w
                  , Ptr_Double max_h )
   {
-    t.setFont( f );
-    t.setText(C);
-    Bounds b = t.getLayoutBounds();
+    m_text.setFont( f );
+    m_text.setText( C );
+    Bounds b = m_text.getLayoutBounds();
     max_w.val = Math.max( b.getWidth(), max_w.val );
     max_h.val = Math.max( b.getHeight(), max_h.val );
+
+    m_avg_W += b.getWidth();
+    m_cnt_W ++;
+
+  //int b_w = (int)(b.getWidth ()*10 + 0.5);
+  //int b_h = (int)(b.getHeight()*10 + 0.5);
+  //int m_w = (int)(max_w.val*10 + 0.5);
+  //Utils.Log( C+": w*10="+b_w+", h*10="+b_h+", max_w*10="+m_w);
   }
+
+  void Calc_X_Point_Offset( final char C )
+  {
+    if( null == m_x_p_o[C] )
+    {
+      m_x_p_o[C] = new Integer(0);
+    }
+    m_text.setText( m_text_chars[C] );
+    Bounds b = m_text.getLayoutBounds();
+    final double d_w = b.getWidth();
+    // X point offset within cell:
+    m_x_p_o[C] = d_w < m_text_W
+                 ? (int)(0.5*(m_text_W - d_w) + 0.5)
+                 : 0;
+  }
+
   public int Num_Rows() { return m_num_rows; }
   public int Num_Cols() { return m_num_cols; }
 
@@ -314,14 +356,17 @@ class ConsoleFx extends Canvas
     m_gc.setFill( Color.BLACK );
     m_gc.fillRect( 0, 0, getWidth(), getHeight() );
     m_gc.setFont( m_font_plain );
+    m_text.setFont( m_font_plain );
     m_gc.setTextBaseline( VPos.TOP );
   //m_gc.setFontSmoothingType( FontSmoothingType.LCD );
   }
   void Init_TextChars()
   {
     m_text_chars = new String[0x10000];
+  //m_text_chars = new String[Character.MAX_VALUE+1];
 
     for( char C=0; C<0xffff; C++ )
+  //for( char C=0; C<Character.MAX_VALUE; C++ )
     {
       char data[] = { C };
 
@@ -380,13 +425,24 @@ class ConsoleFx extends Canvas
     m_num_cols = (int)(width /m_text_W+0.5);
 
     boolean resized = old_num_rows != m_num_rows
-                   || old_num_cols != m_num_cols;
+                   || old_num_cols != m_num_cols
+                   || m_font_changed;
     if( resized )
     {
       setWidth ( width  );
       setHeight( height );
+
+      m_font_changed = false;
     }
     return resized;
+  }
+  void Inc_Font()
+  {
+    Change_Font_Size( 1 );
+  }
+  void Dec_Font()
+  {
+    Change_Font_Size( -1 );
   }
   void Change_Font_Size( final int size_change )
   {
@@ -398,16 +454,23 @@ class ConsoleFx extends Canvas
 
       if( new_font_size != m_font_size )
       {
-        m_font_size = new_font_size;
-
-        m_font_plain = Font.font( GetFontName(), FontWeight.NORMAL, m_font_size );
-        m_font_bold  = Font.font( GetFontName(), FontWeight.BOLD  , m_font_size );
-
-        m_gc.setFont( m_font_plain );
-
-        Init_FontMetrics();
+        Change_Font( new_font_size, m_font_name );
       }
     }
+  }
+  void Change_Font( final int new_font_size, String font_name )
+  {
+    m_font_size = new_font_size;
+
+    m_font_name  = font_name;
+    m_font_plain = Font.font( m_font_name, FontWeight.NORMAL, m_font_size );
+    m_font_bold  = Font.font( m_font_name, FontWeight.BOLD  , m_font_size );
+    m_font_changed = true;
+
+    m_gc.setFont( m_font_plain );
+    m_text.setFont( m_font_plain );
+
+    Init_FontMetrics();
   }
   public int KeysIn()
   {
@@ -536,6 +599,7 @@ class ConsoleFx extends Canvas
     m_crs_row = ROW;
     m_crs_col = COL;
   }
+
   private
   void PrintC( final int row, final int col, final char C, final Style S )
   {
@@ -554,10 +618,15 @@ class ConsoleFx extends Canvas
         // Draw foreground character:
         m_gc.setFill( Style_2_FG( S ) );
 
-        final int x_p_t = col*m_text_W; // X point text
+        if( null == m_x_p_o[ C ] )
+        {
+          Calc_X_Point_Offset( C );
+        }
+        final int x_p_t = col*m_text_W + m_x_p_o[ C ]; // X point text
         final int y_p_t = row*m_text_H; // Y point text
 
-        m_gc.fillText( m_text_chars[C], x_p_t, y_p_t );
+        // Draw char at x_p_t, y_p_t, clip to m_test_W pixels wide
+        m_gc.fillText( m_text_chars[C], x_p_t, y_p_t, m_text_W );
       }
     }
   }
@@ -604,6 +673,7 @@ class ConsoleFx extends Canvas
     CURSOR_FG       = Color.BLACK  ;  CURSOR_BG       = Color.PINK   ;
                                       CURSOR_EMPTY_BG = Color.BLACK  ;
     m_gc.setFont( m_font_plain );
+    m_text.setFont( m_font_plain );
 
     Init_Clear();
     m_vis.UpdateViews( false );
@@ -651,6 +721,7 @@ class ConsoleFx extends Canvas
     CURSOR_FG       = Color.BLACK  ;  CURSOR_BG       = Color.PINK   ;
                                       CURSOR_EMPTY_BG = Color.BLACK  ;
     m_gc.setFont( m_font_plain );
+    m_text.setFont( m_font_plain );
 
     Init_Clear();
     m_vis.UpdateViews( false );
@@ -698,6 +769,7 @@ class ConsoleFx extends Canvas
     CURSOR_FG       = Color.BLACK    ;  CURSOR_BG       = m_d_pink     ;
                                         CURSOR_EMPTY_BG = Color.BLACK  ;
     m_gc.setFont( m_font_bold );
+    m_text.setFont( m_font_bold );
 
     Init_Clear();
     m_vis.UpdateViews( false );
@@ -745,6 +817,7 @@ class ConsoleFx extends Canvas
     CURSOR_FG       = Color.BLACK    ;  CURSOR_BG       = m_d_pink     ;
                                         CURSOR_EMPTY_BG = Color.BLACK  ;
     m_gc.setFont( m_font_bold );
+    m_text.setFont( m_font_bold );
 
     Init_Clear();
     m_vis.UpdateViews( false );
@@ -844,6 +917,78 @@ class ConsoleFx extends Canvas
     }
     return C;
   }
+
+  boolean Init_Font_List()
+  {
+    boolean just_initialized_fonts = false;
+
+    if( null == m_all_fonts )
+    {
+      m_all_fonts = Font.getFontNames();
+
+      Collections.sort( m_all_fonts );
+
+      for( int k=0; k<m_all_fonts.size(); k++ )
+      {
+        String lower = m_all_fonts.get(k).toLowerCase();
+
+        m_all_fonts.set( k, lower );
+      }
+      just_initialized_fonts = true;;
+    }
+    return just_initialized_fonts;
+  }
+  void Next_Font()
+  {
+    if( Init_Font_List() )
+    {
+      // m_all_fonts_index = 0;
+    }
+    else {
+      m_all_fonts_index = (m_all_fonts_index<m_all_fonts.size()-1)
+                        ? m_all_fonts_index+1 : 0;
+    }
+    String font_name = m_all_fonts.get( m_all_fonts_index );
+
+    Change_Font( m_font_size, font_name );
+  }
+  void Prev_Font()
+  {
+    if( Init_Font_List() )
+    {
+      // m_all_fonts_index = 0;
+    }
+    else {
+      m_all_fonts_index = (0 < m_all_fonts_index) ? m_all_fonts_index-1
+                                                  : m_all_fonts.size()-1;
+    }
+    String font_name = m_all_fonts.get( m_all_fonts_index );
+
+    Change_Font( m_font_size, font_name );
+  }
+
+  void Set_Font( String font_name )
+  {
+    Init_Font_List();
+
+    String new_font_name = GetDefaultFontName();
+
+    boolean matched = false;
+
+    for( int k=0; !matched && k<m_all_fonts.size(); k++ )
+    {
+      if( m_all_fonts.get( k ).startsWith( font_name ) )
+      {
+        matched = true;
+
+        new_font_name = m_all_fonts.get( k );
+
+        m_all_fonts_index = k;
+      }
+    }
+    Change_Font( m_font_size, new_font_name );
+  }
+
   public boolean Update()
   {
     boolean output_something = false;
@@ -1084,9 +1229,15 @@ class ConsoleFx extends Canvas
   GraphicsContext  m_gc;
   Font             m_font_plain;
   Font             m_font_bold;
+  String           m_font_name;
+  boolean          m_font_changed;
+  Text             m_text = new Text();
   int              m_font_size = FONT_SIZE;
   int              m_text_W;
   int              m_text_H;
+  double           m_avg_W;
+  double           m_cnt_W;
+  Integer[]        m_x_p_o;    // X point offsets within cell
   int              m_num_rows; // Current num rows
   int              m_num_cols; // Current num rows
   int              m_siz_rows; // Allocated num rows
@@ -1121,5 +1272,8 @@ class ConsoleFx extends Canvas
   StringBuilder    m_sb = new StringBuilder();
   Clipboard        m_cb;
   ClipboardContent m_cbc;
+
+  List<String> m_all_fonts;
+  int          m_all_fonts_index;
 }
 

@@ -514,8 +514,8 @@ public class VisFx extends Application
       }
       else if( m_console.Resized() )
       {
-        // Go to m_run_resize to wait resize events to stop:
-        m_states.addFirst( m_run_resize );
+        // Go to m_run_redraw to wait redraw events to stop:
+        m_states.addFirst( m_run_redraw );
       }
       else {
         CV().m_fb.CheckFileModTime();
@@ -526,7 +526,7 @@ public class VisFx extends Application
       Handle_Exception( e );
     }
   }
-  void run_resize()
+  void run_redraw()
   {
     if( !m_console.Resized() )
     {
@@ -539,6 +539,8 @@ public class VisFx extends Application
       m_console.Update();
 
       m_states.removeFirst();
+
+      CmdLineMessage( m_console.m_font_name );
     }
   }
   void Handle_Cmd( final char c1 )
@@ -653,6 +655,10 @@ public class VisFx extends Application
     case '/': Handle_Slash();     break;
     case '.': Handle_Dot();       break;
     case '\n':Handle_Return();    break;
+    case '-': m_console.Prev_Font();break;
+    case '=': m_console.Next_Font();break;
+    case '+': m_console.Inc_Font();break;
+    case '_': m_console.Dec_Font();break;
     }
   }
 
@@ -2726,16 +2732,17 @@ public class VisFx extends Application
     else if( m_sb.toString().equals("nofull")) Exe_Colon_NoFull();
     else if( m_sb.toString().equals("dos2unix")) Exe_dos2unix();
     else if( m_sb.toString().equals("unix2dos")) Exe_unix2dos();
-    else if( m_sb.toString().startsWith("cd"))Exe_Colon_cd();
-    else if( m_sb.toString().startsWith("syn="))Exe_Colon_Syntax();
+    else if( m_sb.toString().startsWith("cd"))   Exe_Colon_cd();
+    else if( m_sb.toString().startsWith("syn="))  Exe_Colon_Syntax();
     else if( m_sb.toString().startsWith("detab="))Exe_Colon_Detab();
-    else if( m_sb2.toString().startsWith("enc")) Exe_Colon_Encoding();
+    else if( m_sb.toString().startsWith("enc="))  Exe_Colon_Encoding();
+    else if( m_sb.toString().startsWith("font=")) Exe_Colon_Font();
     else if( m_sb.charAt(0)=='w' )            Exe_Colon_w();
     else if( m_sb.charAt(0)=='b' )            Exe_Colon_b();
     else if( m_sb.charAt(0)=='n' )            Exe_Colon_n();
     else if( m_sb.charAt(0)=='e' )            Exe_Colon_e();
-    else if( m_sb.charAt(0)=='+' )            Exe_Colon_Font();
-    else if( m_sb.charAt(0)=='_' )            Exe_Colon_Font();
+  //else if( m_sb.charAt(0)=='+' )            Exe_Colon_Font();
+  //else if( m_sb.charAt(0)=='_' )            Exe_Colon_Font();
     else if( '0' <= m_sb.charAt(0)
                  && m_sb.charAt(0) <= '9' ) Exe_Colon_GoToLine();
     else {
@@ -3736,6 +3743,16 @@ public class VisFx extends Application
     }
   }
 
+  void Exe_Colon_Font()
+  {
+    String[] toks = m_sb.toString().split("=");
+
+    if( toks.length==2 )
+    {
+      m_console.Set_Font( toks[1].toLowerCase() );
+    }
+  }
+
   void Exe_Colon_MapStart()
   {
     m_console.m_map_buf.setLength( 0 );
@@ -3861,19 +3878,19 @@ public class VisFx extends Application
 //  m_frame.setUndecorated( true );
 //  m_frame.setVisible( true );
 //}
-  void Exe_Colon_Font()
-  {
-    int size_change = 0;
-
-    boolean done = false;
-    for( int k=0; !done && k<m_sb.length(); k++ )
-    {
-      if     ( m_sb.charAt(k)=='+' ) size_change++;
-      else if( m_sb.charAt(k)=='_' ) size_change--;
-      else                           done = true;
-    }
-    m_console.Change_Font_Size( size_change );
-  }
+//void Exe_Colon_Font()
+//{
+//  int size_change = 0;
+//
+//  boolean done = false;
+//  for( int k=0; !done && k<m_sb.length(); k++ )
+//  {
+//    if     ( m_sb.charAt(k)=='+' ) size_change++;
+//    else if( m_sb.charAt(k)=='_' ) size_change--;
+//    else                           done = true;
+//  }
+//  m_console.Change_Font_Size( size_change );
+//}
 
   void Exe_Colon_w()
   {
@@ -4859,7 +4876,7 @@ public class VisFx extends Application
   Thread             m_scheduler  = new Thread() { public void run() { Scheduler (); } };
   Thread             m_run_init   = new Thread() { public void run() { run_init  (); Give(); } };
   Thread             m_run_idle   = new Thread() { public void run() { run_idle  (); Give(); } };
-  Thread             m_run_resize = new Thread() { public void run() { run_resize(); Give(); } };
+  Thread             m_run_redraw = new Thread() { public void run() { run_redraw(); Give(); } };
   Thread             m_run_c      = new Thread() { public void run() { run_c     (); Give(); } };
   Thread             m_run_L_c    = new Thread() { public void run() { run_L_c   (); Give(); } };
   Thread             m_run_C      = new Thread() { public void run() { run_C     (); Give(); } };

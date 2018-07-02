@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // VI-Simplified (vis) Java Implementation                                    //
-// Copyright (c) 07 Sep 2015 Paul J. Gartside                                 //
+// Copyright (c) 28 Jun 2018 Paul J. Gartside                                 //
 ////////////////////////////////////////////////////////////////////////////////
 // Permission is hereby granted, free of charge, to any person obtaining a    //
 // copy of this software and associated documentation files (the "Software"), //
@@ -21,7 +21,7 @@
 // DEALINGS IN THE SOFTWARE.                                                  //
 ////////////////////////////////////////////////////////////////////////////////
 
-class Highlight_Bash extends Highlight_Base
+class Highlight_MIB extends Highlight_Base
 {
   enum Hi_State
   {
@@ -29,6 +29,7 @@ class Highlight_Bash extends Highlight_Base
     In_Comment    ,
     In_SingleQuote,
     In_DoubleQuote,
+    In_96_Quote   ,
     NumberBeg     ,
     NumberIn      ,
     NumberHex     ,
@@ -36,21 +37,11 @@ class Highlight_Bash extends Highlight_Base
     NumberExponent,
     Done
   }
-  Highlight_Bash( FileBuf fb )
+  Highlight_MIB( FileBuf fb )
   {
     super( fb );
   }
 
-//void Run()
-//{
-//  m_state = Hi_State.In_None;
-//  m_l = 0;
-//  m_p = 0;
-//
-//  while( Hi_State.Done != m_state ) Run_State();
-//
-//  Find_Styles_Keys();
-//}
   void Run_State()
   {
     switch( m_state )
@@ -59,6 +50,7 @@ class Highlight_Bash extends Highlight_Base
     case In_Comment    : Hi_In_Comment    (); break;
     case In_SingleQuote: Hi_In_SingleQuote(); break;
     case In_DoubleQuote: Hi_In_DoubleQuote(); break;
+    case In_96_Quote   : Hi_In_96_Quote   (); break;
     case NumberBeg     : Hi_NumberBeg     (); break;
     case NumberIn      : Hi_NumberIn      (); break;
     case NumberHex     : Hi_NumberHex     (); break;
@@ -89,44 +81,22 @@ class Highlight_Bash extends Highlight_Base
                      , final char c0 )
   {
     return (c1==0    && c0==qt ) //< Quote at beginning of line
-        || (c1!='\\' && c0==qt ) //< Non-escapted quote
-        || (c2=='\\' && c1=='\\' && c0==qt ); //< Escapted escape before quote
-  }
-  boolean OneVarType( final char c0 )
-  {
-    return c0=='&' || c0=='#'
-        || c0=='.' || c0=='*'
-        || c0=='[' || c0==']';
+        || (c1!='\\' && c0==qt ) //< Non-escaped quote
+        || (c2=='\\' && c1=='\\' && c0==qt ); //< Escaped escape before quote
   }
   boolean OneControl( final char c0 )
   {
-    return c0=='=' || c0=='@'
-        || c0=='^' || c0=='~'
-        || c0==':' || c0=='%'
-        || c0=='+' || c0=='-'
-        || c0=='<' || c0=='>'
-        || c0=='!' || c0=='?'
-        || c0=='(' || c0==')'
+    return c0=='(' || c0==')'
         || c0=='{' || c0=='}'
         || c0==',' || c0==';'
-        || c0=='/' || c0=='|';
-  }
-  boolean TwoControl( final char c1, final char c0 )
-  {
-    return c1=='=' && c0=='='
-        || c1=='&' && c0=='&'
-        || c1=='|' && c0=='|'
-        || c1=='|' && c0=='='
-        || c1=='&' && c0=='='
-        || c1=='!' && c0=='='
-        || c1=='+' && c0=='='
-        || c1=='-' && c0=='=';
+        || c0=='|';
   }
   void Hi_In_None()
   {
     for( ; m_l<m_fb.NumLines(); m_l++ )
     {
       final int  LL = m_fb.LineLen( m_l );
+      final Line lr = m_fb.GetLine( m_l );
  
       for( ; m_p<LL; m_p++ )
       {
@@ -136,30 +106,27 @@ class Highlight_Bash extends Highlight_Base
         final char c2 = (1<m_p) ? m_fb.Get( m_l, m_p-2 ) : 0;
         final char c1 = (0<m_p) ? m_fb.Get( m_l, m_p-1 ) : 0;
         final char c0 =           m_fb.Get( m_l, m_p );
-        final boolean comment = c0=='#' && (0==m_p || c1!='$');
 
-        if     ( comment )                    { m_state = Hi_State.In_Comment; }
+        if     ( c1 == '-' && c0=='-'       ) { m_state = Hi_State.In_Comment; }
         else if( Quote_Start('\'',c2,c1,c0) ) { m_state = Hi_State.In_SingleQuote; }
         else if( Quote_Start('\"',c2,c1,c0) ) { m_state = Hi_State.In_DoubleQuote; }
+        else if( Quote_Start('`' ,c2,c1,c0) ) { m_state = Hi_State.In_96_Quote; }
         else if( !Utils.IsIdent(c1)
                && Character.isDigit(c0) ) { m_state = Hi_State.NumberBeg; }
  
-        else if( TwoControl( c1, c0 ) )
+        else if( c2==':' && c1==':' && c0=='=' )
         {
-           m_fb.SetSyntaxStyle( m_l, m_p-1, Highlight_Type.CONTROL.val );
-           m_fb.SetSyntaxStyle( m_l, m_p  , Highlight_Type.CONTROL.val );
-        }
-        else if( c0=='$' )
-        {
-          m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.DEFINE.val );
-        }
-        else if( OneVarType( c0 ) )
-        {
-           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.VARTYPE.val );
+          m_fb.SetSyntaxStyle( m_l, m_p-2, Highlight_Type.CONTROL.val );
+          m_fb.SetSyntaxStyle( m_l, m_p-1, Highlight_Type.CONTROL.val );
+          m_fb.SetSyntaxStyle( m_l, m_p  , Highlight_Type.VARTYPE.val );
         }
         else if( OneControl( c0 ) )
         {
           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONTROL.val );
+        }
+        else if( c0=='.' )
+        {
+          m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
         }
         else if( c0 < 32 || 126 < c0 )
         {
@@ -176,6 +143,8 @@ class Highlight_Bash extends Highlight_Base
   {
     final int LL = m_fb.LineLen( m_l );
  
+    if( 0 < m_p ) m_p--;
+
     for( ; m_p<LL; m_p++ )
     {
       m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.COMMENT.val );
@@ -254,6 +223,40 @@ class Highlight_Bash extends Highlight_Base
     m_state = Hi_State.Done;
   }
 
+  void Hi_In_96_Quote()
+  {
+    m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+    m_p++;
+    for( ; m_l<m_fb.NumLines(); m_l++ )
+    {
+      final int LL = m_fb.LineLen( m_l );
+
+      boolean slash_escaped = false;
+      for( ; m_p<LL; m_p++ )
+      {
+        final char c1 = 0<m_p ? m_fb.Get( m_l, m_p-1 ) : m_fb.Get( m_l, m_p );
+        final char c0 = 0<m_p ? m_fb.Get( m_l, m_p   ) : 0;
+
+        if( (c1=='`' && c0==0   )
+         || (c1!='\\' && c0=='`')
+         || (c1=='\\' && c0=='`' && slash_escaped) )
+        {
+          m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+          m_p++;
+          m_state = Hi_State.In_None;
+        }
+        else {
+          if( c1=='\\' && c0=='\\' ) slash_escaped = true;
+          else                       slash_escaped = false;
+
+          m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+        }
+        if( Hi_State.In_DoubleQuote != m_state ) return;
+      }
+      m_p = 0;
+    }
+    m_state = Hi_State.Done;
+  }
 
   void Hi_NumberBeg()
   {
@@ -378,10 +381,6 @@ class Highlight_Bash extends Highlight_Base
     }
   }
 
-//void Find_Styles_Keys()
-//{
-//  Hi_FindKey( m_HiPairs );
-//}
   // Find keys starting on st up to but not including fn line
   void Find_Styles_Keys_In_Range( final CrsPos st
                                 , final int    fn )
@@ -391,78 +390,72 @@ class Highlight_Bash extends Highlight_Base
 
   HiKeyVal[] m_HiPairs =
   {
-    new HiKeyVal( "if"      , Highlight_Type.CONTROL ),
-    new HiKeyVal( "fi"      , Highlight_Type.CONTROL ),
-    new HiKeyVal( "else"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "elsif"   , Highlight_Type.CONTROL ),
-    new HiKeyVal( "for"     , Highlight_Type.CONTROL ),
-    new HiKeyVal( "done"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "while"   , Highlight_Type.CONTROL ),
-    new HiKeyVal( "do"      , Highlight_Type.CONTROL ),
-    new HiKeyVal( "return"  , Highlight_Type.CONTROL ),
-    new HiKeyVal( "switch"  , Highlight_Type.CONTROL ),
-    new HiKeyVal( "case"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "break"   , Highlight_Type.CONTROL ),
-    new HiKeyVal( "then"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "bg"      , Highlight_Type.CONTROL ),
-    new HiKeyVal( "bind"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "builtin" , Highlight_Type.CONTROL ),
-    new HiKeyVal( "caller"  , Highlight_Type.CONTROL ),
-    new HiKeyVal( "cd"      , Highlight_Type.CONTROL ),
-    new HiKeyVal( "command" , Highlight_Type.CONTROL ),
-    new HiKeyVal( "compgen" , Highlight_Type.CONTROL ),
-    new HiKeyVal( "complete", Highlight_Type.CONTROL ),
-    new HiKeyVal( "compopt" , Highlight_Type.CONTROL ),
-    new HiKeyVal( "continue", Highlight_Type.CONTROL ),
-    new HiKeyVal( "echo"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "enable"  , Highlight_Type.CONTROL ),
-    new HiKeyVal( "eval"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "exec"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "exit"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "export"  , Highlight_Type.CONTROL ),
-    new HiKeyVal( "fc"      , Highlight_Type.CONTROL ),
-    new HiKeyVal( "fg"      , Highlight_Type.CONTROL ),
-    new HiKeyVal( "hash"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "help"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "history" , Highlight_Type.CONTROL ),
-    new HiKeyVal( "jobs"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "kill"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "logout"  , Highlight_Type.CONTROL ),
-    new HiKeyVal( "popd"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "printf"  , Highlight_Type.CONTROL ),
-    new HiKeyVal( "pushd"   , Highlight_Type.CONTROL ),
-    new HiKeyVal( "pwd"     , Highlight_Type.CONTROL ),
-    new HiKeyVal( "return"  , Highlight_Type.CONTROL ),
-    new HiKeyVal( "set"     , Highlight_Type.CONTROL ),
-    new HiKeyVal( "shift"   , Highlight_Type.CONTROL ),
-    new HiKeyVal( "shopt"   , Highlight_Type.CONTROL ),
-    new HiKeyVal( "source"  , Highlight_Type.CONTROL ),
-    new HiKeyVal( "suspend" , Highlight_Type.CONTROL ),
-    new HiKeyVal( "test"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "times"   , Highlight_Type.CONTROL ),
-    new HiKeyVal( "trap"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "ulimit"  , Highlight_Type.CONTROL ),
-    new HiKeyVal( "umask"   , Highlight_Type.CONTROL ),
-    new HiKeyVal( "unalias" , Highlight_Type.CONTROL ),
-    new HiKeyVal( "unset"   , Highlight_Type.CONTROL ),
-    new HiKeyVal( "wait"    , Highlight_Type.CONTROL ),
+    new HiKeyVal("OBJECT IDENTIFIER", Highlight_Type.VARTYPE ),
+    new HiKeyVal("MODULE-COMPLIANCE", Highlight_Type.VARTYPE ),
+    new HiKeyVal("MANDATORY-GROUPS" , Highlight_Type.CONTROL ),
 
-    new HiKeyVal( "declare" , Highlight_Type.VARTYPE ),
-    new HiKeyVal( "dirs"    , Highlight_Type.VARTYPE ),
-    new HiKeyVal( "disown"  , Highlight_Type.VARTYPE ),
-    new HiKeyVal( "getopts" , Highlight_Type.VARTYPE ),
-    new HiKeyVal( "let"     , Highlight_Type.VARTYPE ),
-    new HiKeyVal( "local"   , Highlight_Type.VARTYPE ),
-    new HiKeyVal( "mapfile" , Highlight_Type.VARTYPE ),
-    new HiKeyVal( "read"    , Highlight_Type.VARTYPE ),
-    new HiKeyVal( "readonly", Highlight_Type.VARTYPE ),
-    new HiKeyVal( "type"    , Highlight_Type.VARTYPE ),
-    new HiKeyVal( "typeset" , Highlight_Type.VARTYPE ),
+    new HiKeyVal("SYNTAX"     , Highlight_Type.CONTROL ),
+    new HiKeyVal("UNITS"      , Highlight_Type.CONTROL ),
+    new HiKeyVal("MAX-ACCESS" , Highlight_Type.CONTROL ),
+    new HiKeyVal("BEGIN"      , Highlight_Type.CONTROL ),
+    new HiKeyVal("FROM"       , Highlight_Type.CONTROL ),
+    new HiKeyVal("END"        , Highlight_Type.CONTROL ),
+    new HiKeyVal("IMPORTS"    , Highlight_Type.CONTROL ),
+    new HiKeyVal("OBJECT-TYPE", Highlight_Type.CONTROL ),
+    new HiKeyVal("STATUS"     , Highlight_Type.CONTROL ),
+    new HiKeyVal("INDEX"      , Highlight_Type.CONTROL ),
+    new HiKeyVal("DEFVAL"     , Highlight_Type.CONTROL ),
+    new HiKeyVal("DISPLAY-HINT", Highlight_Type.CONTROL ),
+    new HiKeyVal("DESCRIPTION", Highlight_Type.CONTROL ),
+    new HiKeyVal("DEFINITIONS", Highlight_Type.CONTROL ),
+    new HiKeyVal("REVISION"   , Highlight_Type.CONTROL ),
+    new HiKeyVal("OBJECTS"    , Highlight_Type.CONTROL ),
+    new HiKeyVal("OBJECT-GROUP", Highlight_Type.CONTROL ),
+    new HiKeyVal("OBJECT"     , Highlight_Type.CONTROL ),
+    new HiKeyVal("REFERENCE"  , Highlight_Type.VARTYPE ),
+    new HiKeyVal("WRITE-SYNTAX", Highlight_Type.CONTROL ),
+    new HiKeyVal("NOTIFICATIONS", Highlight_Type.CONTROL ),
+    new HiKeyVal("LAST-UPDATED", Highlight_Type.CONTROL ),
+    new HiKeyVal("ORGANIZATION", Highlight_Type.CONTROL ),
+    new HiKeyVal("CONTACT-INFO", Highlight_Type.CONTROL ),
 
-    new HiKeyVal( "false"   , Highlight_Type.CONST   ),
-    new HiKeyVal( "true"    , Highlight_Type.CONST   ),
-
-    new HiKeyVal( "alias"   , Highlight_Type.DEFINE  ),
+    new HiKeyVal("Counter32"  , Highlight_Type.VARTYPE ),
+    new HiKeyVal("Counter64"  , Highlight_Type.VARTYPE ),
+    new HiKeyVal("INTEGER"    , Highlight_Type.VARTYPE ),
+    new HiKeyVal("Integer32"  , Highlight_Type.VARTYPE ),
+    new HiKeyVal("IpAddress"  , Highlight_Type.VARTYPE ),
+    new HiKeyVal("InetAddress", Highlight_Type.VARTYPE ),
+    new HiKeyVal("InetAddressType", Highlight_Type.VARTYPE ),
+    new HiKeyVal("Unsigned32" , Highlight_Type.VARTYPE ),
+    new HiKeyVal("Gauge32"    , Highlight_Type.VARTYPE ),
+    new HiKeyVal("InterfaceIndex", Highlight_Type.VARTYPE ),
+    new HiKeyVal("MacAddress" , Highlight_Type.VARTYPE ),
+    new HiKeyVal("TimeTicks"  , Highlight_Type.VARTYPE ),
+    new HiKeyVal("TimeStamp"  , Highlight_Type.VARTYPE ),
+  //new HiKeyVal("Timeout"    , Highlight_Type.VARTYPE ),
+    new HiKeyVal("SnmpAdminString", Highlight_Type.VARTYPE ),
+    new HiKeyVal("BITS"       , Highlight_Type.VARTYPE ),
+    new HiKeyVal("OCTET"      , Highlight_Type.VARTYPE ),
+    new HiKeyVal("SIZE"       , Highlight_Type.VARTYPE ),
+    new HiKeyVal("STRING"     , Highlight_Type.VARTYPE ),
+    new HiKeyVal("SEQUENCE OF", Highlight_Type.VARTYPE ),
+    new HiKeyVal("SEQUENCE"   , Highlight_Type.CONTROL ),
+    new HiKeyVal("IDENTIFIER" , Highlight_Type.VARTYPE ),
+    new HiKeyVal("MIN-ACCESS" , Highlight_Type.VARTYPE ),
+    new HiKeyVal("MODULE-IDENTITY", Highlight_Type.VARTYPE ),
+    new HiKeyVal("MODULE"     , Highlight_Type.VARTYPE ),
+    new HiKeyVal("TEXTUAL-CONVENTION", Highlight_Type.VARTYPE ),
+    new HiKeyVal("NOTIFICATION-GROUP", Highlight_Type.VARTYPE ),
+    new HiKeyVal("NOTIFICATION-TYPE", Highlight_Type.VARTYPE ),
+    new HiKeyVal("GROUP"      , Highlight_Type.VARTYPE ),
+    new HiKeyVal("RowStatus", Highlight_Type.VARTYPE ),
+    new HiKeyVal("TruthValue", Highlight_Type.VARTYPE ),
+    new HiKeyVal("current"    , Highlight_Type.VARTYPE ),
+    new HiKeyVal("read-only"  , Highlight_Type.VARTYPE ),
+    new HiKeyVal("read-create", Highlight_Type.VARTYPE ),
+    new HiKeyVal("read-write" , Highlight_Type.VARTYPE ),
+    new HiKeyVal("not-accessible" , Highlight_Type.VARTYPE ),
+  //new HiKeyVal("", Highlight_Type.VARTYPE ),
   };
 
   Hi_State m_state = Hi_State.In_None;

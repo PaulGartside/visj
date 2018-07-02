@@ -35,6 +35,7 @@ enum File_Type
   JAVA,
   JS,
   MAKE,
+  MIB,
   ODB,
   PY,
   SQL,

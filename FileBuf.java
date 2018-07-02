@@ -142,6 +142,7 @@ class FileBuf
           || Find_File_Type_Java()
           || Find_File_Type_JS()
           || Find_File_Type_Make()
+          || Find_File_Type_MIB()
           || Find_File_Type_Python()
           || Find_File_Type_SQL ()
           || Find_File_Type_STL ()
@@ -284,6 +285,21 @@ class FileBuf
     {
       m_file_type = File_Type.MAKE;
       m_Hi = new Highlight_Make( this );
+      return true;
+    }
+    return false;
+  }
+  boolean Find_File_Type_MIB()
+  {
+    if( m_fname.endsWith(".mib"    )
+     || m_fname.endsWith(".mib.new")
+     || m_fname.endsWith(".mib.old")
+     || m_fname.endsWith("-MIB.txt")
+     || m_fname.endsWith("-MIB.txt.new")
+     || m_fname.endsWith("-MIB.txt.old") )
+    {
+      m_file_type = File_Type.MIB;
+      m_Hi = new Highlight_MIB( this );
       return true;
     }
     return false;
@@ -443,6 +459,11 @@ class FileBuf
       {
         m_file_type = File_Type.MAKE;
         m_Hi = new Highlight_Make( this );
+      }
+      else if( syn.equals("mib") )
+      {
+        m_file_type = File_Type.MIB;
+        m_Hi = new Highlight_MIB( this );
       }
       else if( syn.equals("py") )
       {
