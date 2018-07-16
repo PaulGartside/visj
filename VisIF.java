@@ -44,10 +44,11 @@ interface VisIF
   static final String COLON_BUF_NAME = "COLON_BUFFER";
   static final String SLASH_BUF_NAME = "SLASH_BUFFER";
 
-  static final int MAX_WINS   = 8;  // Maximum number of sub-windows
+  static final int MAX_WINS = 8;  // Maximum number of window panes
 
   View CV();
 
+  void    UpdateViewsOfFile( final FileBuf fb );
   boolean Update_Change_Statuses();
   void    CmdLineMessage( String msg );
   boolean GoToBuffer_Fname( String fname );

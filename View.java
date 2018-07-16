@@ -355,7 +355,7 @@ class View
   }
   void PrintFileLine()
   {
-    StringBuilder buf = new StringBuilder( m_fb.m_fname );
+    StringBuilder buf = new StringBuilder( m_fb.m_pname );
 
     final int WC = WorkingCols();
     final int FILE_NAME_LEN = buf.length();
@@ -521,7 +521,7 @@ class View
     // Internal line number is 1 less than user line number:
     final int NCL = user_line_num - 1; // New cursor line number
 
-    if( m_fb.NumLines() <= NCL )
+    if( NCL == CrsLine() || m_fb.NumLines() <= NCL )
     {
       // Cant move to NCL so just put cursor back where is was
       PrintCursor(); // Does m_console.Update()
@@ -2635,10 +2635,11 @@ class View
   void GoToOppositeBracket()
   {
     MoveInBounds();
+
     final int NUM_LINES = m_fb.NumLines();
-    final int CL = CrsLine();
-    final int CC = CrsChar();
-    final int LL = m_fb.LineLen( CL );
+    final int CL        = CrsLine();
+    final int CC        = CrsChar();
+    final int LL        = m_fb.LineLen( CL );
 
     if( 0==NUM_LINES || 0==LL ) return;
 

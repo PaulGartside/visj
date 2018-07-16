@@ -354,7 +354,7 @@ public class VisSw implements VisIF
 
     for( int k=0; !already_have_file && k<m_files.size(); k++ )
     {
-      if( m_files.get( k ).m_fname.equals( file_name ) )
+      if( m_files.get( k ).m_pname.equals( file_name ) )
       {
         already_have_file = true;
 
@@ -367,7 +367,7 @@ public class VisSw implements VisIF
   {
     for( int k=0; k<m_files.size(); k++ )
     {
-      if( full_fname.equals( m_files.get( k ).m_fname ) )
+      if( full_fname.equals( m_files.get( k ).m_pname ) )
       {
         return k;
       }
@@ -3042,17 +3042,17 @@ public class VisSw implements VisIF
         v0 = DoDiff_FindRegFileView( fb1, fb0, 0, v0 );
       }
       else {
-        if( !fb0.m_hname.equals(SHELL_BUF_NAME)
-         && !Paths.get( fb0.m_fname ).toFile().exists() )
+        if( !fb0.m_fname.equals(SHELL_BUF_NAME)
+         && !Paths.get( fb0.m_pname ).toFile().exists() )
         {
           ok = false;
-          Window_Message("\n"+ fb0.m_fname + " does not exist\n\n");
+          Window_Message("\n"+ fb0.m_pname + " does not exist\n\n");
         }
-        if( !fb1.m_hname.equals(SHELL_BUF_NAME)
-         && !Paths.get("\n"+ fb1.m_fname ).toFile().exists() )
+        if( !fb1.m_fname.equals(SHELL_BUF_NAME)
+         && !Paths.get("\n"+ fb1.m_pname ).toFile().exists() )
         {
           ok = false;
-          Window_Message("\n"+ fb1.m_fname + " does not exist\n\n");
+          Window_Message("\n"+ fb1.m_pname + " does not exist\n\n");
         }
       }
       if( ok )
@@ -3073,7 +3073,7 @@ public class VisSw implements VisIF
                              , final int     win_idx
                              ,       View    pv )
   {
-    StringBuilder possible_fname = new StringBuilder( pfb_dir.m_fname );
+    StringBuilder possible_fname = new StringBuilder( pfb_dir.m_pname );
     StringBuilder fname_extension = new StringBuilder();
 
     final int BASE_LEN = possible_fname.length();
@@ -3084,11 +3084,11 @@ public class VisSw implements VisIF
     String split_delim = Utils.DIR_DELIM_STR;
     if( split_delim.equals("\\") ) split_delim = "\\\\";
 
-    String[] path_parts = pfb_reg.m_fname.split( split_delim );
+    String[] path_parts = pfb_reg.m_pname.split( split_delim );
 
     for( int k=path_parts.length-1; 0<=k; k-- )
     {
-      // Revert back to pfb_dir.m_fname:
+      // Revert back to pfb_dir.m_pname:
       possible_fname.setLength( BASE_LEN );
 
       if( 0<fname_extension.length()
@@ -3190,7 +3190,7 @@ public class VisSw implements VisIF
 
     if( tokens.length == 1 ) // ":cd" to location of current file
     {
-      m_cwd = CV().m_fb.m_pname;
+      m_cwd = CV().m_fb.m_dname;
 
       CmdLineMessage( m_cwd );
     }

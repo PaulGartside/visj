@@ -45,11 +45,34 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 class FileBuf
 {
+//// fname should contain full path and filename
+//FileBuf( VisIF vis, String fname, final boolean mutable )
+//{
+//  m_vis       = vis;
+//  m_path      = FileSystems.getDefault().getPath( fname );
+//  m_isDir     = Files.isDirectory( m_path );
+//  m_mutable   = m_isDir ? false : mutable;
+//
+//  if( m_isDir ) m_dname = fname;
+//  else {
+//    Path parent = m_path.getParent();
+//    if( null != parent ) m_dname = parent.normalize().toString();
+//    else {
+//      // fname passed in was not full path filename, so use process path
+//      m_dname = Utils.GetCWD();
+//        fname = m_dname + fname;
+//    }
+//  }
+//  m_pname = fname;
+//  m_fname = Utils.Pname_2_Fname( m_pname );
+//
+//  Find_File_Type_Suffix();
+//}
   // fname should contain full path and filename
   FileBuf( VisIF vis, String fname, final boolean mutable )
   {
@@ -58,18 +81,22 @@ class FileBuf
     m_isDir     = Files.isDirectory( m_path );
     m_mutable   = m_isDir ? false : mutable;
 
-    if( m_isDir ) m_pname = fname;
+    if( m_isDir )
+    {
+      m_dname = Utils.Append_Dir_Delim( fname );
+      fname = m_dname;
+    }
     else {
       Path parent = m_path.getParent();
-      if( null != parent ) m_pname = parent.normalize().toString();
+      if( null != parent ) m_dname = parent.normalize().toString();
       else {
         // fname passed in was not full path filename, so use process path
-        m_pname = Utils.GetCWD();
-          fname = m_pname + fname;
+        m_dname = Utils.GetCWD();
+          fname = m_dname + fname;
       }
     }
-    m_fname = fname;
-    m_hname = Utils.FnameHead( m_fname );
+    m_pname = fname;
+    m_fname = Utils.Pname_2_Fname( m_pname );
 
     Find_File_Type_Suffix();
   }
@@ -83,18 +110,22 @@ class FileBuf
     m_isDir     = Files.isDirectory( m_path );
     m_mutable   = m_isDir ? false : true;
 
-    if( m_isDir ) m_pname = fname;
+    if( m_isDir )
+    {
+      m_dname = Utils.Append_Dir_Delim( fname );
+      fname = m_dname;
+    }
     else {
       Path parent = m_path.getParent();
-      if( null != parent ) m_pname = parent.normalize().toString();
+      if( null != parent ) m_dname = parent.normalize().toString();
       else {
         // fname passed in was not full path filename, so use process path
-        m_pname = Utils.GetCWD();
-          fname = m_pname + fname;
+        m_dname = Utils.GetCWD();
+          fname = m_dname + fname;
       }
     }
-    m_fname = fname;
-    m_hname = Utils.FnameHead( m_fname );
+    m_pname = fname;
+    m_fname = Utils.Pname_2_Fname( m_pname );
 
     Find_File_Type_Suffix();
 
@@ -127,7 +158,7 @@ class FileBuf
       m_file_type = File_Type.DIR;
       m_Hi = new Highlight_Dir( this );
     }
-    else if( !m_found_BE && m_fname.equals( m_pname + m_vis.EDIT_BUF_NAME ) )
+    else if( !m_found_BE && m_pname.equals( m_dname + m_vis.EDIT_BUF_NAME ) )
     {
       m_found_BE = true;
       m_file_type = File_Type.BUFFER_EDITOR;
@@ -157,17 +188,17 @@ class FileBuf
   }
   boolean Find_File_Type_Bash()
   {
-    if( m_fname.endsWith(".sh"      )
-     || m_fname.endsWith(".sh.new"  )
-     || m_fname.endsWith(".sh.old"  )
-     || m_fname.endsWith(".bash"    )
-     || m_fname.endsWith(".bash.new")
-     || m_fname.endsWith(".bash.old")
-     || m_hname.startsWith(".alias")
-     || m_hname.startsWith(".bash_profile")
-     || m_hname.startsWith(".bash_logout")
-     || m_hname.startsWith(".bashrc")
-     || m_hname.startsWith(".profile") )
+    if( m_pname.endsWith(".sh"      )
+     || m_pname.endsWith(".sh.new"  )
+     || m_pname.endsWith(".sh.old"  )
+     || m_pname.endsWith(".bash"    )
+     || m_pname.endsWith(".bash.new")
+     || m_pname.endsWith(".bash.old")
+     || m_fname.startsWith(".alias")
+     || m_fname.startsWith(".bash_profile")
+     || m_fname.startsWith(".bash_logout")
+     || m_fname.startsWith(".bashrc")
+     || m_fname.startsWith(".profile") )
     {
       m_file_type = File_Type.BASH;
       m_Hi = new Highlight_Bash( this );
@@ -177,27 +208,27 @@ class FileBuf
   }
   boolean Find_File_Type_CPP()
   {
-    if( m_fname.endsWith(".h"      )
-     || m_fname.endsWith(".h.new"  )
-     || m_fname.endsWith(".h.old"  )
-     || m_fname.endsWith(".c"      )
-     || m_fname.endsWith(".c.new"  )
-     || m_fname.endsWith(".c.old"  )
-     || m_fname.endsWith(".hh"     )
-     || m_fname.endsWith(".hh.new" )
-     || m_fname.endsWith(".hh.old" )
-     || m_fname.endsWith(".cc"     )
-     || m_fname.endsWith(".cc.new" )
-     || m_fname.endsWith(".cc.old" )
-     || m_fname.endsWith(".hpp"    )
-     || m_fname.endsWith(".hpp.new")
-     || m_fname.endsWith(".hpp.old")
-     || m_fname.endsWith(".cpp"    )
-     || m_fname.endsWith(".cpp.new")
-     || m_fname.endsWith(".cpp.old")
-     || m_fname.endsWith(".cxx"    )
-     || m_fname.endsWith(".cxx.new")
-     || m_fname.endsWith(".cxx.old") )
+    if( m_pname.endsWith(".h"      )
+     || m_pname.endsWith(".h.new"  )
+     || m_pname.endsWith(".h.old"  )
+     || m_pname.endsWith(".c"      )
+     || m_pname.endsWith(".c.new"  )
+     || m_pname.endsWith(".c.old"  )
+     || m_pname.endsWith(".hh"     )
+     || m_pname.endsWith(".hh.new" )
+     || m_pname.endsWith(".hh.old" )
+     || m_pname.endsWith(".cc"     )
+     || m_pname.endsWith(".cc.new" )
+     || m_pname.endsWith(".cc.old" )
+     || m_pname.endsWith(".hpp"    )
+     || m_pname.endsWith(".hpp.new")
+     || m_pname.endsWith(".hpp.old")
+     || m_pname.endsWith(".cpp"    )
+     || m_pname.endsWith(".cpp.new")
+     || m_pname.endsWith(".cpp.old")
+     || m_pname.endsWith(".cxx"    )
+     || m_pname.endsWith(".cxx.new")
+     || m_pname.endsWith(".cxx.old") )
     {
       m_file_type = File_Type.CPP;
       m_Hi = new Highlight_CPP( this );
@@ -207,9 +238,9 @@ class FileBuf
   }
   boolean Find_File_Type_CS()
   {
-    if( m_fname.endsWith(".cs"    )
-     || m_fname.endsWith(".cs.new")
-     || m_fname.endsWith(".cs.old") )
+    if( m_pname.endsWith(".cs"    )
+     || m_pname.endsWith(".cs.new")
+     || m_pname.endsWith(".cs.old") )
     {
       m_file_type = File_Type.CS;
       m_Hi = new Highlight_CS( this );
@@ -219,9 +250,9 @@ class FileBuf
   }
   boolean Find_File_Type_IDL()
   {
-    if( m_fname.endsWith(".idl"    )
-     || m_fname.endsWith(".idl.new")
-     || m_fname.endsWith(".idl.old") )
+    if( m_pname.endsWith(".idl"    )
+     || m_pname.endsWith(".idl.new")
+     || m_pname.endsWith(".idl.old") )
     {
       m_file_type = File_Type.IDL;
       m_Hi = new Highlight_IDL( this );
@@ -231,12 +262,12 @@ class FileBuf
   }
   boolean Find_File_Type_HTML()
   {
-    if( m_fname.endsWith(".html"    )
-     || m_fname.endsWith(".html.new")
-     || m_fname.endsWith(".html.old")
-     || m_fname.endsWith(".htm"    )
-     || m_fname.endsWith(".htm.new")
-     || m_fname.endsWith(".htm.old") )
+    if( m_pname.endsWith(".html"    )
+     || m_pname.endsWith(".html.new")
+     || m_pname.endsWith(".html.old")
+     || m_pname.endsWith(".htm"    )
+     || m_pname.endsWith(".htm.new")
+     || m_pname.endsWith(".htm.old") )
     {
       m_file_type = File_Type.HTML;
       m_Hi = new Highlight_HTML( this );
@@ -246,9 +277,9 @@ class FileBuf
   }
   boolean Find_File_Type_Java()
   {
-    if( m_fname.endsWith(".java"    )
-     || m_fname.endsWith(".java.new")
-     || m_fname.endsWith(".java.old") )
+    if( m_pname.endsWith(".java"    )
+     || m_pname.endsWith(".java.new")
+     || m_pname.endsWith(".java.old") )
     {
       m_file_type = File_Type.JAVA;
       m_Hi = new Highlight_Java( this );
@@ -258,9 +289,9 @@ class FileBuf
   }
   boolean Find_File_Type_JS()
   {
-    if( m_fname.endsWith(".js"    )
-     || m_fname.endsWith(".js.new")
-     || m_fname.endsWith(".js.old") )
+    if( m_pname.endsWith(".js"    )
+     || m_pname.endsWith(".js.new")
+     || m_pname.endsWith(".js.old") )
     {
       m_file_type = File_Type.JS;
       m_Hi = new Highlight_JS( this );
@@ -270,18 +301,18 @@ class FileBuf
   }
   boolean Find_File_Type_Make()
   {
-    if( m_fname.endsWith(".Make"    )
-     || m_fname.endsWith(".make"    )
-     || m_fname.endsWith(".Make.new")
-     || m_fname.endsWith(".make.new")
-     || m_fname.endsWith(".Make.old")
-     || m_fname.endsWith(".make.old")
-     || m_fname.endsWith("Makefile")
-     || m_fname.endsWith("makefile")
-     || m_fname.endsWith("Makefile.new")
-     || m_fname.endsWith("makefile.new")
-     || m_fname.endsWith("Makefile.old")
-     || m_fname.endsWith("makefile.old") )
+    if( m_pname.endsWith(".Make"    )
+     || m_pname.endsWith(".make"    )
+     || m_pname.endsWith(".Make.new")
+     || m_pname.endsWith(".make.new")
+     || m_pname.endsWith(".Make.old")
+     || m_pname.endsWith(".make.old")
+     || m_pname.endsWith("Makefile")
+     || m_pname.endsWith("makefile")
+     || m_pname.endsWith("Makefile.new")
+     || m_pname.endsWith("makefile.new")
+     || m_pname.endsWith("Makefile.old")
+     || m_pname.endsWith("makefile.old") )
     {
       m_file_type = File_Type.MAKE;
       m_Hi = new Highlight_Make( this );
@@ -291,12 +322,12 @@ class FileBuf
   }
   boolean Find_File_Type_MIB()
   {
-    if( m_fname.endsWith(".mib"    )
-     || m_fname.endsWith(".mib.new")
-     || m_fname.endsWith(".mib.old")
-     || m_fname.endsWith("-MIB.txt")
-     || m_fname.endsWith("-MIB.txt.new")
-     || m_fname.endsWith("-MIB.txt.old") )
+    if( m_pname.endsWith(".mib"    )
+     || m_pname.endsWith(".mib.new")
+     || m_pname.endsWith(".mib.old")
+     || m_pname.endsWith("-MIB.txt")
+     || m_pname.endsWith("-MIB.txt.new")
+     || m_pname.endsWith("-MIB.txt.old") )
     {
       m_file_type = File_Type.MIB;
       m_Hi = new Highlight_MIB( this );
@@ -306,12 +337,12 @@ class FileBuf
   }
   boolean Find_File_Type_STL()
   {
-    if( m_fname.endsWith(".stl"    )
-     || m_fname.endsWith(".stl.new")
-     || m_fname.endsWith(".stl.old")
-     || m_fname.endsWith(".ste"    )
-     || m_fname.endsWith(".ste.new")
-     || m_fname.endsWith(".ste.old") )
+    if( m_pname.endsWith(".stl"    )
+     || m_pname.endsWith(".stl.new")
+     || m_pname.endsWith(".stl.old")
+     || m_pname.endsWith(".ste"    )
+     || m_pname.endsWith(".ste.new")
+     || m_pname.endsWith(".ste.old") )
     {
       m_file_type = File_Type.STL;
       m_Hi = new Highlight_STL( this );
@@ -321,9 +352,9 @@ class FileBuf
   }
   boolean Find_File_Type_Python()
   {
-    if( m_fname.endsWith(".py"    )
-     || m_fname.endsWith(".py.new")
-     || m_fname.endsWith(".py.old") )
+    if( m_pname.endsWith(".py"    )
+     || m_pname.endsWith(".py.new")
+     || m_pname.endsWith(".py.old") )
     {
       m_file_type = File_Type.PY;
       m_Hi = new Highlight_Python( this );
@@ -333,9 +364,9 @@ class FileBuf
   }
   boolean Find_File_Type_SQL()
   {
-    if( m_fname.endsWith(".sql"    )
-     || m_fname.endsWith(".sql.new")
-     || m_fname.endsWith(".sql.old") )
+    if( m_pname.endsWith(".sql"    )
+     || m_pname.endsWith(".sql.new")
+     || m_pname.endsWith(".sql.old") )
     {
       m_file_type = File_Type.SQL;
       m_Hi = new Highlight_SQL( this );
@@ -345,12 +376,12 @@ class FileBuf
   }
   boolean Find_File_Type_XML()
   {
-    if( m_fname.endsWith(".xml"    )
-     || m_fname.endsWith(".xml.new")
-     || m_fname.endsWith(".xml.old")
-     || m_fname.endsWith(".xml.in"    )
-     || m_fname.endsWith(".xml.in.new")
-     || m_fname.endsWith(".xml.in.old") )
+    if( m_pname.endsWith(".xml"    )
+     || m_pname.endsWith(".xml.new")
+     || m_pname.endsWith(".xml.old")
+     || m_pname.endsWith(".xml.in"    )
+     || m_pname.endsWith(".xml.in.new")
+     || m_pname.endsWith(".xml.in.old") )
     {
       m_file_type = File_Type.XML;
       m_Hi = new Highlight_XML( this );
@@ -360,15 +391,15 @@ class FileBuf
   }
   boolean Find_File_Type_CMAKE()
   {
-    if( m_fname.endsWith(".cmake"    )
-     || m_fname.endsWith(".cmake.new")
-     || m_fname.endsWith(".cmake.old")
-     || m_fname.endsWith(".cmake"    )
-     || m_fname.endsWith(".cmake.new")
-     || m_fname.endsWith(".cmake.old")
-     || m_fname.endsWith("CMakeLists.txt")
-     || m_fname.endsWith("CMakeLists.txt.old")
-     || m_fname.endsWith("CMakeLists.txt.new") )
+    if( m_pname.endsWith(".cmake"    )
+     || m_pname.endsWith(".cmake.new")
+     || m_pname.endsWith(".cmake.old")
+     || m_pname.endsWith(".cmake"    )
+     || m_pname.endsWith(".cmake.new")
+     || m_pname.endsWith(".cmake.old")
+     || m_pname.endsWith("CMakeLists.txt")
+     || m_pname.endsWith("CMakeLists.txt.old")
+     || m_pname.endsWith("CMakeLists.txt.new") )
     {
       m_file_type = File_Type.CMAKE;
       m_Hi = new Highlight_CMAKE( this );
@@ -526,7 +557,7 @@ class FileBuf
           // will not keep popping up:
           m_mod_time = curr_mod_time;
 
-          m_vis.Window_Message("\n"+ m_fname +"\n\nhas changed since it was read in\n\n");
+          m_vis.Window_Message("\n"+ m_pname +"\n\nhas changed since it was read in\n\n");
         }
       }
     }
@@ -618,7 +649,7 @@ class FileBuf
     ArrayList<String> dirs  = new ArrayList<>();
 
     // Java DirectoryStream does not have parent directory, so add it:
-    if( 1<m_fname.length() ) dirs.add(".."); // Dont add '..' to '/'
+    if( 1<m_pname.length() ) dirs.add(".."); // Dont add '..' to '/'
 
     DirectoryStream<Path> dir_paths = Files.newDirectoryStream( m_path );
 
@@ -854,7 +885,7 @@ class FileBuf
     m_mod_time = Utils.ModificationTime( m_path );
 
     // Wrote to file message:
-    m_vis.CmdLineMessage("\""+ m_fname +"\" written" );
+    m_vis.CmdLineMessage("\""+ m_pname +"\" written" );
 
     return true;
   }
@@ -1190,37 +1221,44 @@ class FileBuf
 
   boolean File_Has_Regex( Line file_name )
   {
+    boolean has_regex = false;
+
     if( m_file_type == File_Type.DIR )
     {
-      String hname = file_name.toString();
-      String fname = m_pname + hname;
+      // fine_name only has file name, not directory
+      String fname = file_name.toString();
+      String pname = m_dname + fname;
 
-      if( Filename_Is_Relevant( hname ) )
+      if( Filename_Is_Relevant( fname ) )
       {
-        return Utils.Have_Regex_In_File( m_pattern, fname, m_line_buf );
+        FileBuf fb = m_vis.get_FileBuf( pname );
+        has_regex = fb != null
+                  ? fb.Has_Pattern( m_pattern )
+                  : Utils.Have_Regex_In_File( m_pattern, pname, m_line_buf );
       }
     }
     else if( m_file_type == File_Type.BUFFER_EDITOR )
     {
-      String fname = file_name.toString();
+      // fine_name has directory and file name
+      String pname = file_name.toString();
 
-      if( !fname.equals( VisIF. EDIT_BUF_NAME )
-       && !fname.equals( VisIF. EDIT_BUF_NAME )
-       && !fname.equals( VisIF. HELP_BUF_NAME )
-       && !fname.equals( VisIF. MSG__BUF_NAME )
-       && !fname.equals( VisIF.SHELL_BUF_NAME )
-       && !fname.equals( VisIF.COLON_BUF_NAME )
-       && !fname.equals( VisIF.SLASH_BUF_NAME )
-       && !fname.endsWith( Utils.DIR_DELIM_STR ) )
+      if( !pname.equals( VisIF. EDIT_BUF_NAME )
+       && !pname.equals( VisIF. EDIT_BUF_NAME )
+       && !pname.equals( VisIF. HELP_BUF_NAME )
+       && !pname.equals( VisIF. MSG__BUF_NAME )
+       && !pname.equals( VisIF.SHELL_BUF_NAME )
+       && !pname.equals( VisIF.COLON_BUF_NAME )
+       && !pname.equals( VisIF.SLASH_BUF_NAME )
+       && !pname.endsWith( Utils.DIR_DELIM_STR ) )
       {
-        FileBuf fb = m_vis.get_FileBuf( fname );
+        FileBuf fb = m_vis.get_FileBuf( pname );
         if( fb != null )
         {
-          return fb.Has_Pattern( m_pattern );
+          has_regex = fb.Has_Pattern( m_pattern );
         }
       }
     }
-    return false;
+    return has_regex;
   }
   boolean Filename_Is_Relevant( String fname )
   {
@@ -1489,29 +1527,13 @@ class FileBuf
     ChangedLine( Math.min( l_num_1, l_num_2 ) );
   }
 
-  void UpdateWinViews()
-  {
-    for( int w=0; w<VisIF.MAX_WINS; w++ )
-    {
-      View rV = m_views.get( w );
-
-      for( int w2=0; w2<m_vis.get_num_wins(); w2++ )
-      {
-        if( rV == m_vis.GetView_Win( w2 ) )
-        {
-          // rV is a view of this file currently displayed, perform needed update:
-          rV.Update();
-        }
-      }
-    }
-  }
   void Update()
   {
     if( m_vis.get_Console().get_from_dot_buf() ) return;
 
     m_vis.Update_Change_Statuses();
 
-    UpdateWinViews();
+    m_vis.UpdateViewsOfFile( this );
 
     // Put cursor back into current window
     m_vis.CV().PrintCursor();
@@ -1522,7 +1544,7 @@ class FileBuf
 
     m_vis.Update_Change_Statuses();
 
-    UpdateWinViews();
+    m_vis.UpdateViewsOfFile( this );
 
     if( null != m_line_view )
     {
@@ -2164,9 +2186,9 @@ class FileBuf
   }
 
   VisIF                 m_vis;   // Not sure if we need this or should use m_views
-  final String          m_fname; // Full path and filename head = m_pname + m_hname
-  final String          m_pname; // Full path     = m_fname - m_hname, (for directories this is the same a m_fname)
-  final String          m_hname; // Filename head = m_fname - m_pname, (for directories this is empty)
+  final String          m_pname; // Full path      = m_dname + m_fname
+  final String          m_dname; // Full directory = m_pname - m_fname, (for directories this is the same a m_pname)
+  final String          m_fname; // Filename       = m_pname - m_dname, (for directories this is empty)
   final boolean         m_isDir;
   static boolean        m_found_BE;
   private final Path    m_path;

@@ -43,10 +43,13 @@ import java.nio.file.FileSystems;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.concurrent.Semaphore;
 import java.util.Deque;
 import java.util.List;
 import java.util.HashMap;
-import java.util.concurrent.Semaphore;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class VisFx extends Application
                 implements VisIF
@@ -366,10 +369,6 @@ public class VisFx extends Application
   void AddToBufferEditor( String fname )
   {
     Line line = new Line();
-  //int NUM_FILES = m_views[0].size();
-  //line.append_i( NUM_FILES-1 );
-  //while( line.length()<3 ) line.insert( 0, ' ' );
-  //line.append_c( ' ' );
     line.append_s( fname );
     FileBuf fb = m_views[0].get( BE_FILE ).m_fb;
     fb.PushLine( line );
@@ -399,7 +398,7 @@ public class VisFx extends Application
 
     for( int k=0; !already_have_file && k<m_files.size(); k++ )
     {
-      if( m_files.get( k ).m_fname.equals( file_name ) )
+      if( m_files.get( k ).m_pname.equals( file_name ) )
       {
         already_have_file = true;
 
@@ -412,7 +411,7 @@ public class VisFx extends Application
   {
     for( int k=0; k<m_files.size(); k++ )
     {
-      if( full_fname.equals( m_files.get( k ).m_fname ) )
+      if( full_fname.equals( m_files.get( k ).m_pname ) )
       {
         return k;
       }
@@ -2741,8 +2740,8 @@ public class VisFx extends Application
     else if( m_sb.charAt(0)=='b' )            Exe_Colon_b();
     else if( m_sb.charAt(0)=='n' )            Exe_Colon_n();
     else if( m_sb.charAt(0)=='e' )            Exe_Colon_e();
-  //else if( m_sb.charAt(0)=='+' )            Exe_Colon_Font();
-  //else if( m_sb.charAt(0)=='_' )            Exe_Colon_Font();
+  //else if( m_sb.charAt(0)=='+' )            Exe_Colon_Font_Size();
+  //else if( m_sb.charAt(0)=='_' )            Exe_Colon_Font_Size();
     else if( '0' <= m_sb.charAt(0)
                  && m_sb.charAt(0) <= '9' ) Exe_Colon_GoToLine();
     else {
@@ -2838,7 +2837,7 @@ public class VisFx extends Application
   }
   void Quit_ShiftDown()
   {
-    // Save of m_win's list of views and view history:
+    // Save off m_win's list of views and view history:
     ViewList win_views     = m_views    [m_win];
      IntList win_file_hist = m_file_hist[m_win];
 
@@ -3423,17 +3422,17 @@ public class VisFx extends Application
         v0 = DoDiff_FindRegFileView( fb1, fb0, 0, v0 );
       }
       else {
-        if( !fb0.m_hname.equals(SHELL_BUF_NAME)
-         && !Paths.get( fb0.m_fname ).toFile().exists() )
+        if( !fb0.m_fname.equals(SHELL_BUF_NAME)
+         && !Paths.get( fb0.m_pname ).toFile().exists() )
         {
           ok = false;
-          Window_Message("\n"+ fb0.m_fname + " does not exist\n\n");
+          Window_Message("\n"+ fb0.m_pname + " does not exist\n\n");
         }
-        if( !fb1.m_hname.equals(SHELL_BUF_NAME)
-         && !Paths.get( fb1.m_fname ).toFile().exists() )
+        if( !fb1.m_fname.equals(SHELL_BUF_NAME)
+         && !Paths.get( fb1.m_pname ).toFile().exists() )
         {
           ok = false;
-          Window_Message("\n"+ fb1.m_fname + " does not exist\n\n");
+          Window_Message("\n"+ fb1.m_pname + " does not exist\n\n");
         }
       }
       if( ok ) {
@@ -3510,7 +3509,7 @@ public class VisFx extends Application
                              , final int     win_idx
                              ,       View    pv )
   {
-    StringBuilder possible_fname = new StringBuilder( pfb_dir.m_fname );
+    StringBuilder possible_fname = new StringBuilder( pfb_dir.m_pname );
     StringBuilder fname_extension = new StringBuilder();
 
     final int BASE_LEN = possible_fname.length();
@@ -3521,11 +3520,11 @@ public class VisFx extends Application
     String split_delim = Utils.DIR_DELIM_STR;
     if( split_delim.equals("\\") ) split_delim = "\\\\";
 
-    String[] path_parts = pfb_reg.m_fname.split( split_delim );
+    String[] path_parts = pfb_reg.m_pname.split( split_delim );
 
     for( int k=path_parts.length-1; 0<=k; k-- )
     {
-      // Revert back to pfb_dir.m_fname:
+      // Revert back to pfb_dir.m_pname:
       possible_fname.setLength( BASE_LEN );
 
       if( 0<fname_extension.length()
@@ -3640,13 +3639,15 @@ public class VisFx extends Application
 
     if( tokens.length == 1 ) // ":cd" to location of current file
     {
-      m_cwd = CV().m_fb.m_pname;
+      m_cwd = CV().m_fb.m_dname;
+      m_cwd = Utils.Append_Dir_Delim( m_cwd );
 
       CmdLineMessage( m_cwd );
     }
     else if( tokens.length == 2 ) // ":cd path"
     {
       m_cwd = tokens[1];
+      m_cwd = Utils.Append_Dir_Delim( m_cwd );
 
       CmdLineMessage( m_cwd );
     }
@@ -3878,7 +3879,7 @@ public class VisFx extends Application
 //  m_frame.setUndecorated( true );
 //  m_frame.setVisible( true );
 //}
-//void Exe_Colon_Font()
+//void Exe_Colon_Font_Size()
 //{
 //  int size_change = 0;
 //
@@ -4434,8 +4435,8 @@ public class VisFx extends Application
 //      if( l_cV_prev.equals( l_oV_prev ) )
 //      { // Previous file one both sides were directories, and cursor was
 //        // on same file name on both sides, so go back to previous diff:
-//        final int c_file_idx = FName_2_FNum( cV_prev.m_fb.m_fname );
-//        final int o_file_idx = FName_2_FNum( oV_prev.m_fb.m_fname );
+//        final int c_file_idx = FName_2_FNum( cV_prev.m_fb.m_pname );
+//        final int o_file_idx = FName_2_FNum( oV_prev.m_fb.m_pname );
 //
 //        if( 0 <= c_file_idx && 0 <= o_file_idx )
 //        {
@@ -4477,8 +4478,8 @@ public class VisFx extends Application
         if( l_cV_prev.equals( l_oV_prev ) )
         { // Previous file one both sides were directories, and cursor was
           // on same file name on both sides, so go back to previous diff:
-          final int c_file_idx = FName_2_FNum( cV_prev.m_fb.m_fname );
-          final int o_file_idx = FName_2_FNum( oV_prev.m_fb.m_fname );
+          final int c_file_idx = FName_2_FNum( cV_prev.m_fb.m_pname );
+          final int o_file_idx = FName_2_FNum( oV_prev.m_fb.m_pname );
 
           if( 0 <= c_file_idx && 0 <= o_file_idx )
           {
@@ -4514,69 +4515,175 @@ public class VisFx extends Application
 
   void Exe_Colon_e()
   {
-    View cv = CV();
-
     if( m_sb.toString().equals("e") ) // :e
     {
-      cv.m_fb.ReReadFile();
+      CV().m_fb.ReReadFile();
 
-      for( int w=0; w<m_num_wins; w++ )
-      {
-        View v = GetView_Win( w );
-
-        if( cv.m_fb == v.m_fb )
-        {
-          // View is currently displayed, perform needed update:
-          v.Update();
-        }
-      }
+      // Update displayed views of CV().m_fb in case it has changed:
+      UpdateViewsOfFile( CV().m_fb );
     }
     else // :e file_name
     {
-      m_sb2.deleteCharAt( 0 ); // Remove initial 'e'
-      Utils.Trim_Beg( m_sb2 ); // Remove space after initial 'e'
+      String pname = Exe_Colon_e_Get_Pname();
 
-      // Edit file of supplied file name, which can contain spaces:
-      String fname = m_sb2.toString();
+      Ptr_Int files_read = new Ptr_Int( 0 );
 
-      final int FILE_NUM = m_file_hist[ m_win ].get( 0 );
-
-      if( SHELL_FILE < FILE_NUM )
+      if( Utils.IsDirectory( pname ) )
       {
-        // Get full file name relative to path of current file:
-        fname = cv.m_fb.Relative_2_FullFname( fname );
+        Exe_Colon_e_Directory( pname, files_read );
       }
       else {
-        // Get full file name relative to CWD:
-        fname = Utils.FindFullFileName_Path( m_cwd, fname );
+        Exe_Colon_e_Files( pname, files_read );
       }
-      Ptr_Int file_index = new Ptr_Int( 0 );
-
-      if( HaveFile( fname, file_index ) )
+      if( 0 < files_read.val )
       {
-        GoToBuffer( file_index.val );
+        CmdLineMessage("Read "+files_read.val+" files");
       }
-      else {
-        FileBuf new_fb = new FileBuf( this, fname, true );
-        boolean ok = new_fb.ReadFile();
-        if( ok ) {
-          Add_FileBuf_2_Lists_Create_Views( new_fb, fname );
+    }
+  }
 
-          GoToBuffer( m_views[m_win].size()-1 );
+  String Exe_Colon_e_Get_Pname()
+  {
+    m_sb2.deleteCharAt( 0 ); // Remove initial 'e'
+    Utils.Trim_Beg( m_sb2 ); // Remove space after initial 'e'
+
+    // Relative path name, which can contain spaces:
+    String relative_pname = m_sb2.toString().equals(".")
+                          ? "" : m_sb2.toString();
+    String pname = relative_pname;
+
+    if( !relative_pname.startsWith( Utils.DIR_DELIM_STR ) )
+    {
+      final int CUR_FILE_NUM = m_file_hist[ m_win ].get( 0 );
+
+      pname = ( SHELL_FILE < CUR_FILE_NUM )
+            // Convert to full file name relative to path of current file:
+            ? Utils.Append_Dir_Delim( CV().m_fb.m_dname ) + relative_pname
+            // Get full file name relative to current working directory(CWD):
+            : m_cwd + relative_pname;
+    }
+    pname = Utils.NormalizePname( pname );
+
+    return pname;
+  }
+
+  void Exe_Colon_e_Directory( String pname, Ptr_Int files_read )
+  {
+    pname = Utils.Append_Dir_Delim( pname );
+
+    Ptr_Int file_index = new Ptr_Int( 0 );
+
+    if( NotHaveFileAddFile( pname, file_index ) )
+    {
+      files_read.val++;
+    }
+    if( HaveFile( pname, file_index ) )
+    {
+      GoToBuffer( file_index.val );
+    }
+  }
+
+  void Exe_Colon_e_Files( String pname, Ptr_Int files_read )
+  {
+    Ptr_Int file_index = new Ptr_Int( 0 );
+
+    String dname = Utils.Pname_2_Dname( pname );
+
+    // Read in directory dname:
+    if( NotHaveFileAddFile( dname, file_index ) )
+    {
+      files_read.val++;
+    }
+    if( HaveFile( dname, file_index ) )
+    {
+      FileBuf fb = m_files.get( file_index.val );
+      ArrayList<String> file_list
+        = Exe_Colon_e_Get_File_list( pname, dname, fb );
+
+      for( int k=0; k<file_list.size(); k++ )
+      {
+        String fnm = file_list.get( k );
+
+        if( NotHaveFileAddFile( fnm, file_index ) )
+        {
+          files_read.val++;
+        }
+      }
+      if( 0 < file_list.size() )
+      {
+        if( HaveFile( file_list.get( 0 ), file_index ) )
+        {
+          GoToBuffer( file_index.val );
         }
       }
     }
   }
 
+  ArrayList<String> Exe_Colon_e_Get_File_list( String pname, String dname, FileBuf fb )
+  {
+    ArrayList<String> file_list = new ArrayList<>();
+
+    String fname = Utils.Pname_2_Fname( pname );
+
+    // Replace "." with "\."
+    fname = fname.replaceAll("\\.", "\\\\.");
+    // Replace "*" with ".*"
+    // Replace "**" with ".*"
+    // Replace "***" with ".*" and so forth
+    fname = fname.replaceAll("\\*+", ".*");
+
+    Pattern m_pattern = Pattern.compile( fname );
+
+    for( int k=0; k<fb.NumLines(); k++ )
+    {
+      String fnm = fb.GetLine( k ).toString();
+
+      if( m_pattern.matcher( fnm ).find() )
+      {
+        file_list.add( dname + fnm );
+      }
+    }
+    Collections.sort( file_list );
+
+    if( 0 == file_list.size() )
+    {
+      // fname does not match any files in directory dname,
+      // so create a new file named pname
+      file_list.add( pname );
+    }
+    return file_list;
+  }
+
+  boolean NotHaveFileAddFile( String pname, Ptr_Int file_index )
+  {
+    boolean added_file = false;
+
+    if( !HaveFile( pname, file_index ) )
+    {
+      FileBuf new_fb = new FileBuf( this, pname, true );
+      boolean ok = new_fb.ReadFile();
+      if( ok ) {
+        added_file = true;
+        Add_FileBuf_2_Lists_Create_Views( new_fb, pname );
+      }
+    }
+    return added_file;
+  }
+
   void Exe_Colon_GoToLine()
   {
+    View cv = CV();
+
     Ptr_Int ptr_int = new Ptr_Int( 0 );
 
-    if( Utils.String_2_Int( m_sb.toString(), ptr_int ) )
+    if( !Utils.String_2_Int( m_sb.toString(), ptr_int ) )
+    {
+      // Failed to get new line number so just put cursor back where is was
+      cv.PrintCursor();
+    }
+    else
     {
       final int line_num = ptr_int.val;
-
-      View cv = CV();
 
       if( cv.m_in_diff ) m_diff.GoToLine( line_num );
       else                   cv.GoToLine( line_num );
@@ -4638,6 +4745,21 @@ public class VisFx extends Application
         View v = m_views[w].get( f );
 
         v.SetViewPos();
+      }
+    }
+  }
+  public void UpdateViewsOfFile( final FileBuf fb )
+  {
+    // Update displayed views of file referred to by fb:
+    for( int w=0; w<m_num_wins; w++ )
+    {
+      // V is currently displayed view in pane w:
+      View V = GetView_Win( w );
+
+      if( V.m_fb == fb )
+      {
+        // View V is of fb, so update:
+        V.Update();
       }
     }
   }
@@ -4792,7 +4914,7 @@ public class VisFx extends Application
     {
       FileBuf fb_k = m_files.get( k );
 
-      if( fb_k.m_fname.equals( file_name ) )
+      if( fb_k.m_pname.equals( file_name ) )
       {
         return fb_k;
       }
@@ -4893,7 +5015,7 @@ public class VisFx extends Application
   Thread             m_run_Q      = new Thread() { public void run() { run_Q     (); Give(); } };
   Thread             m_run_L_Ha_i = new Thread() { public void run() { run_L_Ha_i(); Give(); } };
   int                m_win;
-  int                m_num_wins = 1; // Number of sub-windows currently on screen
+  int                m_num_wins = 1; // Number of window panes currently on screen
   boolean            m_initialized;
   char               m_fast_char;
   boolean            m_diff_mode;

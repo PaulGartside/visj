@@ -26,11 +26,14 @@ import java.io.IOException;
 import java.io.File;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,20 +49,6 @@ class Utils
   {
     return 0 < LL ? LL-1 : 0;
   }
-//public static
-//OS_Type Get_OS_Type()
-//{
-//  if( !m_determined_os )
-//  {
-//    String os = System.getenv("OS");
-//
-//    if( null != os )
-//    {
-//      if( os.equals("Windows_NT") ) m_os_type = OS_Type.Windows;
-//    }
-//  }
-//  return m_os_type;
-//}
   public static
   OS_Type Get_OS_Type()
   {
@@ -169,12 +158,6 @@ class Utils
         || c == '.'
         || c == ':';
   }
-//public static
-//boolean IsGraph( final char c )
-//{
-//  return true;
-//}
-
   public static
   boolean IsEndOfLineDelim( final int c )
   {
@@ -277,22 +260,67 @@ class Utils
   String GetCWD()
   {
     FileSystem fs = FileSystems.getDefault();
+
     String cwd = fs.getPath(".").toAbsolutePath().normalize().toString();
-    if( !cwd.endsWith( DIR_DELIM_STR ) ) cwd +=  DIR_DELIM_STR ;
-    return cwd;
+
+    return Append_Dir_Delim( cwd );
   }
-//public static
-//String GetCWD()
-//{
-//  FileSystem fs = FileSystems.getDefault();
-//  return fs.getPath(".").toAbsolutePath().normalize().toString();
-//}
-//public static
-//String GetCWD()
-//{
-////return Paths.get("").toAbsolutePath().toString();
-//  return Paths.get(".").toAbsolutePath().normalize().toString();
-//}
+
+  public static
+  Path GetPath( String fname )
+  {
+    Path path = null;
+    try {
+      path = FileSystems.getDefault().getPath( fname );
+    }
+    catch( Exception e ) {
+    }
+    return path;
+  }
+
+  public static
+  boolean IsDirectory( String fname )
+  {
+    boolean is_dir = false;
+
+    Path path = GetPath( fname );
+
+    if( null != path )
+    {
+      is_dir = Files.isDirectory( path );
+    }
+    return is_dir;
+  }
+
+  public static
+  boolean IsRegularFile( String fname )
+  {
+    boolean is_reg = false;
+
+    Path path = GetPath( fname );
+
+    if( null != path )
+    {
+      is_reg = Files.isRegularFile( path );
+    }
+    return is_reg;
+  }
+
+  public static
+  String NormalizePname( String pname )
+  {
+    Path path = GetPath( pname );
+
+    String normalized_pname = pname;
+    try {
+      normalized_pname = path.normalize().toString();
+    }
+    catch( Exception e )
+    {
+      // Return un-normalized pname
+    }
+    return normalized_pname;
+  }
 
   // Find full file name relative to directory of this java process.
   // Find full file name relative to directory vis was started in.
@@ -307,12 +335,21 @@ class Utils
 
     if( file.isDirectory() )
     {
-      if( false == full_fname.endsWith( Utils.DIR_DELIM_STR ) )
+      if( false == full_fname.endsWith( DIR_DELIM_STR ) )
       {
-        full_fname += Utils.DIR_DELIM_STR;
+        full_fname += DIR_DELIM_STR;
       }
     }
     return full_fname;
+  }
+  public static
+  String Append_Dir_Delim( String dir )
+  {
+    if( ! dir.endsWith( DIR_DELIM_STR ) )
+    {
+      dir += DIR_DELIM_STR;
+    }
+    return dir;
   }
 //String FindFullFileName( String fname )
 //{
@@ -325,19 +362,8 @@ class Utils
     try {
       FileSystem fs    = FileSystems.getDefault();
       Path       fpath = fs.getPath( path, fname );
-      File       file  = fpath.toFile();
-    //File file = Paths.get( path, fname ).toFile();
 
-      String full_fname = file.toString();
-
-      if( file.isDirectory() )
-      {
-        if( false == full_fname.endsWith( Utils.DIR_DELIM_STR ) )
-        {
-          full_fname += Utils.DIR_DELIM_STR;
-        }
-      }
-      return full_fname;
+      return Path_2_String( fpath );
     }
     catch( Exception e )
     {
@@ -346,20 +372,49 @@ class Utils
     return fname;
   }
 
-  // Given full path, returns fname head
+  // If fpath is a directory, makes sure slash is at the end of the String
   public static
-  String FnameHead( String in_fname )
+  String Path_2_String( Path fpath )
   {
-    final int last_slash_idx = in_fname.lastIndexOf( Utils.DIR_DELIM );
+    File   file       = fpath.toFile();
+    String full_fname = file.toString();
+
+    if( Files.isDirectory( fpath ) )
+    {
+      full_fname = Append_Dir_Delim( full_fname );
+    }
+    return full_fname;
+  }
+  // Given path, returns fname head
+  public static
+  String Pname_2_Fname( String pname )
+  {
+    final int last_slash_idx = pname.lastIndexOf( Utils.DIR_DELIM );
 
     if( 0 <= last_slash_idx )
     {
-      // Return everything after last slash:
-      return in_fname.substring( last_slash_idx+1 );
+      // Return everything after last slash.
+      // If last slash is at the end of pname, return empty string.
+      return pname.substring( last_slash_idx+1 );
     }
     // No tail, all head:
-    return in_fname;
+    return pname;
   }
+  // Given full path, returns fname directory, including last slash
+  public static
+  String Pname_2_Dname( String pname )
+  {
+    final int last_slash_idx = pname.lastIndexOf( Utils.DIR_DELIM );
+
+    if( 0 <= last_slash_idx )
+    {
+      // Return everything before last slash:
+      return pname.substring( 0, last_slash_idx+1 );
+    }
+    // No tail, all head:
+    return "";
+  }
+
   // Return true if string was converted to int, else false
   public static
   boolean String_2_Int( String s, Ptr_Int pi )
@@ -429,7 +484,6 @@ class Utils
     }
     catch( IOException e )
     {
-    //System.out.println( "ModificationTime: "+ e );
     }
     return mod_time;
   }
@@ -509,11 +563,11 @@ class Utils
         for( boolean done = false; !done; )
         {
           final int C = bis.read();
-          if( -1 == C)
+          if( -1 == C )
           {
             done = true;
           }
-          else if( '\n' == C)
+          else if( '\n' == C )
           {
             Matcher matcher = pattern.matcher( line_buf.toString() );
 
@@ -523,7 +577,7 @@ class Utils
             }
           }
           else {
-            line_buf.append_c( (char)C);
+            line_buf.append_c( (char)C );
           }
         }
         fis.close();

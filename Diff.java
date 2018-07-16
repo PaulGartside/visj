@@ -1029,8 +1029,8 @@ class Diff
 
       System.out.printf(
           "Same: (%s):(%d-%d), (%s):(%d-%d), nlines=%d, nbytes=%d\n"
-        , m_fS.m_fname, same.m_ln_s+1, same.m_ln_s+same.m_nlines
-        , m_fL.m_fname, same.m_ln_l+1, same.m_ln_l+same.m_nlines
+        , m_fS.m_pname, same.m_ln_s+1, same.m_ln_s+same.m_nlines
+        , m_fL.m_pname, same.m_ln_l+1, same.m_ln_l+same.m_nlines
         , same.m_nlines
         , same.m_nbytes );
     }
@@ -1117,8 +1117,8 @@ class Diff
       DiffArea da = m_diffList.get( k );
     //System.out.printf( "Diff: (%s):(%d-%d), (%s):(%d-%d)\n"
       System.out.printf( "Diff: (%s):(%d-%d)\n      (%s):(%d-%d)\n"
-             , m_fS.m_fname, da.ln_s+1, da.ln_s+da.nlines_s
-             , m_fL.m_fname, da.ln_l+1, da.ln_l+da.nlines_l );
+             , m_fS.m_pname, da.ln_s+1, da.ln_s+da.nlines_s
+             , m_fL.m_pname, da.ln_l+1, da.ln_l+da.nlines_l );
     }
   }
 
@@ -1263,8 +1263,8 @@ class Diff
        && !hname_l.equals("..") && !hname_l.endsWith( Utils.DIR_DELIM_STR ) )
       {
         // fname_s and fname_l should both be full paths of regular files
-        String fname_s = m_fS.m_pname + hname_s;
-        String fname_l = m_fL.m_pname + hname_l;
+        String fname_s = m_fS.m_dname + hname_s;
+        String fname_l = m_fL.m_dname + hname_l;
 
         // Compare the files:
         if( !Utils.Files_Are_Same( fname_s, fname_l ) )
@@ -2548,8 +2548,8 @@ class Diff
         // or directories with same name but different paths
         if( (cDT == Diff_Type.DIFF_FILES && oDT == Diff_Type.DIFF_FILES)
          || (cV.m_fb.m_isDir && oV.m_fb.m_isDir
-          && c_file_buf.m_hname.equals( o_file_buf.m_hname )
-          &&!c_file_buf.m_pname.equals( o_file_buf.m_pname ) ) )
+          && c_file_buf.m_fname.equals( o_file_buf.m_fname )
+          &&!c_file_buf.m_dname.equals( o_file_buf.m_dname ) ) )
         {
           final int cV_vl_cl = ViewLine( cV, CrsLine() );
           final int cV_vl_tl = ViewLine( cV, m_topLine );
