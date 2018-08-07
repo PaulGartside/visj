@@ -50,35 +50,13 @@ import java.util.regex.Pattern;
 
 class FileBuf
 {
-//// fname should contain full path and filename
-//FileBuf( VisIF vis, String fname, final boolean mutable )
-//{
-//  m_vis       = vis;
-//  m_path      = FileSystems.getDefault().getPath( fname );
-//  m_isDir     = Files.isDirectory( m_path );
-//  m_mutable   = m_isDir ? false : mutable;
-//
-//  if( m_isDir ) m_dname = fname;
-//  else {
-//    Path parent = m_path.getParent();
-//    if( null != parent ) m_dname = parent.normalize().toString();
-//    else {
-//      // fname passed in was not full path filename, so use process path
-//      m_dname = Utils.GetCWD();
-//        fname = m_dname + fname;
-//    }
-//  }
-//  m_pname = fname;
-//  m_fname = Utils.Pname_2_Fname( m_pname );
-//
-//  Find_File_Type_Suffix();
-//}
   // fname should contain full path and filename
   FileBuf( VisIF vis, String fname, final boolean mutable )
   {
     m_vis       = vis;
     m_path      = FileSystems.getDefault().getPath( fname );
     m_isDir     = Files.isDirectory( m_path );
+    m_isRegular = Files.isRegularFile( m_path );
     m_mutable   = m_isDir ? false : mutable;
 
     if( m_isDir )
@@ -108,6 +86,7 @@ class FileBuf
     m_LF_at_EOF = fb.m_LF_at_EOF;
     m_mod_time  = Utils.ModificationTime( m_path );
     m_isDir     = Files.isDirectory( m_path );
+    m_isRegular = Files.isRegularFile( m_path );
     m_mutable   = m_isDir ? false : true;
 
     if( m_isDir )
@@ -536,9 +515,10 @@ class FileBuf
 
   void CheckFileModTime()
   {
-    long elapsed_time = System.currentTimeMillis() - m_mod_check_time;
+    final long NOW = System.currentTimeMillis();
 
-    if( 1000 <= elapsed_time )
+    // Check for updates to current file once per second:
+    if( 1000 <= (NOW - m_mod_check_time) )
     {
       final long curr_mod_time = Utils.ModificationTime( m_path );
 
@@ -560,6 +540,7 @@ class FileBuf
           m_vis.Window_Message("\n"+ m_pname +"\n\nhas changed since it was read in\n\n");
         }
       }
+      m_mod_check_time = NOW;
     }
   }
 
@@ -567,7 +548,7 @@ class FileBuf
   {
     Path fpath;
 
-    if( Files.isDirectory( m_path ) )
+    if( m_isDir )
     {
       fpath = m_path.resolve( relative_fname ).toAbsolutePath().normalize();
     }
@@ -622,13 +603,13 @@ class FileBuf
   }
   private boolean ReadFile_p() throws FileNotFoundException, IOException
   {
-    if( Files.isDirectory( m_path ) )
+    if( m_isDir )
     {
       ReadExistingDir();
       m_mod_time = Utils.ModificationTime( m_path );
     }
     else {
-      if( Files.isRegularFile( m_path ) )
+      if( m_isRegular )
       {
         ReadExistingFile();
         m_mod_time = Utils.ModificationTime( m_path );
@@ -1225,12 +1206,13 @@ class FileBuf
 
     if( m_file_type == File_Type.DIR )
     {
-      // fine_name only has file name, not directory
+      // file_name only has file name, not directory
       String fname = file_name.toString();
-      String pname = m_dname + fname;
 
       if( Filename_Is_Relevant( fname ) )
       {
+        String pname = m_dname + fname;
+        m_vis.NotHaveFileAddFile( pname );
         FileBuf fb = m_vis.get_FileBuf( pname );
         has_regex = fb != null
                   ? fb.Has_Pattern( m_pattern )
@@ -1239,7 +1221,7 @@ class FileBuf
     }
     else if( m_file_type == File_Type.BUFFER_EDITOR )
     {
-      // fine_name has directory and file name
+      // file_name has directory and file name
       String pname = file_name.toString();
 
       if( !pname.equals( VisIF. EDIT_BUF_NAME )
@@ -1473,10 +1455,19 @@ class FileBuf
     return false;
   }
 
-  void BufferEditor_Sort()
+  // Returns true if something changed
+  boolean Sort()
   {
+    return m_vis.get_sort_by_time()
+         ? BufferEditor_SortTime()
+         : BufferEditor_SortName();
+  }
+
+  private
+  boolean BufferEditor_SortName()
+  {
+    boolean changed = false;
     final int NUM_BUILT_IN_FILES = m_vis.USER_FILE;
-    final int FNAME_START_CHAR   = 0;
 
     // Sort lines (file names), least to greatest:
     for( int i=NumLines()-1; NUM_BUILT_IN_FILES<i; i-- )
@@ -1486,25 +1477,45 @@ class FileBuf
         Line l_0 = m_lines.get( k   );
         Line l_1 = m_lines.get( k+1 );
 
-        // This should never be false, but check just in case.
-        // Out of order BUFFER_EDITOR is better than crashing.
-        if( FNAME_START_CHAR<l_0.length()
-         && FNAME_START_CHAR<l_1.length() )
+        // Move largest file name to bottom.
+        // l_0 is greater than l_1, so move it down:
+        if( 0<l_0.toString().compareTo( l_1.toString() ) )
         {
-          String fn_0 = l_0.toStr().substring( FNAME_START_CHAR );
-          String fn_1 = l_1.toStr().substring( FNAME_START_CHAR );
-
-          // This if statement is not needed, but keep it in for now:
-          if( 0<fn_0.length() && 0<fn_1.length() )
-          {
-            if( 0<fn_0.compareTo( fn_1 ) )
-            {
-              SwapLines( k, k+1 );
-            }
-          }
+          SwapLines( k, k+1 );
+          changed = true;
         }
       }
     }
+    return changed;
+  }
+
+  private
+  boolean BufferEditor_SortTime()
+  {
+    boolean changed = false;
+    final int NUM_BUILT_IN_FILES = m_vis.USER_FILE;
+
+    // Sort lines (file names), least to greatest:
+    for( int i=NumLines()-1; NUM_BUILT_IN_FILES<i; i-- )
+    {
+      for( int k=NUM_BUILT_IN_FILES; k<i; k++ )
+      {
+        Line l_0 = m_lines.get( k   );
+        Line l_1 = m_lines.get( k+1 );
+
+        FileBuf f_0 = m_vis.get_FileBuf( l_0.toString() );
+        FileBuf f_1 = m_vis.get_FileBuf( l_1.toString() );
+
+        // Move oldest files to the bottom.
+        // f_0 has older time than f_1, so move it down:
+        if( f_0.m_foc_time < f_1.m_foc_time )
+        {
+          SwapLines( k, k+1 );
+          changed = true;
+        }
+      }
+    }
+    return changed;
   }
 
   void ClearChanged()
@@ -2189,9 +2200,10 @@ class FileBuf
   final String          m_pname; // Full path      = m_dname + m_fname
   final String          m_dname; // Full directory = m_pname - m_fname, (for directories this is the same a m_pname)
   final String          m_fname; // Filename       = m_pname - m_dname, (for directories this is empty)
-  final boolean         m_isDir;
+  final boolean         m_isDir;     // Directory
+  final boolean         m_isRegular; // Regular File
   static boolean        m_found_BE;
-  private final Path    m_path;
+  final Path            m_path;
   ArrayList<Line>       m_lines        = new ArrayList<>();
   ArrayList<Line>       m_styles       = new ArrayList<>();
   ArrayList<Integer>    m_lineOffsets  = new ArrayList<>();
@@ -2202,7 +2214,8 @@ class FileBuf
   File_Type             m_file_type    = File_Type.UNKNOWN;
   Encoding              m_encoding     = Encoding.NONE;
   Highlight_Base        m_Hi;
-  long                  m_mod_time;
+  long                  m_mod_time; // modification time
+  long                  m_foc_time; // focus time
   boolean               m_need_2_clear_stars = false;
   boolean               m_need_2_find_stars  = true;
   private final boolean m_mutable;

@@ -48,12 +48,8 @@ class Diff
 
       Set_ShortLong_ViewfileMod_Vars( v0, v1 );
 
-      if( same_as_prev )
+      if( !same_as_prev )
       {
-        // Dont need to re-run the diff, just display the results:
-        Update();
-      }
-      else {
         CleanDiff(); //< Start over with clean slate
 
         // All lines in both files:
@@ -1256,20 +1252,31 @@ class Diff
 
     if( m_fS.m_isDir && m_fL.m_isDir )
     {
-      String hname_s = m_fS.GetLine( line_s ).toString();
-      String hname_l = m_fL.GetLine( line_l ).toString();
+      String fname_s = m_fS.GetLine( line_s ).toString();
+      String fname_l = m_fL.GetLine( line_l ).toString();
 
-      if( !hname_s.equals("..") && !hname_s.endsWith( Utils.DIR_DELIM_STR )
-       && !hname_l.equals("..") && !hname_l.endsWith( Utils.DIR_DELIM_STR ) )
+      if( !fname_s.equals("..") && !fname_s.endsWith( Utils.DIR_DELIM_STR )
+       && !fname_l.equals("..") && !fname_l.endsWith( Utils.DIR_DELIM_STR ) )
       {
-        // fname_s and fname_l should both be full paths of regular files
-        String fname_s = m_fS.m_dname + hname_s;
-        String fname_l = m_fL.m_dname + hname_l;
+        // pname_s and pname_l should both be full paths of regular files
+        String pname_s = m_fS.m_dname + fname_s;
+        String pname_l = m_fL.m_dname + fname_l;
 
-        // Compare the files:
-        if( !Utils.Files_Are_Same( fname_s, fname_l ) )
+        // Add files if they have not been added:
+        m_vis.NotHaveFileAddFile( pname_s );
+        m_vis.NotHaveFileAddFile( pname_l );
+
+        FileBuf fb_s = m_vis.get_FileBuf( pname_s );
+        FileBuf fb_l = m_vis.get_FileBuf( pname_l );
+
+        if( fb_s != null && fb_l != null )
         {
-          files_differ = true;
+          // Fast: Compare files already cached in memory:
+          files_differ = !Utils.Files_Are_Same( fb_s, fb_l );
+        }
+        else {
+          // Slow: Compare files by opening and reading from the file system:
+          files_differ = !Utils.Files_Are_Same( pname_s, pname_l );
         }
       }
     }
@@ -2743,9 +2750,7 @@ class Diff
 
   void Do_n_Diff()
   {
-    final int NUM_LINES = NumLines();
-
-    if( 0 < NUM_LINES )
+    if( 0 < NumLines() )
     {
       Set_Cmd_Line_Msg("Searching down for diff");
 
@@ -2774,7 +2779,7 @@ class Diff
         if( found )
         {
           final int NCL = dl.val;
-          final int NCP = CrsChar();
+          final int NCP = Do_n_Find_Crs_Pos( NCL, DI_List );
 
           GoToCrsPos_Write( NCL, NCP );
         }
@@ -2866,6 +2871,34 @@ class Diff
       }
     }
     return found;
+  }
+
+  int Do_n_Find_Crs_Pos( final int NCL, ArrayList<Diff_Info> DI_List )
+  {
+    int NCP = 0;
+
+    final Diff_Type DT_new = DI_List.get( NCL ).diff_type;
+
+    if( DT_new == Diff_Type.CHANGED )
+    {
+      LineInfo rLI_s = m_DI_List_S.get( NCL ).pLineInfo;
+      LineInfo rLI_l = m_DI_List_L.get( NCL ).pLineInfo;
+
+      for( int k=0; null != rLI_s && k<rLI_s.size()
+                 && null != rLI_l && k<rLI_l.size(); k++ )
+      {
+        Diff_Type dt_s = rLI_s.get( k );
+        Diff_Type dt_l = rLI_l.get( k );
+
+        if( dt_s != Diff_Type.SAME
+         || dt_l != Diff_Type.SAME )
+        {
+          NCP = k;
+          break;
+        }
+      }
+    }
+    return NCP;
   }
 
   void Do_N()
@@ -2992,7 +3025,7 @@ class Diff
         if( found )
         {
           final int NCL = dl.val;
-          final int NCP = CrsChar();
+          final int NCP = Do_n_Find_Crs_Pos( NCL, DI_List );
 
           GoToCrsPos_Write( NCL, NCP );
         }

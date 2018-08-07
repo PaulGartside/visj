@@ -834,7 +834,7 @@ class LineView
         {
           Line fname = m_dir_fb.GetLine( k );
       
-          if( fname.toStr().startsWith( m_search__head ) )
+          if( fname.toString().startsWith( m_search__head ) )
           {
             found_tab_fname = true;
             m_file_index    = k;
@@ -844,7 +844,7 @@ class LineView
             {
               m_sb.append( Utils.DIR_DELIM ); // Dont append '/' if no m_partial_path
             }
-            m_sb.append( fname.toStr() );
+            m_sb.append( fname.toString() );
           }
         }
       }
@@ -876,7 +876,7 @@ class LineView
     {
       Line fname = m_dir_fb.GetLine( k % m_dir_fb.NumLines() );
 
-      if( fname.toStr().startsWith( m_search__head ) )
+      if( fname.toString().startsWith( m_search__head ) )
       {
         found_tab_fname = true;
         m_file_index    = k;
@@ -886,7 +886,7 @@ class LineView
         {
           m_sb.append( Utils.DIR_DELIM ); // Done append '/' if no m_partial_path
         }
-        m_sb.append( fname.toStr() );
+        m_sb.append( fname.toString() );
 
         if( ColonOp.e == m_colon_op ) m_sb.insert( 0, "e ");
         else                          m_sb.insert( 0, "w ");

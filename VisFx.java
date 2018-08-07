@@ -372,7 +372,7 @@ public class VisFx extends Application
     line.append_s( fname );
     FileBuf fb = m_views[0].get( BE_FILE ).m_fb;
     fb.PushLine( line );
-    fb.BufferEditor_Sort();
+    fb.Sort();
     fb.ClearChanged();
 
     // Since buffer editor file has been re-arranged, make sure none of its
@@ -517,7 +517,20 @@ public class VisFx extends Application
         m_states.addFirst( m_run_redraw );
       }
       else {
-        CV().m_fb.CheckFileModTime();
+        View cv = CV();
+        cv.m_fb.CheckFileModTime();
+        if( cv != m_cv_old )
+        {
+          m_cv_old = cv;
+          cv.m_fb.m_foc_time = System.currentTimeMillis();
+
+          // cv is of buffer editor:
+          if( m_sort_by_time && cv.m_fb == m_views[0].get( BE_FILE ).m_fb )
+          {
+            // Update the buffer editor if it changed in the sort:
+            if( cv.m_fb.Sort() ) cv.Update();
+          }
+        }
       }
     }
     catch( Exception e )
@@ -2731,6 +2744,7 @@ public class VisFx extends Application
     else if( m_sb.toString().equals("nofull")) Exe_Colon_NoFull();
     else if( m_sb.toString().equals("dos2unix")) Exe_dos2unix();
     else if( m_sb.toString().equals("unix2dos")) Exe_unix2dos();
+    else if( m_sb.toString().equals("sort"))     Exe_Colon_Sort();
     else if( m_sb.toString().startsWith("cd"))   Exe_Colon_cd();
     else if( m_sb.toString().startsWith("syn="))  Exe_Colon_Syntax();
     else if( m_sb.toString().startsWith("detab="))Exe_Colon_Detab();
@@ -3574,8 +3588,6 @@ public class VisFx extends Application
   {
     if( CV().m_in_diff )
     {
-      m_diff_mode = false;
-
       View pvS = m_diff.m_vS;
       View pvL = m_diff.m_vL;
 
@@ -3596,7 +3608,24 @@ public class VisFx extends Application
         pvL.SetCrsRow  ( m_diff.GetCrsRow  () );
         pvL.SetCrsCol  ( m_diff.GetCrsCol  () );
       }
-      UpdateViews( false );
+    }
+    Clear_Diff();
+
+    UpdateViews( false );
+  }
+  void Clear_Diff()
+  {
+    m_diff_mode = false;
+
+    // Make sure diff is turned off for everything:
+    for( int w=0; w<MAX_WINS; w++ )
+    {
+      ViewList vl = m_views[w];
+
+      for( int f=0; f<vl.size(); f++ )
+      {
+        vl.get( f ).m_in_diff = false;
+      }
     }
   }
 
@@ -3694,6 +3723,23 @@ public class VisFx extends Application
   void Exe_unix2dos()
   {
     CV().m_fb.unix2dos();
+  }
+
+  void Exe_Colon_Sort()
+  {
+    m_sort_by_time = !m_sort_by_time;
+
+    FileBuf fb = m_views[0].get( BE_FILE ).m_fb;
+    fb.Sort();
+    fb.Update();
+
+    if( m_sort_by_time )
+    {
+      CmdLineMessage("Sorting files by focus time");
+    }
+    else {
+      CmdLineMessage("Sorting files by name");
+    }
   }
 
   void Exe_Colon_Encoding()
@@ -4571,12 +4617,12 @@ public class VisFx extends Application
   {
     pname = Utils.Append_Dir_Delim( pname );
 
-    Ptr_Int file_index = new Ptr_Int( 0 );
-
-    if( NotHaveFileAddFile( pname, file_index ) )
+    if( NotHaveFileAddFile( pname ) )
     {
       files_read.val++;
     }
+    Ptr_Int file_index = new Ptr_Int( 0 );
+
     if( HaveFile( pname, file_index ) )
     {
       GoToBuffer( file_index.val );
@@ -4585,15 +4631,15 @@ public class VisFx extends Application
 
   void Exe_Colon_e_Files( String pname, Ptr_Int files_read )
   {
-    Ptr_Int file_index = new Ptr_Int( 0 );
-
     String dname = Utils.Pname_2_Dname( pname );
 
     // Read in directory dname:
-    if( NotHaveFileAddFile( dname, file_index ) )
+    if( NotHaveFileAddFile( dname ) )
     {
       files_read.val++;
     }
+    Ptr_Int file_index = new Ptr_Int( 0 );
+
     if( HaveFile( dname, file_index ) )
     {
       FileBuf fb = m_files.get( file_index.val );
@@ -4604,7 +4650,7 @@ public class VisFx extends Application
       {
         String fnm = file_list.get( k );
 
-        if( NotHaveFileAddFile( fnm, file_index ) )
+        if( NotHaveFileAddFile( fnm ) )
         {
           files_read.val++;
         }
@@ -4654,17 +4700,18 @@ public class VisFx extends Application
     return file_list;
   }
 
-  boolean NotHaveFileAddFile( String pname, Ptr_Int file_index )
+  public
+  boolean NotHaveFileAddFile( String pname )
   {
     boolean added_file = false;
 
-    if( !HaveFile( pname, file_index ) )
+    if( !HaveFile( pname, null ) )
     {
-      FileBuf new_fb = new FileBuf( this, pname, true );
-      boolean ok = new_fb.ReadFile();
+      FileBuf fb_new = new FileBuf( this, pname, true );
+      boolean ok = fb_new.ReadFile();
       if( ok ) {
         added_file = true;
-        Add_FileBuf_2_Lists_Create_Views( new_fb, pname );
+        Add_FileBuf_2_Lists_Create_Views( fb_new, pname );
       }
     }
     return added_file;
@@ -4691,13 +4738,13 @@ public class VisFx extends Application
   }
 
   public
-  boolean Diff_By_File_Indexes( View cV, int c_file_idx
-                              , View oV, int o_file_idx )
+  boolean Diff_By_File_Indexes( View ov_c, int c_file_idx
+                              , View ov_o, int o_file_idx )
   {
     boolean ok = false;
-    // Get m_win for cV and oV
-    final int c_win = GetWinNum_Of_View( cV );
-    final int o_win = GetWinNum_Of_View( oV );
+    // Get m_win for ov_c and ov_o
+    final int c_win = GetWinNum_Of_View( ov_c );
+    final int o_win = GetWinNum_Of_View( ov_o );
 
     if( 0 <= c_win && 0 <= o_win )
     {
@@ -4722,8 +4769,8 @@ public class VisFx extends Application
       View nv_c = GetView_WinPrev( c_win, 0 );
       View nv_o = GetView_WinPrev( o_win, 0 );
 
-      nv_c.SetTilePos( cV.m_tile_pos );
-      nv_o.SetTilePos( oV.m_tile_pos );
+      nv_c.SetTilePos( ov_c.m_tile_pos );
+      nv_o.SetTilePos( ov_o.m_tile_pos );
 
       ok = m_diff.Run( nv_c, nv_o );
       if( ok ) {
@@ -4740,11 +4787,11 @@ public class VisFx extends Application
   {
     for( int w=0; w<MAX_WINS; w++ )
     {
-      for( int f=0; f<m_views[w].size(); f++ )
-      {
-        View v = m_views[w].get( f );
+      ViewList vl = m_views[w];
 
-        v.SetViewPos();
+      for( int f=0; f<vl.size(); f++ )
+      {
+        vl.get( f ).SetViewPos();
       }
     }
   }
@@ -4982,6 +5029,10 @@ public class VisFx extends Application
   {
     return m_diff;
   }
+  public boolean get_sort_by_time()
+  {
+    return m_sort_by_time;
+  }
   static String NONE_str     = "none";
   static String UTF_8_str    = "utf-8";
   static String WIN_1252_str = "win-1252";
@@ -5020,6 +5071,7 @@ public class VisFx extends Application
   char               m_fast_char;
   boolean            m_diff_mode;
   boolean            m_run_mode; // True if running shell command
+  boolean            m_sort_by_time;
   private
   Semaphore          m_run_sem = new Semaphore( 1 );
   Diff               m_diff;
@@ -5028,6 +5080,7 @@ public class VisFx extends Application
   ArrayList<FileBuf> m_files     = new ArrayList<>();
    IntList[]         m_file_hist = new  IntList[ MAX_WINS ];
   ViewList[]         m_views     = new ViewList[ MAX_WINS ];
+  View               m_cv_old;
   FileBuf            m_colon_file;  // Buffer for colon commands
   LineView           m_colon_view;  // View   of  colon commands
   FileBuf            m_slash_file;  // Buffer for slash commands

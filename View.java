@@ -2856,11 +2856,12 @@ class View
 
     boolean found_next_star = false;
 
-    // Move past current pattern:
     final int LL = m_fb.LineLen( OCL );
 
     m_fb.Check_4_New_Regex();
     m_fb.Find_Regexs_4_Line( OCL );
+
+    // Move past current pattern:
     for( ; st_c<LL && InStar(OCL,st_c); st_c++ ) ;
 
     // If at end of current line, go down to next line:

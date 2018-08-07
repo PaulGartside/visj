@@ -66,6 +66,7 @@ interface VisIF
   int  GetWinNum_Of_View( final View rV );
   boolean Diff_By_File_Indexes( View cV, int c_file_idx
                               , View oV, int o_file_idx );
+  boolean NotHaveFileAddFile( String pname );
 
   void Handle_SemiColon();
   void Handle_Slash_GotPattern( final String  pattern
@@ -88,5 +89,6 @@ interface VisIF
   void            set_cmd( String cmd );
   boolean         get_diff_mode();
   Diff            get_diff();
+  boolean         get_sort_by_time();
 }
 

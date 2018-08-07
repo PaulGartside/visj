@@ -110,10 +110,6 @@ class Line
   {
     return m_sb.substring( start );
   }
-  String toStr()
-  {
-    return m_sb.toString();
-  }
   int chksum()
   {
     if( !m_chksum_valid )

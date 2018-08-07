@@ -543,6 +543,42 @@ class Utils
     return files_are_same;
   }
 
+  // Given FileBuf of files, return true if the two files are the same
+  public static
+  boolean Files_Are_Same( FileBuf fb_s, FileBuf fb_l )
+  {
+    boolean files_are_same = false;
+
+    if( fb_s.m_isRegular && fb_l.m_isRegular )
+    {
+      final long len_s = fb_s.m_path.toFile().length();
+      final long len_l = fb_l.m_path.toFile().length();
+
+      if( len_s == len_l )
+      {
+        final int lines_s = fb_s.NumLines();
+        final int lines_l = fb_l.NumLines();
+
+        if( lines_s == lines_l )
+        {
+          files_are_same = true;
+
+          for( int k=0; files_are_same && k<lines_s; k++ )
+          {
+            Line l_s = fb_s.GetLine( k );
+            Line l_l = fb_l.GetLine( k );
+
+            if( !l_s.equals( l_l ) )
+            {
+              files_are_same = false;
+            }
+          }
+        }
+      }
+    }
+    return files_are_same;
+  }
+
   public static
   boolean Have_Regex_In_File( Pattern pattern
                             , String  fname
