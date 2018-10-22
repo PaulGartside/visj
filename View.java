@@ -1368,10 +1368,8 @@ class View
   String GetFileName_UnderCursor()
   {
     StringBuilder fname = null;
-
     final int CL = CrsLine();
     final int LL = m_fb.LineLen( CL );
-
     if( 0<LL ) {
       MoveInBounds();
       final int CP = CrsChar();
@@ -1383,22 +1381,23 @@ class View
         fname = new StringBuilder();
         fname.append( C );
 
-        // Search backwards, until white space is found:
+        // Search backwards, until non-filename char found:
         for( int k=CP-1; -1<k; k-- )
         {
           C = m_fb.Get( CL, k );
-
           if( !Utils.IsFileNameChar( C ) ) break;
           else fname.insert( 0, C );
         }
-        // Search forwards, until white space is found:
+        // Search forwards, until non-filename char found:
         for( int k=CP+1; k<LL; k++ )
         {
           C = m_fb.Get( CL, k );
-
           if( !Utils.IsFileNameChar( C ) ) break;
           else fname.append( C );
         }
+        // Trim white space off beginning and ending of fname:
+        Utils.Trim( fname );
+        // Replace environment variables with values:
         Ptr_StringBuilder p_sb = new Ptr_StringBuilder( fname );
         Utils.EnvKeys2Vals( p_sb );
         fname = p_sb.val;

@@ -245,6 +245,7 @@ class Utils
         ||      '_' == c
         ||    ( 'a' <= c && c <= 'z' )
         ||      '~' == c
+        ||      ' ' == c // Allow spaces in file names
         ;
   }
 
