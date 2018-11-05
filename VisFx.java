@@ -120,19 +120,6 @@ public class VisFx extends Application
 
     m_stage.setTitle("visj");
     m_stage.setScene( m_scene );
-
-    // Get m_total_width and m_visual_height:
-    ObservableList<Screen> screenList = Screen.getScreens();
-    for( Screen screen : screenList )
-    {
-      Rectangle2D bounds = screen.getVisualBounds();
-
-      final double W = bounds.getWidth();
-      m_total_width += W;
-
-      final double H = bounds.getHeight();
-      if( 0 == m_visual_height || H < m_visual_height ) m_visual_height = H;
-    }
   }
   void Key_Pressed( KeyEvent ke )
   {
@@ -3885,6 +3872,23 @@ public class VisFx extends Application
     m_old_W = m_stage.getWidth();
     m_old_H = m_stage.getHeight();
 
+    double m_total_width   = 0; // Sum of screen widths side by side
+    double m_visual_height = 0; // Visual height of screen with task bar
+
+    // Get m_total_width and m_visual_height:
+    ObservableList<Screen> screenList = Screen.getScreens();
+    for( Screen screen : screenList )
+    {
+      Rectangle2D bounds = screen.getVisualBounds();
+
+      final double W = bounds.getWidth();
+      m_total_width += W;
+
+      // For multiple screens, one screen might have a taskbar, so set the
+      // m_visual_height to height of the screen with the taskbar:
+      final double H = bounds.getHeight();
+      if( 0 == m_visual_height || H < m_visual_height ) m_visual_height = H;
+    }
     m_stage.setX( 0 );
     m_stage.setY( 0 );
     m_stage.setWidth ( m_total_width );
@@ -4838,8 +4842,10 @@ public class VisFx extends Application
     if( !cv.m_in_diff ) cv.PrintCursor();
   }
   // This ensures that proper change status is displayed around each window:
-  // '+++' for unsaved changes, and
-  // '   ' for no unsaved changes
+  // '    ' for file in vis same as file on file system,
+  // '++++' for changes in vis not written to file system,
+  // '////' for file on file system changed externally to vis,
+  // '+/+/' for changes in vis and on file system
   public boolean Update_Change_Statuses()
   {
     // Update buffer changed status around windows:
@@ -4850,11 +4856,13 @@ public class VisFx extends Application
       // pV points to currently displayed view in window w:
       final View rV = GetView_Win( w );
 
-      if( rV.m_unsaved_changes != rV.m_fb.Changed() )
+      if( rV.m_unsaved_changes != rV.m_fb.Changed()
+       || rV.m_changed_externally != rV.m_fb.m_changed_externally )
       {
         rV.Print_Borders();
 
         rV.m_unsaved_changes = rV.m_fb.Changed();
+        rV.m_changed_externally = rV.m_fb.m_changed_externally;
 
         updated_change_sts = true;
       }
@@ -5100,7 +5108,5 @@ public class VisFx extends Application
   double m_old_Y;
   double m_old_W;
   double m_old_H;
-  double m_total_width;   // Sum of screen widths side by side
-  double m_visual_height; // Visual height of screen with task bar
 }
 

@@ -88,6 +88,7 @@ class FileBuf
     m_isDir     = Files.isDirectory( m_path );
     m_isRegular = Files.isRegularFile( m_path );
     m_mutable   = m_isDir ? false : true;
+    m_changed_externally = fb.m_changed_externally;
 
     if( m_isDir )
     {
@@ -524,20 +525,22 @@ class FileBuf
 
       if( m_mod_time < curr_mod_time )
       {
-        if( m_isDir )
+        if( m_isRegular )
+        {
+          // Update file modification time so that the message window
+          // will not keep popping up:
+          m_mod_time = curr_mod_time;
+          m_changed_externally = true;
+          Update();
+          m_vis.CmdLineMessage(m_fname +" changed on file system");
+        }
+        else if( m_isDir )
         {
           // Dont ask the user, just read in the directory.
           // m_mod_time will get updated in ReReadFile()
           ReReadFile();
 
           Update();
-        }
-        else { // Regular file
-          // Update file modification time so that the message window
-          // will not keep popping up:
-          m_mod_time = curr_mod_time;
-
-          m_vis.Window_Message("\n"+ m_pname +"\n\nhas changed since it was read in\n\n");
         }
       }
       m_mod_check_time = NOW;
@@ -606,13 +609,11 @@ class FileBuf
     if( m_isDir )
     {
       ReadExistingDir();
-      m_mod_time = Utils.ModificationTime( m_path );
     }
     else {
       if( m_isRegular )
       {
         ReadExistingFile();
-        m_mod_time = Utils.ModificationTime( m_path );
       }
       else {
         // File does not exist, so add an empty line:
@@ -621,6 +622,9 @@ class FileBuf
       }
     }
     if( m_mutable ) m_save_history = true;
+
+    m_mod_time = Utils.ModificationTime( m_path );
+    m_changed_externally = false;
 
     return true;
   }
@@ -864,6 +868,7 @@ class FileBuf
 
     m_history.Clear();
     m_mod_time = Utils.ModificationTime( m_path );
+    m_changed_externally = false;
 
     // Wrote to file message:
     m_vis.CmdLineMessage("\""+ m_pname +"\" written" );
@@ -2216,6 +2221,7 @@ class FileBuf
   Highlight_Base        m_Hi;
   long                  m_mod_time; // modification time
   long                  m_foc_time; // focus time
+  boolean               m_changed_externally;
   boolean               m_need_2_clear_stars = false;
   boolean               m_need_2_find_stars  = true;
   private final boolean m_mutable;

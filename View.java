@@ -38,8 +38,8 @@ class View
   }
   int X()           { return m_x; }
   int Y()           { return m_y; }
-  int WorkingRows() { return m_num_rows-5; }
-  int WorkingCols() { return m_num_cols-2; }
+  int WorkingRows() { return 5 < m_num_rows ? m_num_rows-5 : 0; }
+  int WorkingCols() { return 2 < m_num_cols ? m_num_cols-2 : 0; }
   int CrsLine()     { return m_topLine  + m_crsRow; }
   int CrsChar()     { return m_leftChar + m_crsCol; }
   int RightChar()   { return m_leftChar + WorkingCols()-1; }
@@ -212,51 +212,95 @@ class View
   }
   void Print_Borders_Top( final Style S )
   {
-    final char BORDER_CHAR = m_fb.Changed() ? '+' : ' ';
+    final char BORDER_CHAR_1 = Border_Char_1();
+    final char BORDER_CHAR_2 = Border_Char_2();
+
     final int ROW_G = m_y;
 
     for( int k=0; k<m_num_cols; k++ )
     {
       final int COL_G = m_x + k;
+      final boolean odd = 0<k%2 ? true : false;
 
-      m_console.Set( ROW_G, COL_G, BORDER_CHAR, S );
+      if( odd ) m_console.Set( ROW_G, COL_G, BORDER_CHAR_2, S );
+      else      m_console.Set( ROW_G, COL_G, BORDER_CHAR_1, S );
     }
   }
   void Print_Borders_Bottom( final Style S )
   {
-    final char BORDER_CHAR = m_fb.Changed() ? '+' : ' ';
+    final char BORDER_CHAR_1 = Border_Char_1();
+    final char BORDER_CHAR_2 = Border_Char_2();
+
     final int ROW_G = m_y + m_num_rows - 1;
 
     for( int k=0; k<m_num_cols; k++ )
     {
       final int COL_G = m_x + k;
+      final boolean odd = 0<k%2 ? true : false;
 
-      m_console.Set( ROW_G, COL_G, BORDER_CHAR, S );
+      if( odd ) m_console.Set( ROW_G, COL_G, BORDER_CHAR_2, S );
+      else      m_console.Set( ROW_G, COL_G, BORDER_CHAR_1, S );
     }
   }
   void Print_Borders_Right( final Style S )
   {
-    final char BORDER_CHAR = m_fb.Changed() ? '+' : ' ';
+    final char BORDER_CHAR_1 = Border_Char_1();
+    final char BORDER_CHAR_2 = Border_Char_2();
+
     final int COL_G = m_x + m_num_cols - 1;
 
     for( int k=0; k<m_num_rows-1; k++ )
     {
       final int ROW_G = m_y + k;
+      final boolean odd = 0<k%2 ? true : false;
 
-      m_console.Set( ROW_G, COL_G, BORDER_CHAR, S );
+      if( odd ) m_console.Set( ROW_G, COL_G, BORDER_CHAR_2, S );
+      else      m_console.Set( ROW_G, COL_G, BORDER_CHAR_1, S );
     }
   }
   void Print_Borders_Left( final Style S )
   {
-    final char BORDER_CHAR = m_fb.Changed() ? '+' : ' ';
+    final char BORDER_CHAR_1 = Border_Char_1();
+    final char BORDER_CHAR_2 = Border_Char_2();
+
     final int COL_G = m_x;
 
     for( int k=0; k<m_num_rows; k++ )
     {
       final int ROW_G = m_y + k;
+      final boolean odd = 0<k%2 ? true : false;
 
-      m_console.Set( ROW_G, COL_G, BORDER_CHAR, S );
+      if( odd ) m_console.Set( ROW_G, COL_G, BORDER_CHAR_2, S );
+      else      m_console.Set( ROW_G, COL_G, BORDER_CHAR_1, S );
     }
+  }
+  char Border_Char_1()
+  {
+    char border_char = ' ';
+
+    if( m_fb.Changed() )
+    {
+      border_char = '+';
+    }
+    else if( m_fb.m_changed_externally )
+    {
+      border_char = Utils.DIR_DELIM;
+    }
+    return border_char;
+  }
+  char Border_Char_2()
+  {
+    char border_char = ' ';
+
+    if( m_fb.m_changed_externally )
+    {
+      border_char = Utils.DIR_DELIM;
+    }
+    else if( m_fb.Changed() )
+    {
+      border_char = '+';
+    }
+    return border_char;
   }
 
   private void PrintWorkingView()
@@ -2000,7 +2044,7 @@ class View
   }
   void Do_dd()
   {
-    final int ONL = m_fb.NumLines();     // Old number of lines
+    final int ONL = m_fb.NumLines(); // Old number of lines
 
     // If there is nothing to 'dd', just return:
     if( 1 < ONL )
@@ -2019,7 +2063,7 @@ class View
   {
     final int OCL = CrsLine(); // Old cursor line
 
-    // Can only delete one of the user files out of buffer editor
+    // Can only delete user files out of buffer editor
     if( m_vis.USER_FILE <= OCL )
     {
       Line lr = m_fb.GetLine( OCL );
@@ -3781,6 +3825,7 @@ class View
   boolean  m_inVisualBlock;
   boolean  m_copy_vis_buf_2_dot_buf;
   boolean  m_unsaved_changes;
+  boolean  m_changed_externally;
   boolean  m_undo_v;
   boolean  m_in_diff;  // True if this view is being diffed
   int      v_st_line;  // Visual start line number
