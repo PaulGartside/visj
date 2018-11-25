@@ -539,7 +539,7 @@ public class VisFx extends Application
 
       m_states.removeFirst();
 
-      CmdLineMessage( m_console.m_font_name );
+      CmdLineMessage( m_console.m_font_name +","+ m_console.m_font_size );
     }
   }
   void Handle_Cmd( final char c1 )
@@ -2732,9 +2732,11 @@ public class VisFx extends Application
     else if( m_sb.toString().equals("dos2unix")) Exe_dos2unix();
     else if( m_sb.toString().equals("unix2dos")) Exe_unix2dos();
     else if( m_sb.toString().equals("sort"))     Exe_Colon_Sort();
+    else if( m_sb.toString().equals("gc"))       Exe_gc();
     else if( m_sb.toString().startsWith("cd"))   Exe_Colon_cd();
     else if( m_sb.toString().startsWith("syn="))  Exe_Colon_Syntax();
     else if( m_sb.toString().startsWith("detab="))Exe_Colon_Detab();
+    else if( m_sb.toString().startsWith("dec="))  Exe_Colon_Decoding();
     else if( m_sb.toString().startsWith("enc="))  Exe_Colon_Encoding();
     else if( m_sb.toString().startsWith("font=")) Exe_Colon_Font();
     else if( m_sb.charAt(0)=='w' )            Exe_Colon_w();
@@ -3729,61 +3731,124 @@ public class VisFx extends Application
     }
   }
 
-  void Exe_Colon_Encoding()
+  void Exe_gc()
+  {
+    System.gc();
+
+    CmdLineMessage("Performed garbage collection");
+  }
+
+  void Exe_Colon_Decoding()
   {
     String[] toks = m_sb.toString().split("=");
-
-    Encoding enc      = CV().m_fb.m_encoding;
-    String   enc_name = NONE_str;
+    Encoding dec  = CV().m_fb.m_decoding;
 
     if( toks.length!=2 )
     {
-      if     ( enc == Encoding.UTF_8    ) enc_name = UTF_8_str;
-      else if( enc == Encoding.WIN_1252 ) enc_name = WIN_1252_str;
-
-      CmdLineMessage("Encoding is: "+ enc_name );
+      CmdLineMessage("Decoding is: "+ dec );
     }
     else {
       boolean ok = true;
 
-      if( toks[1].equals( NONE_str ) )
-      {
-        enc      = Encoding.NONE;
-        enc_name = NONE_str;
+      if     ( Matches_BYTE    ( toks[1] ) ) dec = Encoding.BYTE;
+      else if( Matches_UTF_8   ( toks[1] ) ) dec = Encoding.UTF_8;
+      else if( Matches_UTF_16BE( toks[1] ) ) dec = Encoding.UTF_16BE;
+      else if( Matches_UTF_16LE( toks[1] ) ) dec = Encoding.UTF_16LE;
+      else if( Matches_WIN_1252( toks[1] ) ) dec = Encoding.WIN_1252;
+      else {
+        ok = false;
+        CmdLineMessage("Unknown Decoding: "+ toks[1] +", Decodings are: "
+                      + Encoding.BYTE +", "
+                      + Encoding.UTF_8 +", "
+                      + Encoding.UTF_16BE +", "
+                      + Encoding.UTF_16LE +", "
+                      + Encoding.WIN_1252 );
       }
-      else if( toks[1].equals( UTF_8_str ) )
+      if( ok )
       {
-        enc      = Encoding.UTF_8;
-        enc_name = UTF_8_str;
+        ok = CV().m_fb.Set_decoding( dec );
+        if( ok ) CV().m_fb.Update();
+
+        if( ok ) CmdLineMessage("Decoding is: "+ dec );
+        else     CmdLineMessage("Failed to set Decoding to: "+ toks[1] );
       }
-      else if( toks[1].equals( WIN_1252_str ) )
-      {
-        enc      = Encoding.WIN_1252;
-        enc_name = WIN_1252_str;
-      }
+    }
+  }
+
+  void Exe_Colon_Encoding()
+  {
+    String[] toks = m_sb.toString().split("=");
+    Encoding enc  = CV().m_fb.m_encoding;
+
+    if( toks.length!=2 )
+    {
+      CmdLineMessage("Encoding is: "+ enc );
+    }
+    else {
+      boolean ok = true;
+
+      if     ( Matches_BYTE    ( toks[1] ) ) enc = Encoding.BYTE;
+      else if( Matches_UTF_8   ( toks[1] ) ) enc = Encoding.UTF_8;
+      else if( Matches_UTF_16BE( toks[1] ) ) enc = Encoding.UTF_16BE;
+      else if( Matches_UTF_16LE( toks[1] ) ) enc = Encoding.UTF_16LE;
+      else if( Matches_WIN_1252( toks[1] ) ) enc = Encoding.WIN_1252;
       else {
         ok = false;
         CmdLineMessage("Unknown Encoding: "+ toks[1] +", Encodings are: "
-                      + NONE_str +", "+ UTF_8_str +", "+ WIN_1252_str );
+                      + Encoding.BYTE +", "
+                      + Encoding.UTF_8 +", "
+                      + Encoding.UTF_16BE +", "
+                      + Encoding.UTF_16LE +", "
+                      + Encoding.WIN_1252 );
       }
       if( ok )
       {
         ok = CV().m_fb.Set_encoding( enc );
         if( ok ) CV().m_fb.Update();
 
-        if( ok ) CmdLineMessage("Encoding is: "+ enc_name );
-        else     CmdLineMessage("Failed to set Encoding to: "+ enc_name );
+        if( ok ) CmdLineMessage("Encoding is: "+ enc );
+        else     CmdLineMessage("Failed to set Encoding to: "+ toks[1] );
       }
     }
   }
 
+  boolean Matches_BYTE( String s )
+  {
+    return 0==s.compareToIgnoreCase("byte")
+        || 0==s.compareToIgnoreCase("none" );
+  }
+  boolean Matches_UTF_8( String s )
+  {
+    return 0==s.compareToIgnoreCase("utf-8")
+        || 0==s.compareToIgnoreCase("utf8" );
+  }
+  boolean Matches_UTF_16BE( String s )
+  {
+    return 0==s.compareToIgnoreCase("utf-16be")
+        || 0==s.compareToIgnoreCase("utf16be" );
+  }
+  boolean Matches_UTF_16LE( String s )
+  {
+    return 0==s.compareToIgnoreCase("utf-16le")
+        || 0==s.compareToIgnoreCase("utf16le" );
+  }
+  boolean Matches_WIN_1252( String s )
+  {
+    return 0==s.compareToIgnoreCase("win")
+        || 0==s.compareToIgnoreCase("1252");
+  }
+
   void Exe_Colon_Font()
   {
-    String[] toks = m_sb.toString().split("=");
+    String[] toks = m_sb2.toString().split("=");
 
-    if( toks.length==2 )
+    if( toks.length!=2 )
     {
-      m_console.Set_Font( toks[1].toLowerCase() );
+      CmdLineMessage("Font is: "+ m_console.m_font_name
+                            +","+ m_console.m_font_size);
+    }
+    else {
+      m_console.Set_Font( toks[1] );
     }
   }
 
@@ -5041,10 +5106,6 @@ public class VisFx extends Application
   {
     return m_sort_by_time;
   }
-  static String NONE_str     = "none";
-  static String UTF_8_str    = "utf-8";
-  static String WIN_1252_str = "win-1252";
-
   List<String>    m_args;
   Stage           m_stage;
   ConsoleFx       m_console;

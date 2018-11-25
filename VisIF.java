@@ -27,8 +27,6 @@ import java.util.Deque;
 interface VisIF
 {
   static final char ESC =  27; // Escape
-  static final int KEY_REPEAT_PERIOD =  10; // ms between key repeats
-  static final int KEY_REPEAT_DELAY  = 250; // ms to wait for first key repeat
   static final int BE_FILE    = 0;    // Buffer editor file
   static final int HELP_FILE  = 1;    // Help          file
   static final int MSG_FILE   = 2;    // Message       file
@@ -62,8 +60,8 @@ interface VisIF
 
   int  Curr_FileNum();
   View GetView_Win( final int w );
-  View GetView_WinPrev( final int w, final int prev );
-  int  GetWinNum_Of_View( final View rV );
+//View GetView_WinPrev( final int w, final int prev );
+//int  GetWinNum_Of_View( final View rV );
   boolean Diff_By_File_Indexes( View cV, int c_file_idx
                               , View oV, int o_file_idx );
   boolean NotHaveFileAddFile( String pname );

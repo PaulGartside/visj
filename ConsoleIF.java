@@ -23,6 +23,8 @@
 
 interface ConsoleIF
 {
+  static final int KEY_REPEAT_PERIOD =  10; // ms between key repeats
+
   static final char CTRL_C =   3;
   static final char BS     =   8; // Backspace
   static final char ESC    =  27; // Escape
@@ -45,9 +47,7 @@ interface ConsoleIF
   void    copy_paste_buf_2_system_clipboard();
   void    copy_system_clipboard_2_paste_buf();
 
-  StringBuilder get_dot_buf_n();
-  StringBuilder get_dot_buf_l();
-  boolean       get_from_dot_buf();
-  void          set_save_2_vis_buf( final boolean save );
+  boolean get_from_dot_buf();
+  void    set_save_2_vis_buf( final boolean save );
 }
 

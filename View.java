@@ -1402,14 +1402,63 @@ class View
     }
   }
 
+//void GoToFile()
+//{
+//  String fname = GetFileName_UnderCursor();
+//
+//  if( null != fname ) m_vis.GoToBuffer_Fname( fname );
+//}
+
   void GoToFile()
   {
-    String fname = GetFileName_UnderCursor();
+    String fname = m_vis.Is_BE_FILE( m_fb )
+                 ? GetFileName_UnderCursor_WholeLine()
+                 : GetFileName_UnderCursor_PartialLine();
 
     if( null != fname ) m_vis.GoToBuffer_Fname( fname );
   }
 
-  String GetFileName_UnderCursor()
+//String GetFileName_UnderCursor()
+//{
+//  StringBuilder fname = null;
+//  final int CL = CrsLine();
+//  final int LL = m_fb.LineLen( CL );
+//  if( 0<LL ) {
+//    MoveInBounds();
+//    final int CP = CrsChar();
+//    char C = m_fb.Get( CL, CP );
+//
+//    if( Utils.IsFileNameChar( C ) )
+//    {
+//      // Get the file name:
+//      fname = new StringBuilder();
+//      fname.append( C );
+//
+//      // Search backwards, until non-filename char found:
+//      for( int k=CP-1; -1<k; k-- )
+//      {
+//        C = m_fb.Get( CL, k );
+//        if( !Utils.IsFileNameChar( C ) ) break;
+//        else fname.insert( 0, C );
+//      }
+//      // Search forwards, until non-filename char found:
+//      for( int k=CP+1; k<LL; k++ )
+//      {
+//        C = m_fb.Get( CL, k );
+//        if( !Utils.IsFileNameChar( C ) ) break;
+//        else fname.append( C );
+//      }
+//      // Trim white space off beginning and ending of fname:
+//      Utils.Trim( fname );
+//      // Replace environment variables with values:
+//      Ptr_StringBuilder p_sb = new Ptr_StringBuilder( fname );
+//      Utils.EnvKeys2Vals( p_sb );
+//      fname = p_sb.val;
+//    }
+//  }
+//  return null != fname ? fname.toString() : null;
+//}
+  String GetFileName_UnderCursor_PartialLine()
   {
     StringBuilder fname = null;
     final int CL = CrsLine();
@@ -1442,12 +1491,23 @@ class View
         // Trim white space off beginning and ending of fname:
         Utils.Trim( fname );
         // Replace environment variables with values:
-        Ptr_StringBuilder p_sb = new Ptr_StringBuilder( fname );
-        Utils.EnvKeys2Vals( p_sb );
-        fname = p_sb.val;
+        fname = Utils.EnvKeys2Vals( fname );
       }
     }
     return null != fname ? fname.toString() : null;
+  }
+  String GetFileName_UnderCursor_WholeLine()
+  {
+    String fname = null;
+
+    final int CL = CrsLine();
+    final int LL = m_fb.LineLen( CL );
+
+    if( 0<LL )
+    {
+      fname = m_fb.GetLine( CL ).toString();
+    }
+    return fname;
   }
 
   // If past end of line, move back to end of line.

@@ -45,6 +45,29 @@ import java.util.Queue;
 class ConsoleFx extends Canvas
              implements ConsoleIF
 {
+  ConsoleFx( VisFx vis, int width, int height )
+  {
+    super( width, height );
+
+    m_vis      = vis;
+    m_gc       = getGraphicsContext2D();
+    m_num_rows = 0;
+    m_num_cols = 0;
+    m_siz_rows = 0;
+    m_siz_cols = 0;
+
+    m_font_name  = GetDefaultFontName();
+    m_font_plain = Font.font( m_font_name, FontWeight.NORMAL, m_font_size );
+    m_font_bold  = Font.font( m_font_name, FontWeight.BOLD  , m_font_size );
+
+    Init_TextChars();
+    Init_FontMetrics();
+    Init_Graphics();
+    Init_RowsCols();
+    Init_Clear();
+    Init_Color_Scheme_1();
+  }
+
   void Key_Pressed( KeyEvent ke )
   {
     if( Add_Key_Char( ke ) )
@@ -137,28 +160,6 @@ class ConsoleFx extends Canvas
     default: add = false;
     }
     return add;
-  }
-
-  ConsoleFx( VisFx vis, int width, int height )
-  {
-    super( width, height );
-
-    m_vis      = vis;
-    m_gc       = getGraphicsContext2D();
-    m_num_rows = 0;
-    m_num_cols = 0;
-    m_siz_rows = 0;
-    m_siz_cols = 0;
-
-    m_font_name  = GetDefaultFontName();
-    m_font_plain = Font.font( m_font_name, FontWeight.NORMAL, m_font_size );
-    m_font_bold  = Font.font( m_font_name, FontWeight.BOLD  , m_font_size );
-
-    Init_TextChars();
-    Init_FontMetrics();
-    Init_Graphics();
-    Init_RowsCols();
-    Init_Clear();
   }
 
   String GetDefaultFontName()
@@ -472,44 +473,103 @@ class ConsoleFx extends Canvas
 
     Init_FontMetrics();
   }
+//public int KeysIn()
+//{
+//  static final int KEY_IN_SLEEP_PERIOD =  10; // ms between key repeats
+//
+//  if( m_get_from_dot_buf_n )
+//  {
+//    // If there is something to process, process it right away,
+//    // else sleep to avoid hogging CPU:
+//    final int num_keys_in = m_dot_buf_n.length();
+//    if( num_keys_in <= 0 )
+//    {
+//      Utils.Sleep( KEY_IN_SLEEP_PERIOD );
+//    }
+//    return num_keys_in;
+//  }
+//  if( m_get_from_dot_buf_l )
+//  {
+//    // If there is something to process, process it right away,
+//    // else sleep to avoid hogging CPU:
+//    final int num_keys_in = m_dot_buf_l.length();
+//    if( num_keys_in <= 0 )
+//    {
+//      Utils.Sleep( KEY_IN_SLEEP_PERIOD );
+//    }
+//    return num_keys_in;
+//  }
+//  if( m_get_from_map_buf )
+//  {
+//    // If there is something to process, process it right away,
+//    // else sleep to avoid hogging CPU:
+//    final int num_keys_in = m_map_buf.length();
+//    if( num_keys_in <= 0 )
+//    {
+//      Utils.Sleep( KEY_IN_SLEEP_PERIOD );
+//    }
+//    return num_keys_in;
+//  }
+//  Utils.Sleep( KEY_IN_SLEEP_PERIOD );
+//
+//  return m_input.size();
+//}
+//public int KeysIn()
+//{
+//  static final int KEY_IN_SLEEP_PERIOD =  10; // ms between key repeats
+//
+//  if( m_get_from_dot_buf_n )
+//  {
+//    // If there is something to process, process it right away,
+//    // else sleep to avoid hogging CPU:
+//    final int num_keys_in = m_dot_buf_n.length();
+//
+//    if( num_keys_in <= 0 ) Utils.Sleep( KEY_IN_SLEEP_PERIOD );
+//
+//    return num_keys_in;
+//  }
+//  if( m_get_from_dot_buf_l )
+//  {
+//    // If there is something to process, process it right away,
+//    // else sleep to avoid hogging CPU:
+//    final int num_keys_in = m_dot_buf_l.length();
+//
+//    if( num_keys_in <= 0 ) Utils.Sleep( KEY_IN_SLEEP_PERIOD );
+//
+//    return num_keys_in;
+//  }
+//  if( m_get_from_map_buf )
+//  {
+//    // If there is something to process, process it right away,
+//    // else sleep to avoid hogging CPU:
+//    final int num_keys_in = m_map_buf.length();
+//
+//    if( num_keys_in <= 0 ) Utils.Sleep( KEY_IN_SLEEP_PERIOD );
+//
+//    return num_keys_in;
+//  }
+//  Utils.Sleep( KEY_IN_SLEEP_PERIOD );
+//
+//  return m_input.size();
+//}
+
   public int KeysIn()
   {
-    if( m_get_from_dot_buf_n )
-    {
-      // If there is something to process, process it right away,
-      // else sleep to avoid hogging CPU:
-      final int num_keys_in = m_dot_buf_n.length();
-      if( num_keys_in <= 0 )
-      {
-        Utils.Sleep( m_vis.KEY_REPEAT_PERIOD );
-      }
-      return num_keys_in;
-    }
-    if( m_get_from_dot_buf_l )
-    {
-      // If there is something to process, process it right away,
-      // else sleep to avoid hogging CPU:
-      final int num_keys_in = m_dot_buf_l.length();
-      if( num_keys_in <= 0 )
-      {
-        Utils.Sleep( m_vis.KEY_REPEAT_PERIOD );
-      }
-      return num_keys_in;
-    }
-    if( m_get_from_map_buf )
-    {
-      // If there is something to process, process it right away,
-      // else sleep to avoid hogging CPU:
-      final int num_keys_in = m_map_buf.length();
-      if( num_keys_in <= 0 )
-      {
-        Utils.Sleep( m_vis.KEY_REPEAT_PERIOD );
-      }
-      return num_keys_in;
-    }
-    Utils.Sleep( m_vis.KEY_REPEAT_PERIOD );
+    int num_keys_in = 0;
 
-    return m_input.size();
+    if     ( m_get_from_dot_buf_n ) num_keys_in = m_dot_buf_n.length();
+    else if( m_get_from_dot_buf_l ) num_keys_in = m_dot_buf_l.length();
+    else if( m_get_from_map_buf   ) num_keys_in = m_map_buf.length();
+    else                            num_keys_in = m_input.size();
+
+    if( num_keys_in <= 0 )
+    {
+      final int KEY_IN_SLEEP_PERIOD = 10;
+
+      // If there is nothing to process, sleep to avoid hogging CPU:
+      Utils.Sleep( KEY_IN_SLEEP_PERIOD );
+    }
+    return num_keys_in;
   }
   public char GetKey()
   {
@@ -633,10 +693,21 @@ class ConsoleFx extends Canvas
 
   void Set_Color_Scheme_1()
   {
+    Init_Color_Scheme_1();
+
+    m_gc.setFont( m_font_plain );
+    m_text.setFont( m_font_plain );
+
+    Init_Clear();
+    m_vis.UpdateViews( false );
+    m_vis.CV().PrintCursor();  // Does m_console.Update();
+  }
+  void Init_Color_Scheme_1()
+  {
     NORMAL_FG       = Color.WHITE  ;  NORMAL_BG       = Color.BLACK  ;
     STATUS_FG       = Color.WHITE  ;  STATUS_BG       = Color.BLUE   ;
     BORDER_FG       = Color.WHITE  ;  BORDER_BG       = Color.BLUE   ;
-    BORDER_HI_FG    = Color.WHITE  ;  BORDER_HI_BG    = Color.LIME   ;
+    BORDER_HI_FG    = Color.BLUE   ;  BORDER_HI_BG    = Color.LIME   ; // FX calls green LIME
     BANNER_FG       = Color.WHITE  ;  BANNER_BG       = Color.RED    ;
     STAR_FG         = Color.WHITE  ;  STAR_BG         = Color.RED    ;
     COMMENT_FG      = m_comment_fg ;  COMMENT_BG      = Color.BLACK  ;
@@ -672,6 +743,12 @@ class ConsoleFx extends Canvas
     DIFF_VISUAL_FG  = Color.BLUE   ;  DIFF_VISUAL_BG  = Color.RED    ;
     CURSOR_FG       = Color.BLACK  ;  CURSOR_BG       = Color.PINK   ;
                                       CURSOR_EMPTY_BG = Color.BLACK  ;
+  }
+
+  void Set_Color_Scheme_2()
+  {
+    Init_Color_Scheme_2();
+
     m_gc.setFont( m_font_plain );
     m_text.setFont( m_font_plain );
 
@@ -679,12 +756,12 @@ class ConsoleFx extends Canvas
     m_vis.UpdateViews( false );
     m_vis.CV().PrintCursor();  // Does m_console.Update();
   }
-  void Set_Color_Scheme_2()
+  void Init_Color_Scheme_2()
   {
     NORMAL_FG       = Color.WHITE  ;  NORMAL_BG       = Color.BLACK  ;
     STATUS_FG       = Color.WHITE  ;  STATUS_BG       = Color.BLUE   ;
     BORDER_FG       = Color.WHITE  ;  BORDER_BG       = Color.BLUE   ;
-    BORDER_HI_FG    = Color.WHITE  ;  BORDER_HI_BG    = Color.LIME   ;
+    BORDER_HI_FG    = Color.BLUE   ;  BORDER_HI_BG    = Color.LIME   ; // FX calls green LIME
     BANNER_FG       = Color.WHITE  ;  BANNER_BG       = Color.RED    ;
     STAR_FG         = Color.WHITE  ;  STAR_BG         = Color.RED    ;
     COMMENT_FG      = m_comment_fg ;  COMMENT_BG      = Color.BLACK  ;
@@ -720,19 +797,25 @@ class ConsoleFx extends Canvas
     DIFF_VISUAL_FG  = Color.BLUE   ;  DIFF_VISUAL_BG  = Color.RED    ;
     CURSOR_FG       = Color.BLACK  ;  CURSOR_BG       = Color.PINK   ;
                                       CURSOR_EMPTY_BG = Color.BLACK  ;
-    m_gc.setFont( m_font_plain );
-    m_text.setFont( m_font_plain );
+  }
+
+  void Set_Color_Scheme_3()
+  {
+    Init_Color_Scheme_3();
+
+    m_gc.setFont( m_font_bold );
+    m_text.setFont( m_font_bold );
 
     Init_Clear();
     m_vis.UpdateViews( false );
     m_vis.CV().PrintCursor();  // Does m_console.Update();
   }
-  void Set_Color_Scheme_3()
+  void Init_Color_Scheme_3()
   {
     NORMAL_FG       = Color.BLACK    ;  NORMAL_BG       = Color.WHITE  ;
     STATUS_FG       = Color.WHITE    ;  STATUS_BG       = Color.BLUE   ;
     BORDER_FG       = Color.WHITE    ;  BORDER_BG       = Color.BLUE   ;
-    BORDER_HI_FG    = Color.WHITE    ;  BORDER_HI_BG    = Color.LIME   ;
+    BORDER_HI_FG    = Color.BLUE     ;  BORDER_HI_BG    = Color.LIME   ; // FX calls green LIME
     BANNER_FG       = Color.WHITE    ;  BANNER_BG       = Color.RED    ;
     STAR_FG         = Color.WHITE    ;  STAR_BG         = Color.RED    ;
     COMMENT_FG      = m_d_blue       ;  COMMENT_BG      = Color.WHITE  ;
@@ -768,6 +851,12 @@ class ConsoleFx extends Canvas
     DIFF_VISUAL_FG  = Color.BLUE     ;  DIFF_VISUAL_BG  = Color.RED    ;
     CURSOR_FG       = Color.BLACK    ;  CURSOR_BG       = m_d_pink     ;
                                         CURSOR_EMPTY_BG = Color.BLACK  ;
+  }
+
+  void Set_Color_Scheme_4()
+  {
+    Init_Color_Scheme_4();
+
     m_gc.setFont( m_font_bold );
     m_text.setFont( m_font_bold );
 
@@ -775,12 +864,12 @@ class ConsoleFx extends Canvas
     m_vis.UpdateViews( false );
     m_vis.CV().PrintCursor();  // Does m_console.Update();
   }
-  void Set_Color_Scheme_4()
+  void Init_Color_Scheme_4()
   {
     NORMAL_FG       = Color.BLACK    ;  NORMAL_BG       = Color.WHITE  ;
     STATUS_FG       = Color.WHITE    ;  STATUS_BG       = Color.BLUE   ;
     BORDER_FG       = Color.WHITE    ;  BORDER_BG       = Color.BLUE   ;
-    BORDER_HI_FG    = Color.WHITE    ;  BORDER_HI_BG    = Color.LIME   ;
+    BORDER_HI_FG    = Color.BLUE     ;  BORDER_HI_BG    = Color.LIME   ; // FX calls green LIME
     BANNER_FG       = Color.WHITE    ;  BANNER_BG       = Color.RED    ;
     STAR_FG         = Color.WHITE    ;  STAR_BG         = Color.RED    ;
     COMMENT_FG      = m_d_blue       ;  COMMENT_BG      = Color.WHITE  ;
@@ -816,12 +905,6 @@ class ConsoleFx extends Canvas
     DIFF_VISUAL_FG  = Color.BLUE     ;  DIFF_VISUAL_BG  = Color.RED    ;
     CURSOR_FG       = Color.BLACK    ;  CURSOR_BG       = m_d_pink     ;
                                         CURSOR_EMPTY_BG = Color.BLACK  ;
-    m_gc.setFont( m_font_bold );
-    m_text.setFont( m_font_bold );
-
-    Init_Clear();
-    m_vis.UpdateViews( false );
-    m_vis.CV().PrintCursor();  // Does m_console.Update();
   }
 
   private Color Style_2_BG( final Style S )
@@ -928,23 +1011,14 @@ class ConsoleFx extends Canvas
 
       Collections.sort( m_all_fonts );
 
-      for( int k=0; k<m_all_fonts.size(); k++ )
-      {
-        String lower = m_all_fonts.get(k).toLowerCase();
-
-        m_all_fonts.set( k, lower );
-      }
       just_initialized_fonts = true;;
     }
     return just_initialized_fonts;
   }
   void Next_Font()
   {
-    if( Init_Font_List() )
+    if( !Init_Font_List() )
     {
-      // m_all_fonts_index = 0;
-    }
-    else {
       m_all_fonts_index = (m_all_fonts_index<m_all_fonts.size()-1)
                         ? m_all_fonts_index+1 : 0;
     }
@@ -954,11 +1028,8 @@ class ConsoleFx extends Canvas
   }
   void Prev_Font()
   {
-    if( Init_Font_List() )
+    if( !Init_Font_List() )
     {
-      // m_all_fonts_index = 0;
-    }
-    else {
       m_all_fonts_index = (0 < m_all_fonts_index) ? m_all_fonts_index-1
                                                   : m_all_fonts.size()-1;
     }
@@ -975,9 +1046,11 @@ class ConsoleFx extends Canvas
 
     boolean matched = false;
 
+    String font_name_lc = font_name.toLowerCase();
+
     for( int k=0; !matched && k<m_all_fonts.size(); k++ )
     {
-      if( m_all_fonts.get( k ).startsWith( font_name ) )
+      if( m_all_fonts.get( k ).toLowerCase().startsWith( font_name_lc ) )
       {
         matched = true;
 
@@ -1047,14 +1120,6 @@ class ConsoleFx extends Canvas
   public void set_save_2_vis_buf( final boolean save )
   {
     m_save_2_vis_buf = save;
-  }
-  public StringBuilder get_dot_buf_n()
-  {
-    return m_dot_buf_n;
-  }
-  public StringBuilder get_dot_buf_l()
-  {
-    return m_dot_buf_l;
   }
   public boolean get_from_dot_buf()
   {
@@ -1146,85 +1211,45 @@ class ConsoleFx extends Canvas
   private Color    m_d_pink     = Color.color( 1.0f, 0.5f, 0.5f );
   private Color    m_d_gray     = Color.color( 0.2f, 0.2f, 0.2f );
 
-  private Color NORMAL_FG       = Color.WHITE  ;
-  private Color STATUS_FG       = Color.WHITE  ;
-  private Color BORDER_FG       = Color.WHITE  ;
-  private Color BORDER_HI_FG    = Color.WHITE  ;
-  private Color BANNER_FG       = Color.WHITE  ;
-  private Color STAR_FG         = Color.WHITE  ;
-  private Color COMMENT_FG      = m_comment_fg ;
-  private Color DEFINE_FG       = Color.MAGENTA;
-  private Color CONST_FG        = Color.CYAN   ;
-  private Color CONTROL_FG      = Color.YELLOW ;
-  private Color VARTYPE_FG      = Color.LIME   ; // FX calls green LIME
-  private Color VISUAL_FG       = Color.WHITE  ;
-  private Color NONASCII_FG     = Color.RED    ;
-  private Color RV_NORMAL_FG    = Color.BLACK  ;
-  private Color RV_STATUS_FG    = Color.BLUE   ;
-  private Color RV_BORDER_FG    = Color.BLUE   ;
-  private Color RV_BORDER_HI_FG = Color.LIME   ;
-  private Color RV_BANNER_FG    = Color.RED    ;
-  private Color RV_STAR_FG      = Color.RED    ;
-  private Color RV_COMMENT_FG   = Color.WHITE  ;
-  private Color RV_DEFINE_FG    = Color.WHITE  ;
-  private Color RV_CONST_FG     = Color.BLACK  ;
-  private Color RV_CONTROL_FG   = Color.BLACK  ;
-  private Color RV_VARTYPE_FG   = Color.WHITE  ;
-  private Color RV_VISUAL_FG    = Color.RED    ;
-  private Color RV_NONASCII_FG  = Color.BLUE   ;
-  private Color EMPTY_FG        = Color.RED    ;
-  private Color EOF_FG          = Color.RED    ;
-  private Color DIFF_DEL_FG     = Color.WHITE  ;
-  private Color DIFF_NORMAL_FG  = Color.WHITE  ;
-  private Color DIFF_STAR_FG    = Color.BLUE   ;
-  private Color DIFF_COMMENT_FG = Color.WHITE  ;
-  private Color DIFF_DEFINE_FG  = Color.MAGENTA;
-  private Color DIFF_CONST_FG   = Color.CYAN   ;
-  private Color DIFF_CONTROL_FG = Color.YELLOW ;
-  private Color DIFF_VARTYPE_FG = Color.LIME   ;
-  private Color DIFF_VISUAL_FG  = Color.BLUE   ;
-  private Color CURSOR_FG       = Color.BLACK  ;
-
-  private Color NORMAL_BG       = Color.BLACK  ;
-  private Color STATUS_BG       = Color.BLUE   ;
-  private Color BORDER_BG       = Color.BLUE   ;
-  private Color BORDER_HI_BG    = Color.LIME   ;
-  private Color BANNER_BG       = Color.RED    ;
-  private Color STAR_BG         = Color.RED    ;
-  private Color COMMENT_BG      = Color.BLACK  ;
-  private Color DEFINE_BG       = Color.BLACK  ;
-  private Color CONST_BG        = Color.BLACK  ;
-  private Color CONTROL_BG      = Color.BLACK  ;
-  private Color VARTYPE_BG      = Color.BLACK  ;
-  private Color VISUAL_BG       = Color.RED    ;
-  private Color NONASCII_BG     = Color.BLUE   ;
-  private Color RV_NORMAL_BG    = Color.WHITE  ;
-  private Color RV_STATUS_BG    = Color.BLUE   ;
-  private Color RV_BORDER_BG    = Color.WHITE  ;
-  private Color RV_BORDER_HI_BG = Color.WHITE  ;
-  private Color RV_BANNER_BG    = Color.WHITE  ;
-  private Color RV_STAR_BG      = Color.WHITE  ;
-  private Color RV_COMMENT_BG   = Color.BLUE   ;
-  private Color RV_DEFINE_BG    = Color.MAGENTA;
-  private Color RV_CONST_BG     = Color.CYAN   ;
-  private Color RV_CONTROL_BG   = Color.YELLOW ;
-  private Color RV_VARTYPE_BG   = Color.LIME   ;
-  private Color RV_VISUAL_BG    = Color.WHITE  ;
-  private Color RV_NONASCII_BG  = Color.RED    ;
-  private Color EMPTY_BG        = Color.BLACK  ;
-  private Color EOF_BG          = m_d_gray     ;
-  private Color DIFF_DEL_BG     = Color.RED    ;
-  private Color DIFF_NORMAL_BG  = Color.BLUE   ;
-  private Color DIFF_STAR_BG    = Color.RED    ;
-  private Color DIFF_COMMENT_BG = Color.BLUE   ;
-  private Color DIFF_DEFINE_BG  = Color.BLUE   ;
-  private Color DIFF_CONST_BG   = Color.BLUE   ;
-  private Color DIFF_CONTROL_BG = Color.BLUE   ;
-  private Color DIFF_VARTYPE_BG = Color.BLUE   ;
-  private Color DIFF_VISUAL_BG  = Color.RED    ;
-  private Color CURSOR_BG       = Color.PINK   ;
-  private Color CURSOR_EMPTY_BG = Color.BLACK  ;
-
+  private Color NORMAL_FG      ;  private Color NORMAL_BG      ;
+  private Color STATUS_FG      ;  private Color STATUS_BG      ;
+  private Color BORDER_FG      ;  private Color BORDER_BG      ;
+  private Color BORDER_HI_FG   ;  private Color BORDER_HI_BG   ;
+  private Color BANNER_FG      ;  private Color BANNER_BG      ;
+  private Color STAR_FG        ;  private Color STAR_BG        ;
+  private Color COMMENT_FG     ;  private Color COMMENT_BG     ;
+  private Color DEFINE_FG      ;  private Color DEFINE_BG      ;
+  private Color CONST_FG       ;  private Color CONST_BG       ;
+  private Color CONTROL_FG     ;  private Color CONTROL_BG     ;
+  private Color VARTYPE_FG     ;  private Color VARTYPE_BG     ;
+  private Color VISUAL_FG      ;  private Color VISUAL_BG      ;
+  private Color NONASCII_FG    ;  private Color NONASCII_BG    ;
+  private Color RV_NORMAL_FG   ;  private Color RV_NORMAL_BG   ;
+  private Color RV_STATUS_FG   ;  private Color RV_STATUS_BG   ;
+  private Color RV_BORDER_FG   ;  private Color RV_BORDER_BG   ;
+  private Color RV_BORDER_HI_FG;  private Color RV_BORDER_HI_BG;
+  private Color RV_BANNER_FG   ;  private Color RV_BANNER_BG   ;
+  private Color RV_STAR_FG     ;  private Color RV_STAR_BG     ;
+  private Color RV_COMMENT_FG  ;  private Color RV_COMMENT_BG  ;
+  private Color RV_DEFINE_FG   ;  private Color RV_DEFINE_BG   ;
+  private Color RV_CONST_FG    ;  private Color RV_CONST_BG    ;
+  private Color RV_CONTROL_FG  ;  private Color RV_CONTROL_BG  ;
+  private Color RV_VARTYPE_FG  ;  private Color RV_VARTYPE_BG  ;
+  private Color RV_VISUAL_FG   ;  private Color RV_VISUAL_BG   ;
+  private Color RV_NONASCII_FG ;  private Color RV_NONASCII_BG ;
+  private Color EMPTY_FG       ;  private Color EMPTY_BG       ;
+  private Color EOF_FG         ;  private Color EOF_BG         ;
+  private Color DIFF_DEL_FG    ;  private Color DIFF_DEL_BG    ;
+  private Color DIFF_NORMAL_FG ;  private Color DIFF_NORMAL_BG ;
+  private Color DIFF_STAR_FG   ;  private Color DIFF_STAR_BG   ;
+  private Color DIFF_COMMENT_FG;  private Color DIFF_COMMENT_BG;
+  private Color DIFF_DEFINE_FG ;  private Color DIFF_DEFINE_BG ;
+  private Color DIFF_CONST_FG  ;  private Color DIFF_CONST_BG  ;
+  private Color DIFF_CONTROL_FG;  private Color DIFF_CONTROL_BG;
+  private Color DIFF_VARTYPE_FG;  private Color DIFF_VARTYPE_BG;
+  private Color DIFF_VISUAL_FG ;  private Color DIFF_VISUAL_BG ;
+  private Color CURSOR_FG      ;  private Color CURSOR_BG      ;
+                                  private Color CURSOR_EMPTY_BG;
   VisFx            m_vis;
   GraphicsContext  m_gc;
   Font             m_font_plain;

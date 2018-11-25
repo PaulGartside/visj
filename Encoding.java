@@ -23,8 +23,10 @@
 
 enum Encoding
 {
-  NONE,
+  BYTE,
   UTF_8,
+  UTF_16BE,
+  UTF_16LE,
   WIN_1252
 }
 

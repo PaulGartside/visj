@@ -58,9 +58,10 @@ class Utils
 
       if( null != os )
       {
-        if( os.equals("Mac OS X" ) ) m_os_type = OS_Type.OSX;
-        if( os.equals("Windows 7") ) m_os_type = OS_Type.Windows;
+        if( os.equals    ("Mac OS X") ) m_os_type = OS_Type.OSX;
+        if( os.startsWith("Windows" ) ) m_os_type = OS_Type.Windows;
       }
+      m_determined_os = true;
     }
     return m_os_type;
   }
@@ -432,26 +433,61 @@ class Utils
     }
     return ok;
   }
+//public static
+//void EnvKeys2Vals( Ptr_StringBuilder in_out_fname )
+//{
+//  StringBuilder sb = in_out_fname.val;
+//
+//  // Replace ~/ with $HOME/
+//  if( 1<sb.length() && '~' == sb.charAt(0) && '/' == sb.charAt(1) )
+//  {
+//    sb.replace( 0, 0, "$HOME" );
+//  }
+//  StringBuilder env_key_sb = new StringBuilder();
+//
+//  for( int k=0; k<sb.length()-1; k++ )
+//  {
+//    if( '$' == sb.charAt(k) )
+//    {
+//      env_key_sb.setLength( 0 );
+//      for( k++; k<sb.length() && IsWord_Ident( sb.charAt(k) ); k++ )
+//      {
+//        env_key_sb.append( sb.charAt(k) );
+//      }
+//      if( 0<env_key_sb.length() )
+//      {
+//        final String env_val_s = System.getenv( env_key_sb.toString() );
+//        if( null != env_val_s )
+//        {
+//          env_key_sb.insert( 0, '$' );
+//
+//          String s = sb.toString();
+//          String s2 = s.replace( env_key_sb, env_val_s );
+//          in_out_fname.val = new StringBuilder( s2 );
+//        }
+//      }
+//    }
+//  }
+//}
   public static
-  void EnvKeys2Vals( Ptr_StringBuilder in_out_fname )
+  StringBuilder EnvKeys2Vals( StringBuilder sb_io )
   {
-    StringBuilder sb = in_out_fname.val;
-
     // Replace ~/ with $HOME/
-    if( 1<sb.length() && '~' == sb.charAt(0) && '/' == sb.charAt(1) )
+    if( 1<sb_io.length() && '~' == sb_io.charAt(0) && '/' == sb_io.charAt(1) )
     {
-      sb.replace( 0, 0, "$HOME" );
+      sb_io.replace( 0, 0, "$HOME" );
     }
     StringBuilder env_key_sb = new StringBuilder();
 
-    for( int k=0; k<sb.length()-1; k++ )
+    for( int k=0; k<sb_io.length()-1; k++ )
     {
-      if( '$' == sb.charAt(k) )
+      if( '$' == sb_io.charAt(k) )
       {
+        int k_st = k;
         env_key_sb.setLength( 0 );
-        for( k++; k<sb.length() && IsWord_Ident( sb.charAt(k) ); k++ )
+        for( k++; k<sb_io.length() && IsWord_Ident( sb_io.charAt(k) ); k++ )
         {
-          env_key_sb.append( sb.charAt(k) );
+          env_key_sb.append( sb_io.charAt(k) );
         }
         if( 0<env_key_sb.length() )
         {
@@ -460,13 +496,16 @@ class Utils
           {
             env_key_sb.insert( 0, '$' );
 
-            String s = sb.toString();
+            String s = sb_io.toString();
             String s2 = s.replace( env_key_sb, env_val_s );
-            in_out_fname.val = new StringBuilder( s2 );
+            sb_io = new StringBuilder( s2 );
+            // In case env_val_s is shorter than env_key_sb,
+            k = k_st; // backup to where we started
           }
         }
       }
     }
+    return sb_io;
   }
   public static
   void Swap( Ptr_Int A, Ptr_Int B )

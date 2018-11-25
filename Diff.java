@@ -2582,6 +2582,50 @@ class Diff
     }
   }
 
+//String GetFileName_UnderCursor()
+//{
+//  StringBuilder fname = null;
+//
+//  View pV = m_vis.CV();
+//
+//  final int DL = CrsLine();
+//  final int VL = ViewLine( pV, DL ); // View line number
+//  final int LL = pV.m_fb.LineLen( VL );
+//
+//  if( 0<LL ) {
+//    MoveInBounds();
+//    final int CP = CrsChar();
+//    char C = pV.m_fb.Get( VL, CP );
+//
+//    if( Utils.IsFileNameChar( C ) )
+//    {
+//      // Get the file name:
+//      fname = new StringBuilder();
+//      fname.append( C );
+//
+//      // Search backwards, until white space is found:
+//      for( int k=CP-1; -1<k; k-- )
+//      {
+//        C = pV.m_fb.Get( VL, k );
+//
+//        if( !Utils.IsFileNameChar( C ) ) break;
+//        else fname.insert( 0, C );
+//      }
+//      // Search forwards, until white space is found:
+//      for( int k=CP+1; k<LL; k++ )
+//      {
+//        C = pV.m_fb.Get( VL, k );
+//
+//        if( !Utils.IsFileNameChar( C ) ) break;
+//        else fname.append( C );
+//      }
+//      Ptr_StringBuilder p_sb = new Ptr_StringBuilder( fname );
+//      Utils.EnvKeys2Vals( p_sb );
+//      fname = p_sb.val;
+//    }
+//  }
+//  return null != fname ? fname.toString() : null;
+//}
   String GetFileName_UnderCursor()
   {
     StringBuilder fname = null;
@@ -2619,9 +2663,7 @@ class Diff
           if( !Utils.IsFileNameChar( C ) ) break;
           else fname.append( C );
         }
-        Ptr_StringBuilder p_sb = new Ptr_StringBuilder( fname );
-        Utils.EnvKeys2Vals( p_sb );
-        fname = p_sb.val;
+        fname = Utils.EnvKeys2Vals( fname );
       }
     }
     return null != fname ? fname.toString() : null;

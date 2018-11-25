@@ -85,7 +85,7 @@ class Highlight_Text extends Highlight_Base
         {
           m_state = Hi_State.In_Define;
         }
-        else if( C < 32 || (126 < C && m_fb.m_encoding == Encoding.NONE) )
+        else if( C < 32 || (126 < C && m_fb.m_decoding == Encoding.BYTE) )
         {
           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.NONASCII.val );
         }

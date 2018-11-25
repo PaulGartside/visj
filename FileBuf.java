@@ -89,6 +89,8 @@ class FileBuf
     m_isRegular = Files.isRegularFile( m_path );
     m_mutable   = m_isDir ? false : true;
     m_changed_externally = fb.m_changed_externally;
+    m_decoding = fb.m_decoding;
+    m_encoding = fb.m_encoding;
 
     if( m_isDir )
     {
@@ -814,13 +816,13 @@ class FileBuf
   {
     boolean ok = false;
     try {
-      if( Encoding.NONE == m_encoding )
+      if( Encoding.BYTE == m_encoding )
       {
         ok = Write_p( m_lines, m_LF_at_EOF );
       }
       else { // m_lines to
         final long file_size = GetSize();
-        // Going from WIN_1252 or UTF_8 to NONE
+        // Going from UTF_8, UTF_16BE, UTF_16LE, or WIN_1252 or to NONE
         CharBuffer cbuf = File_2_char_buf( file_size );
         cbuf.flip();
         ByteBuffer bbuf = Encode( cbuf );
@@ -871,7 +873,7 @@ class FileBuf
     m_changed_externally = false;
 
     // Wrote to file message:
-    m_vis.CmdLineMessage("\""+ m_pname +"\" written" );
+    m_vis.CmdLineMessage("\""+ m_pname +"\" written:"+ m_encoding );
 
     return true;
   }
@@ -1974,31 +1976,33 @@ class FileBuf
     }
   }
 
-  boolean Set_encoding( final Encoding enc )
+  boolean Set_decoding( final Encoding dec )
   {
     boolean ok = true;
-    if( enc != m_encoding )
+    if( dec != m_decoding )
     {
       final long file_size = GetSize();
-      if( Encoding.NONE == m_encoding )
+      if( Encoding.BYTE != dec
+       && Encoding.BYTE == m_decoding )
       {
-        // Going from NONE to WIN_1252 or UTF_8
+        // Going from NONE to UTF_8, UTF_16BE, UTF_16LE or WIN_1252
         if( Integer.MAX_VALUE < file_size ) ok = false;
         else {
           ByteBuffer bbuf = File_2_byte_buf( file_size );
           bbuf.flip();
-          CharBuffer cbuf = Decode( bbuf, enc );
+          CharBuffer cbuf = Decode( bbuf, dec );
           if( null == cbuf ) ok = false;
           else {
             Ptr_Boolean p_LF_at_EOF = new Ptr_Boolean( true );
             ArrayList<Line> n_lines = Char_buf_2_lines( cbuf, p_LF_at_EOF );
-            Replace_current_file( enc, n_lines, p_LF_at_EOF );
+            Replace_current_file( n_lines, dec, p_LF_at_EOF.val );
           }
         }
       }
-      else if( Encoding.NONE == enc )
+      else if( Encoding.BYTE == dec
+            && Encoding.BYTE != m_decoding )
       {
-        // Going from WIN_1252 or UTF_8 to NONE
+        // Going from UTF_8, UTF_16BE, UTF_16LE or WIN_1252 to NONE
         CharBuffer cbuf = File_2_char_buf( file_size );
         cbuf.flip();
         ByteBuffer bbuf = Encode( cbuf );
@@ -2008,11 +2012,19 @@ class FileBuf
         //bbuf.order( cbuf.order() );
           Ptr_Boolean p_LF_at_EOF = new Ptr_Boolean( true );
           ArrayList<Line> n_lines = Byte_buf_2_lines( bbuf, p_LF_at_EOF );
-          Replace_current_file( enc, n_lines, p_LF_at_EOF );
+          Replace_current_file( n_lines, dec, p_LF_at_EOF.val );
         }
       }
       else ok = false;
     }
+    return ok;
+  }
+  boolean Set_encoding( final Encoding enc )
+  {
+    boolean ok = true;
+
+    m_encoding = enc;
+
     return ok;
   }
 
@@ -2051,21 +2063,17 @@ class FileBuf
   // Decodes ByteBuffer bbuf according to Encoding enc into newly
   // allocated CharBuffer.
   // Returns CharBuffer if successfull, else null.
-  CharBuffer Decode( ByteBuffer bbuf, final Encoding enc )
+  CharBuffer Decode( ByteBuffer bbuf, final Encoding dec )
   {
     CharBuffer cbuf = null;
     CharsetDecoder decoder = null;
 
-    if( enc == Encoding.UTF_8 )
-    {
-      decoder = Charset.forName("UTF-8").newDecoder();
-    }
-    else if( enc == Encoding.WIN_1252 )
-    {
-      decoder = Charset.forName("windows-1252").newDecoder();
-    }
+    if     ( dec == Encoding.UTF_8    ) decoder = Charset.forName("UTF-8").newDecoder();
+    else if( dec == Encoding.UTF_16BE ) decoder = Charset.forName("UTF-16BE").newDecoder();
+    else if( dec == Encoding.UTF_16LE ) decoder = Charset.forName("UTF-16LE").newDecoder();
+    else if( dec == Encoding.WIN_1252 ) decoder = Charset.forName("windows-1252").newDecoder();
     else {
-      // enc is NONE, so just put plain bytes into cbuf
+      // dec is NONE, so just put plain bytes into cbuf
       final int bbuf_size = bbuf.remaining();
       cbuf = CharBuffer.allocate( bbuf_size );
       for( int k=0; k<bbuf_size; k++ )
@@ -2094,14 +2102,10 @@ class FileBuf
     ByteBuffer bbuf = null;
     CharsetEncoder encoder = null;
 
-    if( m_encoding == Encoding.UTF_8 )
-    {
-      encoder = Charset.forName("UTF-8").newEncoder();
-    }
-    else if( m_encoding == Encoding.WIN_1252 )
-    {
-      encoder = Charset.forName("windows-1252").newEncoder();
-    }
+    if     ( m_encoding == Encoding.UTF_8    ) encoder = Charset.forName("UTF-8").newEncoder();
+    else if( m_encoding == Encoding.UTF_16BE ) encoder = Charset.forName("UTF-16BE").newEncoder();
+    else if( m_encoding == Encoding.UTF_16LE ) encoder = Charset.forName("UTF-16LE").newEncoder();
+    else if( m_encoding == Encoding.WIN_1252 ) encoder = Charset.forName("windows-1252").newEncoder();
     else {
       // cbuf already contains plain bytes, so just put them into bbuf
       final int cbuf_size = cbuf.remaining();
@@ -2179,9 +2183,9 @@ class FileBuf
     return n_lines;
   }
 
-  void Replace_current_file( final Encoding enc
-                           , ArrayList<Line> n_lines
-                           , Ptr_Boolean p_LF_at_EOF )
+  void Replace_current_file( ArrayList<Line> n_lines
+                           , final Encoding enc
+                           , final boolean LF_at_EOF )
   {
     m_history.Clear();
     m_save_history = false;
@@ -2190,15 +2194,16 @@ class FileBuf
     m_styles.clear();
     m_lineRegexsValid.clear();
 
-    m_LF_at_EOF = p_LF_at_EOF.val;
-
     for( int k=0; k<n_lines.size(); k++ )
     {
       PushLine( n_lines.get(k) );
     }
     m_save_history = true;
-    m_encoding = enc;
     m_hi_touched_line = 0;
+
+    m_decoding = enc;
+    m_encoding = enc;
+    m_LF_at_EOF = LF_at_EOF;
   }
 
   VisIF                 m_vis;   // Not sure if we need this or should use m_views
@@ -2217,7 +2222,8 @@ class FileBuf
   ChangeHist            m_history      = new ChangeHist( this );
   boolean               m_LF_at_EOF    = true;
   File_Type             m_file_type    = File_Type.UNKNOWN;
-  Encoding              m_encoding     = Encoding.NONE;
+  Encoding              m_decoding     = Encoding.BYTE;
+  Encoding              m_encoding     = Encoding.BYTE;
   Highlight_Base        m_Hi;
   long                  m_mod_time; // modification time
   long                  m_foc_time; // focus time
