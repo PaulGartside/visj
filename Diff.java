@@ -56,7 +56,7 @@ class Diff
         DiffArea CA = new DiffArea( 0, m_fS.NumLines(), 0, m_fL.NumLines() );
 
         RunDiff( CA );
-        Set_DiffContext_2_ViewContext();
+        Find_Context();
       }
       return true;
     }
@@ -79,20 +79,45 @@ class Diff
     m_diff_ms = t2 - t1;
     m_printed_diff_ms = false;
   }
-  void Set_DiffContext_2_ViewContext()
+
+  boolean Has_Context()
+  {
+    return 0 != m_topLine
+        || 0 != m_leftChar
+        || 0 != m_crsRow
+        || 0 != m_crsCol ;
+  }
+  void Find_Context()
+  {
+    if( !Has_Context() )
+    {
+      View pV = m_vis.CV();
+
+      if( pV.Has_Context() )
+      {
+        Copy_ViewContext_2_DiffContext();
+      }
+      else {
+        Do_n_Diff( false );
+        MoveCurrLineCenter( false );
+      }
+    }
+  }
+  void Copy_ViewContext_2_DiffContext()
   {
     View pV = m_vis.CV();
-
+  
+    // View context -> diff context
     final int diff_topLine = DiffLine( pV, pV.TopLine() );
     final int diff_crsLine = DiffLine( pV, pV.CrsLine() );
     final int diff_crsRow  = diff_crsLine - diff_topLine;
-
+  
     m_topLine  = diff_topLine;
     m_leftChar = pV.LeftChar();
     m_crsRow   = diff_crsRow;
     m_crsCol   = pV.CrsCol();
   }
-  void Set_Remaining_ViewContext_2_DiffContext()
+  void Copy_DiffContext_2_Remaining_ViewContext()
   {
     View cV = m_vis.CV();
     View remaining_view = cV == m_vL ? m_vS : m_vL;
@@ -650,8 +675,7 @@ class Diff
       // Screen width so far
       m_sb.setLength( 0 );
       m_sb.append( "Pos=("+(CLv+1)+","+(CC+1)+")"
-                 + "  ("+percent+"%, "+crsByte
-                 + Utils.DIR_DELIM_STR + fb.GetSize()+")"
+                 + "  ("+percent+"%, "+crsByte+"/"+fileSize+")"
                  + "  Char=("+str+")  ");
 
       final int SW = m_sb.length(); // Screen width so far
@@ -1588,12 +1612,12 @@ class Diff
     return num_same;
   }
 
-  void Set_crsRow( final int row )
-  {
-    m_crsRow = row;
-
-    Set_Console_CrsCell();
-  }
+//void Set_crsRow( final int row )
+//{
+//  m_crsRow = row;
+//
+//  Set_Console_CrsCell();
+//}
   void Set_crsCol( final int col )
   {
     m_crsCol = col;
@@ -2150,7 +2174,7 @@ class Diff
   {
     View pV = m_vis.CV();
 
-    MoveInBounds();
+    MoveInBounds_Line();
 
     final int NUM_LINES = pV.m_fb.NumLines();
     final int CL        = ViewLine( pV, CrsLine() ); //< View line
@@ -2187,7 +2211,7 @@ class Diff
   {
     View pV = m_vis.CV();
 
-    MoveInBounds();
+    MoveInBounds_Line();
 
     final char  start_char = '}';
     final char finish_char = '{';
@@ -2197,7 +2221,7 @@ class Diff
   {
     View pV = m_vis.CV();
 
-    MoveInBounds();
+    MoveInBounds_Line();
 
     final char  start_char = '{';
     final char finish_char = '}';
@@ -2582,50 +2606,6 @@ class Diff
     }
   }
 
-//String GetFileName_UnderCursor()
-//{
-//  StringBuilder fname = null;
-//
-//  View pV = m_vis.CV();
-//
-//  final int DL = CrsLine();
-//  final int VL = ViewLine( pV, DL ); // View line number
-//  final int LL = pV.m_fb.LineLen( VL );
-//
-//  if( 0<LL ) {
-//    MoveInBounds();
-//    final int CP = CrsChar();
-//    char C = pV.m_fb.Get( VL, CP );
-//
-//    if( Utils.IsFileNameChar( C ) )
-//    {
-//      // Get the file name:
-//      fname = new StringBuilder();
-//      fname.append( C );
-//
-//      // Search backwards, until white space is found:
-//      for( int k=CP-1; -1<k; k-- )
-//      {
-//        C = pV.m_fb.Get( VL, k );
-//
-//        if( !Utils.IsFileNameChar( C ) ) break;
-//        else fname.insert( 0, C );
-//      }
-//      // Search forwards, until white space is found:
-//      for( int k=CP+1; k<LL; k++ )
-//      {
-//        C = pV.m_fb.Get( VL, k );
-//
-//        if( !Utils.IsFileNameChar( C ) ) break;
-//        else fname.append( C );
-//      }
-//      Ptr_StringBuilder p_sb = new Ptr_StringBuilder( fname );
-//      Utils.EnvKeys2Vals( p_sb );
-//      fname = p_sb.val;
-//    }
-//  }
-//  return null != fname ? fname.toString() : null;
-//}
   String GetFileName_UnderCursor()
   {
     StringBuilder fname = null;
@@ -2637,7 +2617,7 @@ class Diff
     final int LL = pV.m_fb.LineLen( VL );
 
     if( 0<LL ) {
-      MoveInBounds();
+      MoveInBounds_Line();
       final int CP = CrsChar();
       char C = pV.m_fb.Get( VL, CP );
 
@@ -2696,7 +2676,7 @@ class Diff
   void Do_n()
   {
     if( 0 < m_vis.get_regex().length() ) Do_n_Pattern();
-    else                                 Do_n_Diff();
+    else                                 Do_n_Diff( true );
   }
 
   void Do_n_Pattern()
@@ -2790,7 +2770,7 @@ class Diff
     return found_next_star;
   }
 
-  void Do_n_Diff()
+  void Do_n_Diff( final boolean write )
   {
     if( 0 < NumLines() )
     {
@@ -2823,7 +2803,8 @@ class Diff
           final int NCL = dl.val;
           final int NCP = Do_n_Find_Crs_Pos( NCL, DI_List );
 
-          GoToCrsPos_Write( NCL, NCP );
+          if( write ) GoToCrsPos_Write( NCL, NCP );
+          else        GoToCrsPos_NoWrite( NCL, NCP );
         }
       }
     }
@@ -2968,7 +2949,7 @@ class Diff
 
   boolean Do_N_FindPrevPattern( CrsPos ncp )
   {
-    MoveInBounds();
+    MoveInBounds_Line();
 
     View pV = m_vis.CV();
     FileBuf pfb = pV.m_fb;
@@ -3213,7 +3194,7 @@ class Diff
   // If past end of line, move back to end of line.
   // Returns true if moved, false otherwise.
   //
-  boolean MoveInBounds()
+  void MoveInBounds_Line()
   {
     View pV = m_vis.CV();
 
@@ -3222,12 +3203,8 @@ class Diff
     final int LL  = pV.m_fb.LineLen( VL );
     final int EOL = 0<LL ? LL-1 : 0;
 
-    if( EOL < CrsChar() ) // Since cursor is now allowed past EOL,
-    {                      // it may need to be moved back:
-      GoToCrsPos_NoWrite( DL, EOL );
-      return true;
-    }
-    return false;
+    // Since cursor is now allowed past EOL, it may need to be moved back:
+    if( EOL < CrsChar() ) GoToCrsPos_NoWrite( DL, EOL );
   }
 
   void Do_z()
@@ -3246,7 +3223,7 @@ class Diff
       }
       else if( c2 == 'z' )
       {
-        MoveCurrLineCenter();
+        MoveCurrLineCenter( true );
       }
       else if( c2 == 'b' )
       {
@@ -3268,7 +3245,7 @@ class Diff
     }
   }
 
-  void MoveCurrLineCenter()
+  void MoveCurrLineCenter( final boolean write )
   {
     View pV = m_vis.CV();
 
@@ -3284,7 +3261,7 @@ class Diff
       m_topLine = 0;
       Set_Console_CrsCell();
 
-      Update();
+      if( write ) Update();
     }
     else if( center < OCL
           && center != m_crsRow )
@@ -3293,7 +3270,7 @@ class Diff
       m_crsRow = center;
       Set_Console_CrsCell();
 
-      Update();
+      if( write ) Update();
     }
   }
 
@@ -3342,7 +3319,7 @@ class Diff
     {
       pattern = new StringBuilder();
 
-      MoveInBounds();
+      MoveInBounds_Line();
       final int  CC = CrsChar();
       final char C  = pfb.Get( CLv,  CC );
 
@@ -4719,7 +4696,7 @@ class Diff
       Patch_Diff_Info_Inserted( pV, ODL+k, ODVL0 );
     }
     else {
-      MoveInBounds();
+      MoveInBounds_Line();
       final int LL = pfb.LineLen( VL );
       final int CP = CrsChar();         // Cursor position
 
@@ -4793,7 +4770,7 @@ class Diff
       Patch_Diff_Info_Inserted( pV, ODL+k, false );
     }
     else {
-      MoveInBounds();
+      MoveInBounds_Line();
       final int LL = pfb.LineLen( VL );
 
       for( int i=0; i<NLL; i++ )
@@ -4980,7 +4957,7 @@ class Diff
   }
   void run_v_beg()
   {
-    MoveInBounds();
+    MoveInBounds_Line();
     m_inVisualMode = true;
     m_undo_v       = true;
     DisplayBanner();

@@ -117,6 +117,7 @@ class Highlight_CPP extends Highlight_Code
     new HiKeyVal( "__FUNCTION__"       , Highlight_Type.DEFINE  ),
     new HiKeyVal( "__PRETTY_FUNCTION__", Highlight_Type.DEFINE  ),
     new HiKeyVal( "__FILE__"           , Highlight_Type.DEFINE  ),
+    new HiKeyVal( "__func__"           , Highlight_Type.DEFINE  ),
     new HiKeyVal( "__LINE__"           , Highlight_Type.DEFINE  ),
     new HiKeyVal( "__TIMESTAMP__"      , Highlight_Type.DEFINE  ),
   };

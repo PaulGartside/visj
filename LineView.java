@@ -603,20 +603,15 @@ class LineView
   }
 
   // If past end of line, move back to end of line.
-  // Returns true if moved, false otherwise.
   //
-  boolean MoveInBounds()
+  void MoveInBounds_Line()
   {
     final int CL  = CrsLine();
     final int LL  = m_fb.LineLen( CL );
     final int EOL = 0<LL ? LL-1 : 0;
 
-    if( EOL < CrsChar() ) // Since cursor is now allowed past EOL,
-    {                      // it may need to be moved back:
-      GoToCrsPos_NoWrite( CL, EOL );
-      return true;
-    }
-    return false;
+    // Since cursor is now allowed past EOL, it may need to be moved back:
+    if( EOL < CrsChar() ) GoToCrsPos_NoWrite( CL, EOL );
   }
 
   void Do_A()
@@ -833,7 +828,7 @@ class LineView
         for( int k=0; !found_tab_fname && k<m_dir_fb.NumLines(); k++ )
         {
           Line fname = m_dir_fb.GetLine( k );
-      
+
           if( fname.toString().startsWith( m_search__head ) )
           {
             found_tab_fname = true;
@@ -1062,7 +1057,7 @@ class LineView
   void ReplaceAddChars( final char C )
   {
     if( m_fb.NumLines()==0 ) m_fb.PushLine();
-  
+
     final int CL = CrsLine();
     final int CP = CrsChar();
     final int LL = m_fb.LineLen( CL );
@@ -1268,14 +1263,14 @@ class LineView
         ident = false;
       }
       final int START_C = OCL==l ? OCP : 0;
-  
+
       for( int p=START_C; (!found_space || !found_word) && p<LL; p++ )
       {
         ncp_crsLine = l;
         ncp_crsChar = p;
-  
+
         final char C = m_fb.Get( l, p );
-  
+
         if( found_space  )
         {
           if( IsWord( C, ident ) ) found_word = true;
@@ -1311,7 +1306,7 @@ class LineView
 
     final int OCL = CrsLine(); // Old cursor line
     final int LL  = m_fb.LineLen( OCL );
-  
+
     if( LL < CrsChar() ) // Since cursor is now allowed past EOL,
     {                    // it may need to be moved back:
       if( 0<LL && !Utils.IsSpace( m_fb.Get( OCL, LL-1 ) ) )
@@ -1343,14 +1338,14 @@ class LineView
         ident = false;
       }
       final int START_C = OCL==l ? OCP-1 : LL2-1;
-  
+
       for( int p=START_C; (!found_space || !found_word) && -1<p; p-- )
       {
         ncp_crsLine = l;
         ncp_crsChar = p;
-  
+
         final char C = m_fb.Get( l, p );
-  
+
         if( found_word  )
         {
           if( !IsWord( C, ident ) || p==0 ) found_space = true;
@@ -1621,8 +1616,8 @@ class LineView
     {
       Line nlr = new Line();
 
-      final int P_st = Math.min( st_char, OLL-1 ); 
-      final int P_fn = Math.min( fn_char, OLL-1 );  
+      final int P_st = Math.min( st_char, OLL-1 );
+      final int P_fn = Math.min( fn_char, OLL-1 );
 
       int LL = OLL;
 
@@ -1759,20 +1754,20 @@ class LineView
     {
       final int NLL = m_vis.get_reg().get(k).length();  // New line length
       final int OCL = CrsLine();                        // Old cursor line
-  
+
       if( 0 == k ) // Add to current line
       {
-        MoveInBounds();
+        MoveInBounds_Line();
         final int OLL = m_fb.LineLen( OCL );
         final int OCP = CrsChar();               // Old cursor position
-  
+
         // If line we are pasting to is zero length, dont paste a space forward
         final int forward = 0<OLL ? ( paste_pos==Paste_Pos.After ? 1 : 0 ) : 0;
-  
+
         for( int i=0; i<NLL; i++ )
         {
           char C = m_vis.get_reg().get(k).charAt(i);
-  
+
           m_fb.InsertChar( OCL, OCP+i+forward, C );
         }
         if( 1 < N_REG_LINES && OCP+forward < OLL ) // Move rest of first line onto new line below
@@ -1789,11 +1784,11 @@ class LineView
       {
         // Insert a new line if at end of file:
         if( m_fb.NumLines() == OCL+k ) m_fb.InsertLine( OCL+k );
-  
+
         for( int i=0; i<NLL; i++ )
         {
           char C = m_vis.get_reg().get(k).charAt(i);
-  
+
           m_fb.InsertChar( OCL+k, i, C );
         }
       }
@@ -1949,7 +1944,7 @@ class LineView
 
   void GoToOppositeBracket()
   {
-    MoveInBounds();
+    MoveInBounds_Line();
     final int NUM_LINES = m_fb.NumLines();
     final int CL = CrsLine();
     final int CC = CrsChar();
@@ -2142,23 +2137,23 @@ class LineView
   {
     CrsPos ncp = new CrsPos( 0, 0 );
 
-    MoveInBounds();
+    MoveInBounds_Line();
 
     final int NUM_LINES = m_fb.NumLines();
-  
+
     final int OCL = CrsLine();
     final int OCC = CrsChar();
-  
+
     boolean found_prev_star = false;
-  
+
     // Search for first star position before current position
     for( int l=OCL; !found_prev_star && 0<=l; l-- )
     {
       final int LL = m_fb.LineLen( l );
-  
+
       int p=LL-1;
       if( OCL==l ) p = 0<OCC ? OCC-1 : 0;
-  
+
       for( ; 0<p && !found_prev_star; p-- )
       {
         for( ; 0<=p && InStar(l,p); p-- )
@@ -2175,10 +2170,10 @@ class LineView
       for( int l=NUM_LINES-1; !found_prev_star && OCL<l; l-- )
       {
         final int LL = m_fb.LineLen( l );
-  
+
         int p=LL-1;
         if( OCL==l ) p = 0<OCC ? OCC-1 : 0;
-  
+
         for( ; 0<p && !found_prev_star; p-- )
         {
           for( ; 0<=p && InStar(l,p); p-- )
@@ -2202,7 +2197,7 @@ class LineView
   }
   void run_v_beg()
   {
-    MoveInBounds();
+    MoveInBounds_Line();
     m_inVisualMode = true;
     DisplayBanner();
 
@@ -2376,12 +2371,12 @@ class LineView
     for( int L=v_st_line; L<=v_fn_line; L++ )
     {
       Line nlr = new Line();
-  
+
       final int LL = m_fb.LineLen( L );
       if( 0<LL ) {
         final int P_st = (L==v_st_line) ? v_st_char : 0;
         final int P_fn = (L==v_fn_line) ? Math.min(LL-1,v_fn_char) : LL-1;
-  
+
         for( int P = P_st; P <= P_fn; P++ )
         {
           nlr.append_c( m_fb.Get( L, P ) );
@@ -2403,9 +2398,9 @@ class LineView
     for( int L=v_st_line; L<=v_fn_line; L++ )
     {
       Line nlr = new Line();
-  
+
       final int LL = m_fb.LineLen(L);
-  
+
       if( 0<LL )
       {
         for( int P = 0; P <= LL-1; P++ )
@@ -2423,7 +2418,7 @@ class LineView
     Swap_Visual_St_Fn_If_Needed();
 
     m_vis.get_reg().clear();
-  
+
     boolean removed_line = false;
     // 1. If v_st_line==0, fn_line will go negative in the loop below,
     //    so use int's instead of unsigned's
@@ -2433,7 +2428,7 @@ class LineView
     {
       Line lr = m_fb.RemoveLine( L );
       m_vis.get_reg().add( lr );
-  
+
       removed_line = true;
     }
     m_vis.set_paste_mode( Paste_Mode.LINE );
@@ -2441,16 +2436,16 @@ class LineView
     m_inVisualMode = false;
     DisplayBanner();
     // D'ed lines will be removed, so no need to Undo_v()
-  
+
     if( removed_line )
     {
       // Figure out and move to new cursor position:
       final int NUM_LINES = m_fb.NumLines();
       final int OCL       = CrsLine(); // Old cursor line
-  
+
       int ncl = v_st_line;
       if( NUM_LINES-1 < ncl ) ncl = 0<v_st_line ? v_st_line-1 : 0;
-  
+
       final int NCLL = m_fb.LineLen( ncl );
       int ncc = 0;
       if( 0<NCLL ) ncc = v_st_char < NCLL ? v_st_char : NCLL-1;
@@ -2477,7 +2472,7 @@ class LineView
       final int LL = m_fb.LineLen( L );
       final int P_st = (L==v_st_line) ? v_st_char : 0;
       final int P_fn = (L==v_fn_line) ? v_fn_char : LL-1;
-  
+
       for( int P = P_st; P <= P_fn; P++ )
       {
         char C = m_fb.Get( L, P );
@@ -2521,7 +2516,7 @@ class LineView
         for( int p=OCP+1; !found_char && p<LL; p++ )
         {
           final char C = m_fb.Get( OCL, p );
-      
+
           if( C == FAST_CHAR )
           {
             NCP = p;
@@ -2705,7 +2700,7 @@ class LineView
 }
 
 enum ColonOp
-{ 
+{
   unknown,
   e,
   w

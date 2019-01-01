@@ -94,77 +94,171 @@ class Utils
       // At this point p should always be less than LL-1,
       // but put the check in above just to be safe.
       // The check above could also be implemented as an ASSERT.
-      final char c = line.charAt( p+1 );
-      if( !Character.isLetterOrDigit( c ) && c != '_' )
+      final char C = line.charAt( p+1 );
+      if( !Character.isLetterOrDigit( C ) && C != '_' )
       {
-        // c is not an identifier
+        // C is not an identifier
         return true;
       }
     }
-    // c is an identifier
+    // C is an identifier
     return false;
   }
   public static
-  boolean IsUpper( final char c )
+  boolean IsUpper( final char C )
   {
-    return Character.isUpperCase( c );
+    return Character.isUpperCase( C );
   }
   public static
-  boolean IsLower( final char c )
+  boolean IsLower( final char C )
   {
-    return Character.isLowerCase( c );
+    return Character.isLowerCase( C );
   }
   public static
-  char ToUpper( final char c )
+  char ToUpper( final char C )
   {
-    return Character.toUpperCase( c );
+    return Character.toUpperCase( C );
   }
   public static
-  char ToLower( final char c )
+  char ToLower( final char C )
   {
-    return Character.toLowerCase( c );
+    return Character.toLowerCase( C );
   }
   public static
-  boolean IsIdent( final char c )
+  boolean IsIdent( final char C )
   {
-    return Character.isLetterOrDigit( c ) || c == '_';
+    return Character.isLetterOrDigit( C ) || C == '_';
   }
   public static
-  boolean IsWord_Ident( final char c )
+  boolean IsWord_Ident( final char C )
   {
-    return Character.isLetterOrDigit( c ) || c == '_';
+    return Character.isLetterOrDigit( C ) || C == '_';
   }
   public static
-  boolean IsWord_NonIdent( final char c )
+  boolean IsWord_NonIdent( final char C )
   {
-    return !IsSpace( c ) && !IsWord_Ident( c );
+    return !IsSpace( C ) && !IsWord_Ident( C );
   }
   public static
-  boolean IsHexDigit( final char c )
+  boolean IsHexDigit( final char C )
   {
-    return Character.isDigit( c )
-        || c == 'A' || c == 'a'
-        || c == 'B' || c == 'b'
-        || c == 'C' || c == 'c'
-        || c == 'D' || c == 'd'
-        || c == 'E' || c == 'e'
-        || c == 'F' || c == 'f';
+    return Character.isDigit( C )
+        || C == 'A' || C == 'a'
+        || C == 'B' || C == 'b'
+        || C == 'C' || C == 'C'
+        || C == 'D' || C == 'd'
+        || C == 'E' || C == 'e'
+        || C == 'F' || C == 'f';
   }
   public static
-  boolean IsXML_Ident( final char c )
+  boolean IsXML_Ident( final char C )
   {
-    return Character.isLetterOrDigit( c )
-        || c == '_'
-        || c == '-'
-        || c == '.'
-        || c == ':';
+    return Character.isLetterOrDigit( C )
+        || C == '_'
+        || C == '-'
+        || C == '.'
+        || C == ':';
   }
   public static
-  boolean IsEndOfLineDelim( final int c )
+  boolean IsEndOfLineDelim( final int C )
   {
-    if( c == '\n' ) return true;
-    if( c == '\r' ) return true;
+    if( C == '\n' ) return true;
+    if( C == '\r' ) return true;
     return false;
+  }
+  public static
+  char MS_Hex_Digit( final char Ci )
+  {
+    final int I = (Ci >> 4) & 0xF;
+
+    char Co = '*';
+
+    switch( I )
+    {
+    case  0: Co = '0'; break;
+    case  1: Co = '1'; break;
+    case  2: Co = '2'; break;
+    case  3: Co = '3'; break;
+    case  4: Co = '4'; break;
+    case  5: Co = '5'; break;
+    case  6: Co = '6'; break;
+    case  7: Co = '7'; break;
+    case  8: Co = '8'; break;
+    case  9: Co = '9'; break;
+    case 10: Co = 'A'; break;
+    case 11: Co = 'B'; break;
+    case 12: Co = 'C'; break;
+    case 13: Co = 'D'; break;
+    case 14: Co = 'E'; break;
+    case 15: Co = 'F'; break;
+    }
+    return Co;
+  }
+  public static
+  char LS_Hex_Digit( final char Ci )
+  {
+    final int I = Ci & 0xF;
+
+    char Co = '*';
+
+    switch( I )
+    {
+    case  0: Co = '0'; break;
+    case  1: Co = '1'; break;
+    case  2: Co = '2'; break;
+    case  3: Co = '3'; break;
+    case  4: Co = '4'; break;
+    case  5: Co = '5'; break;
+    case  6: Co = '6'; break;
+    case  7: Co = '7'; break;
+    case  8: Co = '8'; break;
+    case  9: Co = '9'; break;
+    case 10: Co = 'A'; break;
+    case 11: Co = 'B'; break;
+    case 12: Co = 'C'; break;
+    case 13: Co = 'D'; break;
+    case 14: Co = 'E'; break;
+    case 15: Co = 'F'; break;
+    }
+    return Co;
+  }
+  public static
+  int Hex_Char_2_Int_Val( final char C )
+  {
+    int I = 0;
+
+    switch( C )
+    {
+    case '0': I = 0; break;
+    case '1': I = 1; break;
+    case '2': I = 2; break;
+    case '3': I = 3; break;
+    case '4': I = 4; break;
+    case '5': I = 5; break;
+    case '6': I = 6; break;
+    case '7': I = 7; break;
+    case '8': I = 8; break;
+    case '9': I = 9; break;
+    case 'A':
+    case 'a': I = 10; break;
+    case 'B':
+    case 'b': I = 11; break;
+    case 'C':
+    case 'c': I = 12; break;
+    case 'D':
+    case 'd': I = 13; break;
+    case 'E':
+    case 'e': I = 14; break;
+    case 'F':
+    case 'f': I = 15; break;
+    }
+    return I;
+  }
+  public static
+  char Hex_Chars_2_Byte( final char C1, final char C2 )
+  {
+    return (char)( Hex_Char_2_Int_Val( C1 )*16
+                 + Hex_Char_2_Int_Val( C2 ) );
   }
   public static
   void Sleep( final int ms )

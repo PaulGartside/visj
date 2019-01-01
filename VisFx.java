@@ -2621,12 +2621,32 @@ public class VisFx extends Application
     }
   }
 
+//void Handle_Return()
+//{
+//  View cv = CV();
+//
+//  if( cv.m_in_diff ) m_diff.GoToBegOfNextLine();
+//  else                   cv.GoToBegOfNextLine();
+//}
+
   void Handle_Return()
   {
     View cv = CV();
 
     if( cv.m_in_diff ) m_diff.GoToBegOfNextLine();
-    else                   cv.GoToBegOfNextLine();
+    else {
+      if( SLASH_FILE != Curr_FileNum() )
+      {
+        // Normal case:
+        cv.GoToBegOfNextLine();
+      }
+      else {
+        // In search buffer, search for pattern on current line:
+        Line line = cv.m_fb.GetLine( cv.CrsLine() );
+
+        Handle_Slash_GotPattern( line.toString(), false );
+      }
+    }
   }
 
   void run_dot()
@@ -2817,7 +2837,7 @@ public class VisFx extends Application
       {
         m_diff.m_vS.m_in_diff = false;
         m_diff.m_vL.m_in_diff = false;
-        m_diff.Set_Remaining_ViewContext_2_DiffContext();
+        m_diff.Copy_DiffContext_2_Remaining_ViewContext();
         m_diff_mode = false;
       }
       if( m_win < m_num_wins-1 )
@@ -3751,6 +3771,7 @@ public class VisFx extends Application
       boolean ok = true;
 
       if     ( Matches_BYTE    ( toks[1] ) ) dec = Encoding.BYTE;
+      else if( Matches_HEX     ( toks[1] ) ) dec = Encoding.HEX;
       else if( Matches_UTF_8   ( toks[1] ) ) dec = Encoding.UTF_8;
       else if( Matches_UTF_16BE( toks[1] ) ) dec = Encoding.UTF_16BE;
       else if( Matches_UTF_16LE( toks[1] ) ) dec = Encoding.UTF_16LE;
@@ -3758,8 +3779,9 @@ public class VisFx extends Application
       else {
         ok = false;
         CmdLineMessage("Unknown Decoding: "+ toks[1] +", Decodings are: "
-                      + Encoding.BYTE +", "
-                      + Encoding.UTF_8 +", "
+                      + Encoding.BYTE     +", "
+                      + Encoding.HEX      +", "
+                      + Encoding.UTF_8    +", "
                       + Encoding.UTF_16BE +", "
                       + Encoding.UTF_16LE +", "
                       + Encoding.WIN_1252 );
@@ -3767,8 +3789,14 @@ public class VisFx extends Application
       if( ok )
       {
         ok = CV().m_fb.Set_decoding( dec );
-        if( ok ) CV().m_fb.Update();
-
+        if( ok )
+        {
+          // Different decodings have different numbers of characters
+          // and lines representing a file, so make sure the new decoding
+          // does not leave the cursor out of bounds
+          CV().MoveInBounds_File();
+          CV().m_fb.Update();
+        }
         if( ok ) CmdLineMessage("Decoding is: "+ dec );
         else     CmdLineMessage("Failed to set Decoding to: "+ toks[1] );
       }
@@ -3788,6 +3816,7 @@ public class VisFx extends Application
       boolean ok = true;
 
       if     ( Matches_BYTE    ( toks[1] ) ) enc = Encoding.BYTE;
+      else if( Matches_HEX     ( toks[1] ) ) enc = Encoding.HEX;
       else if( Matches_UTF_8   ( toks[1] ) ) enc = Encoding.UTF_8;
       else if( Matches_UTF_16BE( toks[1] ) ) enc = Encoding.UTF_16BE;
       else if( Matches_UTF_16LE( toks[1] ) ) enc = Encoding.UTF_16LE;
@@ -3795,47 +3824,50 @@ public class VisFx extends Application
       else {
         ok = false;
         CmdLineMessage("Unknown Encoding: "+ toks[1] +", Encodings are: "
-                      + Encoding.BYTE +", "
-                      + Encoding.UTF_8 +", "
+                      + Encoding.BYTE     +", "
+                      + Encoding.HEX      +", "
+                      + Encoding.UTF_8    +", "
                       + Encoding.UTF_16BE +", "
                       + Encoding.UTF_16LE +", "
                       + Encoding.WIN_1252 );
       }
       if( ok )
       {
-        ok = CV().m_fb.Set_encoding( enc );
-        if( ok ) CV().m_fb.Update();
+        CV().m_fb.Set_encoding( enc );
 
-        if( ok ) CmdLineMessage("Encoding is: "+ enc );
-        else     CmdLineMessage("Failed to set Encoding to: "+ toks[1] );
+        CmdLineMessage("Encoding is: "+ enc );
       }
     }
   }
 
-  boolean Matches_BYTE( String s )
+  boolean Matches_BYTE( String S )
   {
-    return 0==s.compareToIgnoreCase("byte")
-        || 0==s.compareToIgnoreCase("none" );
+    return 0==S.compareToIgnoreCase("byte")
+        || 0==S.compareToIgnoreCase("none" );
   }
-  boolean Matches_UTF_8( String s )
+  boolean Matches_HEX( String S )
   {
-    return 0==s.compareToIgnoreCase("utf-8")
-        || 0==s.compareToIgnoreCase("utf8" );
+    return 0==S.compareToIgnoreCase("hex");
   }
-  boolean Matches_UTF_16BE( String s )
+  boolean Matches_UTF_8( String S )
   {
-    return 0==s.compareToIgnoreCase("utf-16be")
-        || 0==s.compareToIgnoreCase("utf16be" );
+    return 0==S.compareToIgnoreCase("utf-8")
+        || 0==S.compareToIgnoreCase("utf8" );
   }
-  boolean Matches_UTF_16LE( String s )
+  boolean Matches_UTF_16BE( String S )
   {
-    return 0==s.compareToIgnoreCase("utf-16le")
-        || 0==s.compareToIgnoreCase("utf16le" );
+    return 0==S.compareToIgnoreCase("utf-16be")
+        || 0==S.compareToIgnoreCase("utf16be" );
   }
-  boolean Matches_WIN_1252( String s )
+  boolean Matches_UTF_16LE( String S )
   {
-    return 0==s.compareToIgnoreCase("win")
-        || 0==s.compareToIgnoreCase("1252");
+    return 0==S.compareToIgnoreCase("utf-16le")
+        || 0==S.compareToIgnoreCase("utf16le" );
+  }
+  boolean Matches_WIN_1252( String S )
+  {
+    return 0==S.compareToIgnoreCase("win")
+        || 0==S.compareToIgnoreCase("1252");
   }
 
   void Exe_Colon_Font()

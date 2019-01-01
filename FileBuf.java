@@ -816,21 +816,36 @@ class FileBuf
   {
     boolean ok = false;
     try {
-      if( Encoding.BYTE == m_encoding )
+      if( m_encoding == Encoding.BYTE )
       {
         ok = Write_p( m_lines, m_LF_at_EOF );
       }
       else { // m_lines to
-        final long file_size = GetSize();
-        // Going from UTF_8, UTF_16BE, UTF_16LE, or WIN_1252 or to NONE
-        CharBuffer cbuf = File_2_char_buf( file_size );
-        cbuf.flip();
-        ByteBuffer bbuf = Encode( cbuf );
-        if( null != bbuf ) {
+        if( m_encoding == Encoding.HEX )
+        {
+          ArrayList<Line> n_lines = new ArrayList<>();
           Ptr_Boolean p_LF_at_EOF = new Ptr_Boolean( true );
-          ArrayList<Line> n_lines = Byte_buf_2_lines( bbuf, p_LF_at_EOF );
-          ok = Write_p( n_lines, p_LF_at_EOF.val );
+          ok = HEX_to_BYTE_get_lines( n_lines, p_LF_at_EOF );
+
+          if( ok ) ok = Write_p( n_lines, p_LF_at_EOF.val );
         }
+        else if( m_encoding == Encoding.UTF_8
+              || m_encoding == Encoding.UTF_16BE
+              || m_encoding == Encoding.UTF_16LE
+              || m_encoding == Encoding.WIN_1252 )
+        {
+          // Going from UTF_8, UTF_16BE, UTF_16LE, or WIN_1252 or to NONE
+          final long file_size = GetSize();
+          if( Integer.MAX_VALUE < file_size ) ok = false;
+          else {
+            ArrayList<Line> n_lines = new ArrayList<>();
+            Ptr_Boolean p_LF_at_EOF = new Ptr_Boolean( true );
+            ok = UTF_or_WIN_1252_to_BYTE_get_lines( (int)file_size, m_encoding, n_lines, p_LF_at_EOF );
+
+            if( ok ) ok = Write_p( n_lines, p_LF_at_EOF.val );
+          }
+        }
+        else throw new Exception("Unhandled Encoding: "+ m_encoding );
       }
     }
     catch( Exception e )
@@ -950,8 +965,16 @@ class FileBuf
     }
     return ' ';
   }
-  // Returns file size and fills in m_lineOffsets if needed
+  // Returns number of characters representing the file
+  //   and fills in m_lineOffsets if needed.
+  // If m_decoding is BYTE, then number characters
+  //   representing the file equals the file size.
   int GetSize()
+  {
+    return m_encoding == Encoding.HEX ? GetSizeHEX()
+                                      : GetSizeStd();
+  }
+  private int GetSizeStd()
   {
     final int NUM_LINES = m_lines.size();
 
@@ -983,7 +1006,46 @@ class FileBuf
     }
     return size;
   }
+  // Returns number of bytes representing the file
+  //   and fills in m_lineOffsets if needed.
+  private int GetSizeHEX()
+  {
+    final int NUM_LINES = m_lines.size();
+
+    int size = 0;
+
+    if( 0<NUM_LINES )
+    {
+      m_lineOffsets.ensureCapacity( NUM_LINES );
+
+      // Absolute byte offset of beginning of first line in file is always zero:
+      if( 0 == m_lineOffsets.size() ) m_lineOffsets.add( 0 );
+
+      // Old line offsets length:
+      final int OLOL = m_lineOffsets.size();
+
+      // New line offsets length:
+      while( m_lineOffsets.size() < NUM_LINES ) m_lineOffsets.add( 0 );
+
+      for( int k=OLOL; k<NUM_LINES; k++ )
+      {
+        // For HEX decoded files, each byte is represented by
+        // a space and two hex characters, so divide by 3:
+        final int offset_k = m_lineOffsets.get( k-1 )
+                           + m_lines.get( k-1 ).length()/3;
+        m_lineOffsets.set( k, offset_k );
+      }
+      size = m_lineOffsets.get( NUM_LINES-1 )
+           + m_lines.get( NUM_LINES-1 ).length()/3;
+    }
+    return size;
+  }
   int GetCursorByte( int CL, int CC )
+  {
+    return m_encoding == Encoding.HEX ? GetCursorByteHEX(CL, CC)
+                                      : GetCursorByteStd(CL, CC);
+  }
+  private int GetCursorByteStd( int CL, int CC )
   {
     final int NUM_LINES = m_lines.size();
 
@@ -1007,7 +1069,7 @@ class FileBuf
 
       if( HVLO < CL )
       {
-        while( m_lineOffsets.size() < CL+1 ) m_lineOffsets.add( 0 );
+        while( m_lineOffsets.size() <= CL ) m_lineOffsets.add( 0 );
 
         for( int k=HVLO+1; k<=CL; k++ )
         {
@@ -1018,6 +1080,45 @@ class FileBuf
         }
       }
       crsByte = m_lineOffsets.get( CL ) + CC;
+    }
+    return crsByte;
+  }
+  private int GetCursorByteHEX( int CL, int CC )
+  {
+    final int NUM_LINES = m_lines.size();
+
+    int crsByte = 0;
+
+    if( 0<NUM_LINES )
+    {
+      m_lineOffsets.ensureCapacity( NUM_LINES );
+
+      if( NUM_LINES <= CL ) CL = NUM_LINES-1;
+
+      final int CLL = m_lines.get( CL ).length();
+
+      if( CLL <= CC ) CC = 0<CLL ? CLL-1 : 0;
+
+      // Absolute byte offset of beginning of first line in file is always zero:
+      if( 0 == m_lineOffsets.size() ) m_lineOffsets.add( 0 );
+
+      // HVLO = Highest valid line offset
+      final int HVLO = m_lineOffsets.size()-1;
+
+      if( HVLO < CL )
+      {
+        while( m_lineOffsets.size() <= CL ) m_lineOffsets.add( 0 );
+
+        for( int k=HVLO+1; k<=CL; k++ )
+        {
+          // For HEX decoded files, each byte is represented by
+          // a space and two hex characters, so divide by 3:
+          final int offset_k = m_lineOffsets.get( k-1 )
+                             + m_lines.get( k-1 ).length()/3;
+          m_lineOffsets.set( k, offset_k );
+        }
+      }
+      crsByte = m_lineOffsets.get( CL ) + CC/3;
     }
     return crsByte;
   }
@@ -1547,32 +1648,34 @@ class FileBuf
 
   void Update()
   {
-    if( m_vis.get_Console().get_from_dot_buf() ) return;
+    if( !m_vis.get_Console().get_from_dot_buf() )
+    {
+      m_vis.Update_Change_Statuses();
 
-    m_vis.Update_Change_Statuses();
+      m_vis.UpdateViewsOfFile( this );
 
-    m_vis.UpdateViewsOfFile( this );
-
-    // Put cursor back into current window
-    m_vis.CV().PrintCursor();
+      // Put cursor back into current window
+      m_vis.CV().PrintCursor();
+    }
   }
   void UpdateCmd()
   {
-    if( m_vis.get_Console().get_from_dot_buf() ) return;
-
-    m_vis.Update_Change_Statuses();
-
-    m_vis.UpdateViewsOfFile( this );
-
-    if( null != m_line_view )
+    if( !m_vis.get_Console().get_from_dot_buf() )
     {
-      final LineView pV = m_line_view;
+      m_vis.Update_Change_Statuses();
 
-      pV.RepositionView();
-      pV.PrintWorkingView();
+      m_vis.UpdateViewsOfFile( this );
 
-      // Put cursor back into current window
-      pV.PrintCursor();
+      if( null != m_line_view )
+      {
+        final LineView pV = m_line_view;
+
+        pV.RepositionView();
+        pV.PrintWorkingView();
+
+        // Put cursor back into current window
+        pV.PrintCursor();
+      }
     }
   }
 
@@ -1982,49 +2085,225 @@ class FileBuf
     if( dec != m_decoding )
     {
       final long file_size = GetSize();
-      if( Encoding.BYTE != dec
-       && Encoding.BYTE == m_decoding )
-      {
-        // Going from NONE to UTF_8, UTF_16BE, UTF_16LE or WIN_1252
-        if( Integer.MAX_VALUE < file_size ) ok = false;
-        else {
-          ByteBuffer bbuf = File_2_byte_buf( file_size );
-          bbuf.flip();
-          CharBuffer cbuf = Decode( bbuf, dec );
-          if( null == cbuf ) ok = false;
-          else {
-            Ptr_Boolean p_LF_at_EOF = new Ptr_Boolean( true );
-            ArrayList<Line> n_lines = Char_buf_2_lines( cbuf, p_LF_at_EOF );
-            Replace_current_file( n_lines, dec, p_LF_at_EOF.val );
-          }
+      if( Integer.MAX_VALUE < file_size ) ok = false;
+      else {
+        final int fsz = (int)file_size;
+        if( m_decoding == Encoding.BYTE )
+        {
+          if     ( dec == Encoding.HEX     ) ok = BYTE_to_HEX();
+          else if( dec == Encoding.UTF_8   ) ok = BYTE_to_UTF_or_WIN_1252( fsz, dec );
+          else if( dec == Encoding.UTF_16BE) ok = BYTE_to_UTF_or_WIN_1252( fsz, dec );
+          else if( dec == Encoding.UTF_16LE) ok = BYTE_to_UTF_or_WIN_1252( fsz, dec );
+          else if( dec == Encoding.WIN_1252) ok = BYTE_to_UTF_or_WIN_1252( fsz, dec );
+          else ok = false;
         }
-      }
-      else if( Encoding.BYTE == dec
-            && Encoding.BYTE != m_decoding )
-      {
-        // Going from UTF_8, UTF_16BE, UTF_16LE or WIN_1252 to NONE
-        CharBuffer cbuf = File_2_char_buf( file_size );
-        cbuf.flip();
-        ByteBuffer bbuf = Encode( cbuf );
-        if( null == bbuf ) ok = false;
-        else {
-        //bbuf.order( ByteOrder.nativeOrder() );
-        //bbuf.order( cbuf.order() );
-          Ptr_Boolean p_LF_at_EOF = new Ptr_Boolean( true );
-          ArrayList<Line> n_lines = Byte_buf_2_lines( bbuf, p_LF_at_EOF );
-          Replace_current_file( n_lines, dec, p_LF_at_EOF.val );
+        else if( dec == Encoding.BYTE )
+        {
+          if     ( m_decoding == Encoding.HEX     ) ok = HEX_to_BYTE();
+          else if( m_decoding == Encoding.UTF_8   ) ok = UTF_or_WIN_1252_to_BYTE( fsz, m_decoding );
+          else if( m_decoding == Encoding.UTF_16BE) ok = UTF_or_WIN_1252_to_BYTE( fsz, m_decoding );
+          else if( m_decoding == Encoding.UTF_16LE) ok = UTF_or_WIN_1252_to_BYTE( fsz, m_decoding );
+          else if( m_decoding == Encoding.WIN_1252) ok = UTF_or_WIN_1252_to_BYTE( fsz, m_decoding );
+          else ok = false;
         }
+        else ok = false;
       }
-      else ok = false;
     }
     return ok;
   }
-  boolean Set_encoding( final Encoding enc )
+
+  void Set_encoding( final Encoding enc )
+  {
+    m_encoding = enc;
+  }
+
+  // Convert the current from from a byte to a hex representation
+  boolean BYTE_to_HEX()
   {
     boolean ok = true;
 
-    m_encoding = enc;
+    ArrayList<Line> n_lines = new ArrayList<>();
+    Line n_line = new Line();
 
+    final int NUM_LINES = m_lines.size();
+    for( int k=0; k<NUM_LINES; k++ )
+    {
+      Line l = m_lines.get(k);
+      final int LL = l.length();
+
+      for( int i=0; i<LL; i++ )
+      {
+        n_line = Append_hex_2_line( n_lines, n_line, l.charAt(i) );
+      }
+      if( k<NUM_LINES-1 || m_LF_at_EOF )
+      {
+        n_line = Append_hex_2_line( n_lines, n_line, '\n' );
+      }
+    }
+    if( 0 < n_line.length() )
+    {
+      n_lines.add( n_line );
+    }
+    Replace_current_file( n_lines, Encoding.HEX, false );
+    Set_File_Type("text");
+    return ok;
+  }
+  Line Append_hex_2_line( ArrayList<Line> n_lines, Line n_line, final char C )
+  {
+    char C1 = Utils.MS_Hex_Digit( C );
+    char C2 = Utils.LS_Hex_Digit( C );
+
+    n_line.append_c(' ');
+    n_line.append_c(C1);
+    n_line.append_c(C2);
+
+    if( 47 < n_line.length() )
+    {
+      n_lines.add( n_line );
+      n_line = new Line();
+    }
+    return n_line;
+  }
+
+  boolean BYTE_to_UTF_or_WIN_1252( final int file_size, final Encoding E )
+  {
+    boolean ok = true;
+    // Going from NONE to UTF_8, UTF_16BE, UTF_16LE or WIN_1252
+    ByteBuffer bbuf = File_2_byte_buf( file_size );
+    bbuf.flip();
+    CharBuffer cbuf = Decode( bbuf, E );
+    if( null == cbuf ) ok = false;
+    else {
+      Ptr_Boolean p_LF_at_EOF = new Ptr_Boolean( true );
+      ArrayList<Line> n_lines = Char_buf_2_lines( cbuf, p_LF_at_EOF );
+      Replace_current_file( n_lines, E, p_LF_at_EOF.val );
+    }
+    return ok;
+  }
+
+  // Convert the current from from a hex to a byte representation
+  boolean HEX_to_BYTE()
+  {
+    ArrayList<Line> n_lines = new ArrayList<>();
+    Ptr_Boolean p_LF_at_EOF = new Ptr_Boolean( true );
+
+    boolean ok = HEX_to_BYTE_get_lines( n_lines, p_LF_at_EOF );
+    if( ok )
+    {
+      Replace_current_file( n_lines, Encoding.BYTE, p_LF_at_EOF.val );
+      Find_File_Type_Suffix();
+    }
+    return ok;
+  }
+  boolean HEX_to_BYTE_get_lines( ArrayList<Line> n_lines, Ptr_Boolean p_LF_at_EOF )
+  {
+    boolean ok = HEX_to_BYTE_check_format();
+    if( ok )
+    {
+      Line n_line = new Line();
+
+      for( int k=0; k<m_lines.size(); k++ )
+      {
+        Line l = m_lines.get(k);
+        final int LL = l.length();
+        for( int i=0; i<LL; i+=3 )
+        {
+          final char C1 = l.charAt(i+1);
+          final char C2 = l.charAt(i+2);
+          final char C  = Utils.Hex_Chars_2_Byte( C1, C2 );
+
+          if('\n' == C)
+          {
+            n_lines.add( n_line );
+            n_line = new Line();
+            p_LF_at_EOF.val = true;
+          }
+          else {
+            n_line.append_c( C );
+            p_LF_at_EOF.val = false;
+          }
+        }
+      }
+      if( 0 < n_line.length() ) n_lines.add( n_line );
+    }
+    return ok;
+  }
+  boolean HEX_to_BYTE_check_format()
+  {
+    boolean ok = true;
+
+    final int NUM_LINES = m_lines.size();
+    // Make sure lines are all 48 characters long, except last line,
+    // which must be a multiple of 3 characters long
+    for( int k=0; ok && k<NUM_LINES; k++ )
+    {
+      Line l = m_lines.get(k);
+      final int LL = l.length();
+      if( k<(NUM_LINES-1) && LL != 48 )
+      {
+        ok = false;
+        m_vis.Window_Message("Line: "+(k+1)+" is "+ LL +" characters, not 48");
+      }
+      else { // Last line
+        if( 48 < LL || 0!=(LL%3) )
+        {
+          ok = false;
+          m_vis.Window_Message("Line: "+(k+1)+" is "+ LL +" characters, not multiple of 3");
+        }
+      }
+      // Make sure lines are: ' XX XX'
+      for( int i=0; ok && i<LL; i+=3 )
+      {
+        final char C0 = l.charAt(i);
+        final char C1 = l.charAt(i+1);
+        final char C2 = l.charAt(i+2);
+
+        if( C0 != ' ' )
+        {
+          ok = false;
+          m_vis.Window_Message("Expected space on Line: "+(k+1)+" pos: "+ i+1);
+        }
+        else if( !Utils.IsHexDigit( C1 ) )
+        {
+          ok = false;
+          m_vis.Window_Message("Expected hex digit on Line: "+(k+1)+" pos: "+ i+2 +" : "+ C1);
+        }
+        else if( !Utils.IsHexDigit( C2 ) )
+        {
+          ok = false;
+          m_vis.Window_Message("Expected hex digit on Line: "+(k+1)+" pos: "+ i+3 +" : "+ C2);
+        }
+      }
+    }
+    return ok;
+  }
+
+  boolean UTF_or_WIN_1252_to_BYTE( final int file_size, final Encoding E )
+  {
+    ArrayList<Line> n_lines = new ArrayList<>();
+    Ptr_Boolean p_LF_at_EOF = new Ptr_Boolean( true );
+
+    boolean ok = UTF_or_WIN_1252_to_BYTE_get_lines( file_size, E, n_lines, p_LF_at_EOF );
+    if( ok )
+    {
+      Replace_current_file( n_lines, Encoding.BYTE, p_LF_at_EOF.val );
+    }
+    return ok;
+  }
+  boolean UTF_or_WIN_1252_to_BYTE_get_lines( final int file_size
+                                           , final Encoding E
+                                           , ArrayList<Line> n_lines
+                                           , Ptr_Boolean p_LF_at_EOF )
+  {
+    boolean ok = true;
+    // Going from UTF_8, UTF_16BE, UTF_16LE or WIN_1252 to NONE
+    CharBuffer cbuf = File_2_char_buf( file_size );
+    cbuf.flip();
+    ByteBuffer bbuf = Encode( Encoding_2_name(E), cbuf );
+    if( null == bbuf ) ok = false;
+    else {
+      Byte_buf_2_lines( bbuf, p_LF_at_EOF, n_lines );
+    }
     return ok;
   }
 
@@ -2094,32 +2373,32 @@ class FileBuf
     return cbuf;
   }
 
-  // Encodes CharBuffer cbuf according to m_encoding into newly
+  String Encoding_2_name( Encoding E )
+  {
+    String name = "Unknown";
+
+    if     ( E == Encoding.BYTE    ) name = "Byte";
+    else if( E == Encoding.HEX     ) name = "Hex";
+    else if( E == Encoding.UTF_8   ) name = "UTF-8";
+    else if( E == Encoding.UTF_16BE) name = "UTF-16BE";
+    else if( E == Encoding.UTF_16LE) name = "UTF-16LE";
+    else if( E == Encoding.WIN_1252) name = "windows-1252";
+
+    return name;
+  }
+  // Encodes CharBuffer cbuf according to Charset name into newly
   // allocated ByteBuffer.
   // Returns ByteBuffer if successfull, else null.
-  ByteBuffer Encode( CharBuffer cbuf )
+  ByteBuffer Encode( String name, CharBuffer cbuf )
   {
     ByteBuffer bbuf = null;
-    CharsetEncoder encoder = null;
 
-    if     ( m_encoding == Encoding.UTF_8    ) encoder = Charset.forName("UTF-8").newEncoder();
-    else if( m_encoding == Encoding.UTF_16BE ) encoder = Charset.forName("UTF-16BE").newEncoder();
-    else if( m_encoding == Encoding.UTF_16LE ) encoder = Charset.forName("UTF-16LE").newEncoder();
-    else if( m_encoding == Encoding.WIN_1252 ) encoder = Charset.forName("windows-1252").newEncoder();
-    else {
-      // cbuf already contains plain bytes, so just put them into bbuf
-      final int cbuf_size = cbuf.remaining();
-      bbuf = ByteBuffer.allocate( cbuf_size );
-    //bbuf.order( cbuf.order() );
-    //bbuf.order( ByteOrder.nativeOrder() );
-      for( int k=0; k<cbuf_size; k++ )
-      {
-        bbuf.put( (byte)cbuf.get(k) );
-      }
-    }
+    CharsetEncoder encoder = Charset.forName( name ).newEncoder();
+
     if( null != encoder )
     {
       try {
+        // ByteBuffer bbuf is allocated here:
         bbuf = encoder.encode( cbuf );
       }
       catch( Exception e )
@@ -2130,10 +2409,10 @@ class FileBuf
     return bbuf;
   }
 
-  ArrayList<Line> Byte_buf_2_lines( ByteBuffer bbuf, Ptr_Boolean p_LF_at_EOF )
+  ArrayList<Line> Byte_buf_2_lines( ByteBuffer bbuf
+                                  , Ptr_Boolean p_LF_at_EOF
+                                  , ArrayList<Line> n_lines )
   {
-    ArrayList<Line> n_lines = new ArrayList<>();
-
     Line l_line = new Line();
 
     for( int k=0; k<bbuf.remaining(); k++ )
@@ -2187,25 +2466,20 @@ class FileBuf
                            , final Encoding enc
                            , final boolean LF_at_EOF )
   {
-    m_history.Clear();
     m_save_history = false;
 
-    m_lines.clear();
-    m_styles.clear();
-    m_lineRegexsValid.clear();
+    ClearLines();
 
     for( int k=0; k<n_lines.size(); k++ )
     {
       PushLine( n_lines.get(k) );
     }
     m_save_history = true;
-    m_hi_touched_line = 0;
 
     m_decoding = enc;
     m_encoding = enc;
     m_LF_at_EOF = LF_at_EOF;
   }
-
   VisIF                 m_vis;   // Not sure if we need this or should use m_views
   final String          m_pname; // Full path      = m_dname + m_fname
   final String          m_dname; // Full directory = m_pname - m_fname, (for directories this is the same a m_pname)

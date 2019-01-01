@@ -149,10 +149,11 @@ class View
   {
     if( !m_console.get_from_dot_buf() )
     {
+      RepositionView();
+
       m_fb.Find_Styles( m_topLine + WorkingRows() );
       m_fb.Find_Regexs( m_topLine, WorkingRows() );
 
-      RepositionView();
       Print_Borders();
       PrintWorkingView();
       PrintStsLine();
@@ -166,10 +167,11 @@ class View
   {
     if( !m_console.get_from_dot_buf() )
     {
+      RepositionView();
+
       m_fb.Find_Styles( m_topLine + WorkingRows() );
       m_fb.Find_Regexs( m_topLine, WorkingRows() );
 
-      RepositionView();
       Print_Borders();
       PrintWorkingView();
       PrintStsLine();
@@ -382,8 +384,7 @@ class View
       // Screen width so far
       m_sb.setLength( 0 );
       m_sb.append( "Pos=("+(CL+1)+","+(CC+1)+")"
-                 + "  ("+percent+"%, "+crsByte
-                 + Utils.DIR_DELIM_STR + m_fb.GetSize()+")"
+                 + "  ("+percent+"%, "+crsByte+"/"+fileSize+")"
                  + "  Char=("+str+")  ");
 
       final int SW = m_sb.length(); // Screen width so far
@@ -1417,54 +1418,13 @@ class View
 
     if( null != fname ) m_vis.GoToBuffer_Fname( fname );
   }
-
-//String GetFileName_UnderCursor()
-//{
-//  StringBuilder fname = null;
-//  final int CL = CrsLine();
-//  final int LL = m_fb.LineLen( CL );
-//  if( 0<LL ) {
-//    MoveInBounds();
-//    final int CP = CrsChar();
-//    char C = m_fb.Get( CL, CP );
-//
-//    if( Utils.IsFileNameChar( C ) )
-//    {
-//      // Get the file name:
-//      fname = new StringBuilder();
-//      fname.append( C );
-//
-//      // Search backwards, until non-filename char found:
-//      for( int k=CP-1; -1<k; k-- )
-//      {
-//        C = m_fb.Get( CL, k );
-//        if( !Utils.IsFileNameChar( C ) ) break;
-//        else fname.insert( 0, C );
-//      }
-//      // Search forwards, until non-filename char found:
-//      for( int k=CP+1; k<LL; k++ )
-//      {
-//        C = m_fb.Get( CL, k );
-//        if( !Utils.IsFileNameChar( C ) ) break;
-//        else fname.append( C );
-//      }
-//      // Trim white space off beginning and ending of fname:
-//      Utils.Trim( fname );
-//      // Replace environment variables with values:
-//      Ptr_StringBuilder p_sb = new Ptr_StringBuilder( fname );
-//      Utils.EnvKeys2Vals( p_sb );
-//      fname = p_sb.val;
-//    }
-//  }
-//  return null != fname ? fname.toString() : null;
-//}
   String GetFileName_UnderCursor_PartialLine()
   {
     StringBuilder fname = null;
     final int CL = CrsLine();
     final int LL = m_fb.LineLen( CL );
     if( 0<LL ) {
-      MoveInBounds();
+      MoveInBounds_Line();
       final int CP = CrsChar();
       char C = m_fb.Get( CL, CP );
 
@@ -1510,21 +1470,42 @@ class View
     return fname;
   }
 
+  // If past end of file, move back to last line.
   // If past end of line, move back to end of line.
-  // Returns true if moved, false otherwise.
   //
-  boolean MoveInBounds()
+  void MoveInBounds_File()
+  {
+    final int NUM_LINES = m_fb.NumLines();
+
+    if( 0 < NUM_LINES )
+    {
+      if( NUM_LINES <= CrsLine() )
+      {
+        final int NCL = NUM_LINES-1;
+        final int LL  = m_fb.LineLen( NCL );
+        final int EOL = 0<LL ? LL-1 : 0;
+
+        // Since cursor is now allowed past EOL, it may need to be moved back:
+        final int NCC = Math.min( CrsChar(), EOL );
+
+        GoToCrsPos_NoWrite( NCL, NCC );
+      }
+      else
+      {
+        MoveInBounds_Line();
+      }
+    }
+  }
+  // If past end of line, move back to end of line.
+  //
+  void MoveInBounds_Line()
   {
     final int CL  = CrsLine();
     final int LL  = m_fb.LineLen( CL );
     final int EOL = 0<LL ? LL-1 : 0;
 
-    if( EOL < CrsChar() ) // Since cursor is now allowed past EOL,
-    {                      // it may need to be moved back:
-      GoToCrsPos_NoWrite( CL, EOL );
-      return true;
-    }
-    return false;
+    // Since cursor is now allowed past EOL, it may need to be moved back:
+    if( EOL < CrsChar() ) GoToCrsPos_NoWrite( CL, EOL );
   }
 
   void Do_A()
@@ -2425,7 +2406,7 @@ class View
 
       if( 0 == k ) // Add to current line
       {
-        MoveInBounds();
+        MoveInBounds_Line();
         final int OLL = m_fb.LineLen( OCL );
         final int OCP = CrsChar();               // Old cursor position
 
@@ -2737,7 +2718,7 @@ class View
   }
   void GoToOppositeBracket()
   {
-    MoveInBounds();
+    MoveInBounds_Line();
 
     final int NUM_LINES = m_fb.NumLines();
     final int CL        = CrsLine();
@@ -2830,7 +2811,7 @@ class View
   }
   void GoToLeftSquigglyBracket()
   {
-    MoveInBounds();
+    MoveInBounds_Line();
 
     final char  start_char = '}';
     final char finish_char = '{';
@@ -2839,7 +2820,7 @@ class View
   }
   void GoToRightSquigglyBracket()
   {
-    MoveInBounds();
+    MoveInBounds_Line();
 
     final char  start_char = '{';
     final char finish_char = '}';
@@ -2860,7 +2841,7 @@ class View
     {
       pattern = new StringBuilder();
 
-      MoveInBounds();
+      MoveInBounds_Line();
       final int  CC = CrsChar();
       final char C  = m_fb.Get( CL,  CC );
 
@@ -3036,7 +3017,7 @@ class View
   {
     CrsPos ncp = new CrsPos( 0, 0 );
 
-    MoveInBounds();
+    MoveInBounds_Line();
 
     final int NUM_LINES = m_fb.NumLines();
 
@@ -3112,7 +3093,7 @@ class View
   }
   void run_v_beg()
   {
-    MoveInBounds();
+    MoveInBounds_Line();
     m_inVisualMode = true;
     m_undo_v       = true;
     DisplayBanner();

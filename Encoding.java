@@ -24,6 +24,7 @@
 enum Encoding
 {
   BYTE,
+  HEX,
   UTF_8,
   UTF_16BE,
   UTF_16LE,
