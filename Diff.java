@@ -106,12 +106,12 @@ class Diff
   void Copy_ViewContext_2_DiffContext()
   {
     View pV = m_vis.CV();
-  
+
     // View context -> diff context
     final int diff_topLine = DiffLine( pV, pV.TopLine() );
     final int diff_crsLine = DiffLine( pV, pV.CrsLine() );
     final int diff_crsRow  = diff_crsLine - diff_topLine;
-  
+
     m_topLine  = diff_topLine;
     m_leftChar = pV.LeftChar();
     m_crsRow   = diff_crsRow;

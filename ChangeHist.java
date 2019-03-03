@@ -38,7 +38,6 @@ class ChangeHist
   {
     return 0<m_changes.size();
   }
-
   void Undo( final View rV )
   {
     if( 0 < m_changes.size() )
@@ -47,7 +46,7 @@ class ChangeHist
 
       final ChangeType ct = rlc.m_type;
 
-      if( m_fb.m_vis.get_diff_mode() )
+      if( rV.m_in_diff )
       {
         if     ( ct == ChangeType.Insert_Line  ) Undo_InsertLine_Diff( rlc, rV );
         else if( ct == ChangeType.Remove_Line  ) Undo_RemoveLine_Diff( rlc, rV );

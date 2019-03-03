@@ -85,7 +85,7 @@ interface VisIF
   void            set_run_mode( final boolean mode );
   String          get_cwd();
   void            set_cmd( String cmd );
-  boolean         get_diff_mode();
+  boolean         in_diff_mode(); //< No longer needed
   Diff            get_diff();
   boolean         get_sort_by_time();
 }

@@ -2826,37 +2826,44 @@ public class VisFx extends Application
 
   void Exe_Colon_q()
   {
-    if( m_num_wins <= 1 ) Exe_Colon_qa();
+    if( m_num_wins <= 1 )
+    {
+      Exe_Colon_qa();
+    }
     else {
-      View cv = CV();
-
-      // Save original time position
-      final Tile_Pos TP = cv.m_tile_pos;
-
-      if( cv.m_in_diff )
-      {
-        m_diff.m_vS.m_in_diff = false;
-        m_diff.m_vL.m_in_diff = false;
-        m_diff.Copy_DiffContext_2_Remaining_ViewContext();
-        m_diff_mode = false;
-      }
-      if( m_win < m_num_wins-1 )
-      {
-        Quit_ShiftDown();
-      }
-      if( 0 < m_win ) m_win--;
-      m_num_wins--;
-
-      Quit_JoinTiles( TP );
-
-      UpdateViews( false );
-
-      CV().PrintCursor();
+      Quit_One();
     }
   }
   void Exe_Colon_qa()
   {
     System.exit( 0 );
+  }
+  void Quit_One()
+  {
+    View cv = CV();
+
+    // Save original time position
+    final Tile_Pos TP = cv.m_tile_pos;
+
+    if( cv.m_in_diff )
+    {
+      NoDiff_4_FileBuf( m_diff.m_vS.m_fb );
+      NoDiff_4_FileBuf( m_diff.m_vL.m_fb );
+
+      m_diff.Copy_DiffContext_2_Remaining_ViewContext();
+    }
+    if( m_win < m_num_wins-1 )
+    {
+      Quit_ShiftDown();
+    }
+    if( 0 < m_win ) m_win--;
+    m_num_wins--;
+
+    Quit_JoinTiles( TP );
+
+    UpdateViews( false );
+
+    CV().PrintCursor();
   }
   void Quit_ShiftDown()
   {
@@ -2875,6 +2882,7 @@ public class VisFx extends Application
     m_views    [m_num_wins-1] = win_views;
     m_file_hist[m_num_wins-1] = win_file_hist;
   }
+  // TP is disappearing
   void Quit_JoinTiles( final Tile_Pos TP )
   {
     // m_win is disappearing, so move its screen space to another view:
@@ -3355,6 +3363,16 @@ public class VisFx extends Application
 
   boolean Have_BOT__HALF()
   {
+    // Diff occupies bottom half:
+    if( in_diff_mode()
+     && ( ( m_diff.m_vS.m_tile_pos == Tile_Pos.BOT__LEFT_QTR
+         && m_diff.m_vL.m_tile_pos == Tile_Pos.BOT__RITE_QTR )
+       || ( m_diff.m_vS.m_tile_pos == Tile_Pos.BOT__RITE_QTR
+         && m_diff.m_vL.m_tile_pos == Tile_Pos.BOT__LEFT_QTR ) ) )
+    {
+      return true;
+    }
+    // A view occupies bottom half:
     for( int k=0; k<m_num_wins; k++ )
     {
       View v = GetView_Win( k );
@@ -3366,6 +3384,16 @@ public class VisFx extends Application
   }
   boolean Have_TOP__HALF()
   {
+    // Diff occupies top half:
+    if( in_diff_mode()
+     && ( ( m_diff.m_vS.m_tile_pos == Tile_Pos.TOP__LEFT_QTR
+         && m_diff.m_vL.m_tile_pos == Tile_Pos.TOP__RITE_QTR )
+       || ( m_diff.m_vS.m_tile_pos == Tile_Pos.TOP__RITE_QTR
+         && m_diff.m_vL.m_tile_pos == Tile_Pos.TOP__LEFT_QTR ) ) )
+    {
+      return true;
+    }
+    // A view occupies top half:
     for( int k=0; k<m_num_wins; k++ )
     {
       View v = GetView_Win( k );
@@ -3377,6 +3405,16 @@ public class VisFx extends Application
   }
   boolean Have_BOT__LEFT_QTR()
   {
+    // Diff occupies bottom left quarter:
+    if( in_diff_mode()
+     && ( ( m_diff.m_vS.m_tile_pos == Tile_Pos.BOT__LEFT_8TH
+         && m_diff.m_vL.m_tile_pos == Tile_Pos.BOT__LEFT_CTR_8TH )
+       || ( m_diff.m_vS.m_tile_pos == Tile_Pos.BOT__LEFT_CTR_8TH
+         && m_diff.m_vL.m_tile_pos == Tile_Pos.BOT__LEFT_8TH ) ) )
+    {
+      return true;
+    }
+    // A view occupies bottom left quarter:
     for( int k=0; k<m_num_wins; k++ )
     {
       View v = GetView_Win( k );
@@ -3388,6 +3426,16 @@ public class VisFx extends Application
   }
   boolean Have_TOP__LEFT_QTR()
   {
+    // Diff occupies top left quarter:
+    if( in_diff_mode()
+     && ( ( m_diff.m_vS.m_tile_pos == Tile_Pos.TOP__LEFT_8TH
+         && m_diff.m_vL.m_tile_pos == Tile_Pos.TOP__LEFT_CTR_8TH )
+       || ( m_diff.m_vS.m_tile_pos == Tile_Pos.TOP__LEFT_CTR_8TH
+         && m_diff.m_vL.m_tile_pos == Tile_Pos.TOP__LEFT_8TH ) ) )
+    {
+      return true;
+    }
+    // A view occupies top left quarter:
     for( int k=0; k<m_num_wins; k++ )
     {
       View v = GetView_Win( k );
@@ -3399,6 +3447,16 @@ public class VisFx extends Application
   }
   boolean Have_BOT__RITE_QTR()
   {
+    // Diff occupies bottom right quarter:
+    if( in_diff_mode()
+     && ( ( m_diff.m_vS.m_tile_pos == Tile_Pos.BOT__RITE_8TH
+         && m_diff.m_vL.m_tile_pos == Tile_Pos.BOT__RITE_CTR_8TH )
+       || ( m_diff.m_vS.m_tile_pos == Tile_Pos.BOT__RITE_CTR_8TH
+         && m_diff.m_vL.m_tile_pos == Tile_Pos.BOT__RITE_8TH ) ) )
+    {
+      return true;
+    }
+    // A view occupies bottom right quarter:
     for( int k=0; k<m_num_wins; k++ )
     {
       View v = GetView_Win( k );
@@ -3410,6 +3468,16 @@ public class VisFx extends Application
   }
   boolean Have_TOP__RITE_QTR()
   {
+    // Diff occupies top right quarter:
+    if( in_diff_mode()
+     && ( ( m_diff.m_vS.m_tile_pos == Tile_Pos.TOP__RITE_8TH
+         && m_diff.m_vL.m_tile_pos == Tile_Pos.TOP__RITE_CTR_8TH )
+       || ( m_diff.m_vS.m_tile_pos == Tile_Pos.TOP__RITE_CTR_8TH
+         && m_diff.m_vL.m_tile_pos == Tile_Pos.TOP__RITE_8TH ) ) )
+    {
+      return true;
+    }
+    // A view occupies top right quarter:
     for( int k=0; k<m_num_wins; k++ )
     {
       View v = GetView_Win( k );
@@ -3461,7 +3529,6 @@ public class VisFx extends Application
       if( ok ) {
         ok = m_diff.Run( v0, v1 );
         if( ok ) {
-          m_diff_mode = true;
           m_diff.m_vS.m_in_diff = true;
           m_diff.m_vL.m_in_diff = true;
           m_diff.Update();
@@ -3474,7 +3541,7 @@ public class VisFx extends Application
     int diff_win_num = -1; // Failure value
 
     // Must be not already doing a diff and at least 2 buffers to do diff:
-    if( !m_diff_mode && 2 <= m_num_wins )
+    if( !in_diff_mode() && 2 <= m_num_wins )
     {
       View      v_c = GetView_Win( m_win ); // Current View
       Tile_Pos tp_c = v_c.m_tile_pos;       // Current Tile_Pos
@@ -3597,35 +3664,71 @@ public class VisFx extends Application
   {
     if( CV().m_in_diff )
     {
-      View pvS = m_diff.m_vS;
-      View pvL = m_diff.m_vL;
-
-      // Set the view contexts to similar values as the diff contexts:
-      if( null != pvS )
-      {
-        pvS.m_in_diff = false;
-        pvS.SetTopLine ( m_diff.GetTopLine ( pvS ) );
-        pvS.SetLeftChar( m_diff.GetLeftChar() );
-        pvS.SetCrsRow  ( m_diff.GetCrsRow  () );
-        pvS.SetCrsCol  ( m_diff.GetCrsCol  () );
-      }
-      if( null != pvL )
-      {
-        pvL.m_in_diff = false;
-        pvL.SetTopLine ( m_diff.GetTopLine ( pvL ) );
-        pvL.SetLeftChar( m_diff.GetLeftChar() );
-        pvL.SetCrsRow  ( m_diff.GetCrsRow  () );
-        pvL.SetCrsCol  ( m_diff.GetCrsCol  () );
-      }
+      NoDiff_Copy_DiffContext_2_ViewContext();
     }
     Clear_Diff();
 
     UpdateViews( false );
   }
+  void NoDiff_CV()
+  {
+    if( CV().m_in_diff )
+    {
+      NoDiff_Copy_DiffContext_2_ViewContext();
+
+      // Since currently only one diff can be running at a time,
+      // if the current view is going out of diff, might as well
+      // make sure diff is turned off completely:
+      Clear_Diff();
+
+      UpdateViews( false );
+    }
+  }
+  void NoDiff_Copy_DiffContext_2_ViewContext()
+  {
+    View pvS = m_diff.m_vS;
+    View pvL = m_diff.m_vL;
+
+    // Set the view contexts to similar values as the diff contexts:
+    if( null != pvS )
+    {
+      NoDiff_4_FileBuf( pvS.m_fb );
+
+      pvS.SetTopLine ( m_diff.GetTopLine ( pvS ) );
+      pvS.SetLeftChar( m_diff.GetLeftChar() );
+      pvS.SetCrsRow  ( m_diff.GetCrsRow  () );
+      pvS.SetCrsCol  ( m_diff.GetCrsCol  () );
+    }
+    if( null != pvL )
+    {
+      NoDiff_4_FileBuf( pvL.m_fb );
+
+      pvL.SetTopLine ( m_diff.GetTopLine ( pvL ) );
+      pvL.SetLeftChar( m_diff.GetLeftChar() );
+      pvL.SetCrsRow  ( m_diff.GetCrsRow  () );
+      pvL.SetCrsCol  ( m_diff.GetCrsCol  () );
+    }
+  }
+  // Set m_in_diff to false for any View of FileBuf fb
+  void NoDiff_4_FileBuf( final FileBuf fb )
+  {
+    for( int w=0; w<MAX_WINS; w++ )
+    {
+      ViewList vl = m_views[w];
+
+      for( int f=0; f<vl.size(); f++ )
+      {
+        View v_f = vl.get( f );
+
+        if( v_f.m_fb == fb )
+        {
+          v_f.m_in_diff = false;
+        }
+      }
+    }
+  }
   void Clear_Diff()
   {
-    m_diff_mode = false;
-
     // Make sure diff is turned off for everything:
     for( int w=0; w<MAX_WINS; w++ )
     {
@@ -3640,7 +3743,7 @@ public class VisFx extends Application
 
   void Exe_Colon_ReDiff()
   {
-    if( true == m_diff_mode )
+    if( true == in_diff_mode() )
     {
       m_diff.ReDiff();
     }
@@ -3955,7 +4058,7 @@ public class VisFx extends Application
   }
   void Exe_Colon_Cover()
   {
-    Exe_Colon_NoDiff();
+    NoDiff_CV();
 
     m_colon_view.Do_Cover();
   }
@@ -4135,7 +4238,7 @@ public class VisFx extends Application
       CV().PrintCursor();
     }
     else {
-      Exe_Colon_NoDiff();
+      NoDiff_CV();
 
       Tile_Pos tp_old = CV().m_tile_pos;
 
@@ -4150,7 +4253,7 @@ public class VisFx extends Application
   }
   void Exe_Colon_vsp()
   {
-    Exe_Colon_NoDiff();
+    NoDiff_CV();
 
     View cv = CV();
     final Tile_Pos cv_tp = cv.m_tile_pos;
@@ -4250,7 +4353,7 @@ public class VisFx extends Application
   }
   void Exe_Colon_hsp()
   {
-    Exe_Colon_NoDiff();
+    NoDiff_CV();
 
     View cv = CV();
     final Tile_Pos cv_tp = cv.m_tile_pos;
@@ -4313,7 +4416,7 @@ public class VisFx extends Application
   }
   void Exe_Colon_3sp()
   {
-    Exe_Colon_NoDiff();
+    NoDiff_CV();
 
     View cv = CV();
     final Tile_Pos cv_tp = cv.m_tile_pos;
@@ -4406,7 +4509,7 @@ public class VisFx extends Application
         CV().PrintCursor();
       }
       else {
-        Exe_Colon_NoDiff();
+        NoDiff_CV();
 
         m_file_hist[ m_win ].add( 0, buf_idx );
 
@@ -4476,7 +4579,7 @@ public class VisFx extends Application
 
   void GoToPoundBuffer()
   {
-    Exe_Colon_NoDiff();
+    NoDiff_CV();
 
     if( BE_FILE == m_file_hist[ m_win ].get( 1 ) )
     {
@@ -4494,7 +4597,7 @@ public class VisFx extends Application
      || CVI == HELP_FILE
      || CVI == SLASH_FILE )
     {
-      Exe_Colon_NoDiff();
+      NoDiff_CV();
 
       GoToBuffer( m_file_hist[ m_win ].get( 1 ) );
     }
@@ -4540,7 +4643,7 @@ public class VisFx extends Application
       {
         went_back_to_prev_dir_diff = WentBackToPrevDirDiff();
 
-        if( !went_back_to_prev_dir_diff ) Exe_Colon_NoDiff();
+        if( !went_back_to_prev_dir_diff ) NoDiff_CV();
       }
       if( !went_back_to_prev_dir_diff )
       {
@@ -4638,7 +4741,6 @@ public class VisFx extends Application
 
             went_back = m_diff.Run( cV_prev, oV_prev );
             if( went_back ) {
-              m_diff_mode = true;
               m_diff.m_vS.m_in_diff = true;
               m_diff.m_vL.m_in_diff = true;
               m_diff.Update();
@@ -4875,7 +4977,6 @@ public class VisFx extends Application
 
       ok = m_diff.Run( nv_c, nv_o );
       if( ok ) {
-        m_diff_mode = true;
         m_diff.m_vS.m_in_diff = true;
         m_diff.m_vL.m_in_diff = true;
         m_diff.Update();
@@ -4926,7 +5027,7 @@ public class VisFx extends Application
         V.Update_DoNot_PrintCursor();
       }
     }
-    if( m_diff_mode )
+    if( in_diff_mode() )
     {
       if( show_search )
       {
@@ -5126,9 +5227,11 @@ public class VisFx extends Application
     m_sb.setLength( 0 );
     m_sb.append( cmd );
   }
-  public boolean get_diff_mode()
+  // This method is not currently used:
+  public boolean in_diff_mode()
   {
-    return m_diff_mode;
+    return (null != m_diff.m_vS && m_diff.m_vS.m_in_diff)
+        || (null != m_diff.m_vL && m_diff.m_vL.m_in_diff);
   }
   public Diff get_diff()
   {
@@ -5170,7 +5273,6 @@ public class VisFx extends Application
   int                m_num_wins = 1; // Number of window panes currently on screen
   boolean            m_initialized;
   char               m_fast_char;
-  boolean            m_diff_mode;
   boolean            m_run_mode; // True if running shell command
   boolean            m_sort_by_time;
   private

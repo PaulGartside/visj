@@ -4034,7 +4034,7 @@ public class VisSw implements VisIF
     m_sb.setLength( 0 );
     m_sb.append( cmd );
   }
-  public boolean get_diff_mode()
+  public boolean in_diff_mode()
   {
     return m_diff_mode;
   } 
