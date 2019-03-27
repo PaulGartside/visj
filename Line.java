@@ -55,14 +55,16 @@ class Line
   {
     m_sb.setCharAt( index, c );
 
-    m_chksum_valid = false;
+    m_chksum_all_valid = false;
+    m_chksum_diff_valid = false;
   }
 
   Line append_c( char c )
   {
     m_sb.append( c );
 
-    m_chksum_valid = false;
+    m_chksum_all_valid = false;
+    m_chksum_diff_valid = false;
 
     return this;
   }
@@ -70,7 +72,8 @@ class Line
   {
     m_sb.append( i );
 
-    m_chksum_valid = false;
+    m_chksum_all_valid = false;
+    m_chksum_diff_valid = false;
 
     return this;
   }
@@ -78,7 +81,8 @@ class Line
   {
     m_sb.append( str );
 
-    m_chksum_valid = false;
+    m_chksum_all_valid = false;
+    m_chksum_diff_valid = false;
 
     return this;
   }
@@ -86,7 +90,8 @@ class Line
   {
     m_sb.append( other.m_sb );
 
-    m_chksum_valid = false;
+    m_chksum_all_valid = false;
+    m_chksum_diff_valid = false;
 
     return this;
   }
@@ -94,7 +99,8 @@ class Line
   {
     m_sb.deleteCharAt( index );
 
-    m_chksum_valid = false;
+    m_chksum_all_valid = false;
+    m_chksum_diff_valid = false;
 
     return this;
   }
@@ -102,7 +108,8 @@ class Line
   {
     m_sb.insert( offset, c );
 
-    m_chksum_valid = false;
+    m_chksum_all_valid = false;
+    m_chksum_diff_valid = false;
 
     return this;
   }
@@ -110,17 +117,43 @@ class Line
   {
     return m_sb.substring( start );
   }
-  int chksum()
+  int chksum_all()
   {
-    if( !m_chksum_valid )
+    if( !m_chksum_all_valid )
     {
-      m_chksum = calc_chksum();
+      m_chksum_all = calc_chksum_all();
 
-      m_chksum_valid = true;
+      m_chksum_all_valid = true;
     }
-    return m_chksum;
+    return m_chksum_all;
   }
-  private int calc_chksum()
+  int chksum_diff()
+  {
+    if( !m_chksum_diff_valid )
+    {
+      m_chksum_diff = calc_chksum_diff();
+
+      m_chksum_diff_valid = true;
+    }
+    return m_chksum_diff;
+  }
+  private int calc_chksum_all()
+  {
+    int chk_sum = 0;
+
+    final int start  = 0;
+    final int finish = m_sb.length();
+
+    for( int i=start; i<finish; i++ )
+    {
+      chk_sum ^= m_primes[(i-start)%m_num_primes] ^ m_sb.charAt( i );
+      chk_sum = ((chk_sum <<  7)&0xFFFFFF80)
+              | ((chk_sum >> 25)&0x0000007F);
+    }
+//Utils.Log(chk_sum+":'"+toString()+"'");
+    return chk_sum;
+  }
+  private int calc_chksum_diff()
   {
     int chk_sum = 0;
 
@@ -133,8 +166,8 @@ class Line
     for( int i=start; i<=finish; i++ )
     {
       chk_sum ^= m_primes[(i-start)%m_num_primes] ^ m_sb.charAt( i );
-      chk_sum = ((chk_sum << 13)&0xFFFFE000)
-              | ((chk_sum >> 19)&0x00001FFF);
+      chk_sum = ((chk_sum <<  7)&0xFFFFFF80)
+              | ((chk_sum >> 25)&0x0000007F);
     }
     return chk_sum;
   }
@@ -168,13 +201,20 @@ class Line
   {
     return m_sb.toString();
   }
+//boolean equals( Line l )
+//{
+//  return toString().equals( l.toString() );
+//}
   boolean equals( Line l )
   {
-    return toString().equals( l.toString() );
+    return m_sb.length() == l.m_sb.length()
+        &&  chksum_all() == l.chksum_all();
   }
   private StringBuilder m_sb;
-  private boolean       m_chksum_valid = false;
-  private int           m_chksum;
+  private boolean       m_chksum_all_valid = false;
+  private boolean       m_chksum_diff_valid = false;
+  private int           m_chksum_all;
+  private int           m_chksum_diff;
   private static int[]  m_primes = {  43, 101, 149, 193, 241, 293,
                                      353, 409, 461, 521, 587, 641,
                                      691, 757, 823, 881, 947 };

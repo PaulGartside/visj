@@ -940,18 +940,18 @@ class FileBuf
     }
     return 0;
   }
-  int LongestLineLen()
-  {
-    int longest = 0;
-
-    final int NUM_LINES =  m_lines.size();
-
-    for( int k=0; k<NUM_LINES; k++ )
-    {
-      longest = Math.max( m_lines.get( k ).length(), longest );
-    }
-    return longest;
-  }
+//int LongestLineLen()
+//{
+//  int longest = 0;
+//
+//  final int NUM_LINES =  m_lines.size();
+//
+//  for( int k=0; k<NUM_LINES; k++ )
+//  {
+//    longest = Math.max( m_lines.get( k ).length(), longest );
+//  }
+//  return longest;
+//}
   char Get( final int l_num, final int c_num )
   {
     if( l_num < m_lines.size() )
@@ -1459,11 +1459,11 @@ class FileBuf
     return false;
   }
 
-  Line GetLine( final int l_num )
+  final Line GetLine( final int l_num )
   {
     return m_lines.get( l_num );
   }
-  Line GetStyle( final int l_num )
+  final Line GetStyle( final int l_num )
   {
     return m_styles.get( l_num );
   }
@@ -1959,7 +1959,7 @@ class FileBuf
   {
     int tabs_removed = 0;
 
-    Line l_c = m_lines.get(l);
+    final Line l_c = m_lines.get(l);
     int LL = l_c.length();
     int cnum_t = 0; // char number with respect to tabs
 
@@ -1988,7 +1988,7 @@ class FileBuf
   {
     int spaces_removed = 0;
 
-    Line l_c = m_lines.get(l);
+    final Line l_c = m_lines.get(l);
     final int LL = l_c.length();
 
     if( 0 < LL )
@@ -2019,7 +2019,7 @@ class FileBuf
 
     for( int l=0; l<NUM_LINES; l++ )
     {
-      Line l_c = m_lines.get(l);
+      final Line l_c = m_lines.get(l);
       final int LL = l_c.length();
 
       if( 0 < LL )
@@ -2128,7 +2128,7 @@ class FileBuf
     final int NUM_LINES = m_lines.size();
     for( int k=0; k<NUM_LINES; k++ )
     {
-      Line l = m_lines.get(k);
+      final Line l = m_lines.get(k);
       final int LL = l.length();
 
       for( int i=0; i<LL; i++ )
@@ -2204,7 +2204,7 @@ class FileBuf
 
       for( int k=0; k<m_lines.size(); k++ )
       {
-        Line l = m_lines.get(k);
+        final Line l = m_lines.get(k);
         final int LL = l.length();
         for( int i=0; i<LL; i+=3 )
         {
@@ -2237,7 +2237,7 @@ class FileBuf
     // which must be a multiple of 3 characters long
     for( int k=0; ok && k<NUM_LINES; k++ )
     {
-      Line l = m_lines.get(k);
+      final Line l = m_lines.get(k);
       final int LL = l.length();
       if( k<(NUM_LINES-1) && LL != 48 )
       {
@@ -2315,7 +2315,7 @@ class FileBuf
     final int NUM_LINES = m_lines.size();
     for( int k=0; k<NUM_LINES; k++ )
     {
-      Line l = m_lines.get(k);
+      final Line l = m_lines.get(k);
       final int LL = l.length();
       for( int i=0; i<LL; i++ ) bbuf.put( (byte)l.charAt(i) );
       if( k<NUM_LINES-1 || m_LF_at_EOF ) bbuf.put((byte)'\n');
@@ -2331,7 +2331,7 @@ class FileBuf
     final int NUM_LINES = m_lines.size();
     for( int k=0; k<NUM_LINES; k++ )
     {
-      Line l = m_lines.get(k);
+      final Line l = m_lines.get(k);
       final int LL = l.length();
       for( int i=0; i<LL; i++ ) cbuf.put( l.charAt(i) );
       if( k<NUM_LINES-1 || m_LF_at_EOF ) cbuf.put('\n');

@@ -1201,15 +1201,15 @@ class ConsoleFx extends Canvas
                           + cb_str.length() +" chars to paste buffer");
     }
   }
-  private Color    m_comment_fg = Color.color( 0.3f, 0.3f, 1.0f );
-  private Color    m_d_blue     = Color.color( 0.0f, 0.0f, 1.0f );
-  private Color    m_d_green    = Color.color( 0.0f, 1.0f, 0.0f );
-  private Color    m_d_yellow   = Color.color( 0.9f, 0.9f, 0.0f );
-  private Color    m_d_magenta  = Color.color( 1.0f, 0.0f, 1.0f );
-  private Color    m_d_cyan     = Color.color( 0.0f, 0.9f, 0.9f );
-  private Color    m_d_white    = Color.color( 0.9f, 0.9f, 0.9f );
-  private Color    m_d_pink     = Color.color( 1.0f, 0.5f, 0.5f );
-  private Color    m_d_gray     = Color.color( 0.2f, 0.2f, 0.2f );
+  private Color m_comment_fg = Color.color( 0.3f, 0.3f, 1.0f );
+  private Color m_d_blue     = Color.color( 0.0f, 0.0f, 1.0f );
+  private Color m_d_green    = Color.color( 0.0f, 1.0f, 0.0f );
+  private Color m_d_yellow   = Color.color( 0.9f, 0.9f, 0.0f );
+  private Color m_d_magenta  = Color.color( 1.0f, 0.0f, 1.0f );
+  private Color m_d_cyan     = Color.color( 0.0f, 0.9f, 0.9f );
+  private Color m_d_white    = Color.color( 0.9f, 0.9f, 0.9f );
+  private Color m_d_pink     = Color.color( 1.0f, 0.5f, 0.5f );
+  private Color m_d_gray     = Color.color( 0.2f, 0.2f, 0.2f );
 
   private Color NORMAL_FG      ;  private Color NORMAL_BG      ;
   private Color STATUS_FG      ;  private Color STATUS_BG      ;

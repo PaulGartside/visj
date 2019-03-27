@@ -685,27 +685,21 @@ class Utils
 
     if( fb_s.m_isRegular && fb_l.m_isRegular )
     {
-      final long len_s = fb_s.m_path.toFile().length();
-      final long len_l = fb_l.m_path.toFile().length();
+      final int num_lines_s = fb_s.NumLines();
+      final int num_lines_l = fb_l.NumLines();
 
-      if( len_s == len_l )
+      if( num_lines_s == num_lines_l )
       {
-        final int lines_s = fb_s.NumLines();
-        final int lines_l = fb_l.NumLines();
+        files_are_same = true;
 
-        if( lines_s == lines_l )
+        for( int k=0; files_are_same && k<num_lines_s; k++ )
         {
-          files_are_same = true;
+          Line l_s = fb_s.GetLine( k );
+          Line l_l = fb_l.GetLine( k );
 
-          for( int k=0; files_are_same && k<lines_s; k++ )
+          if( !l_s.equals( l_l ) )
           {
-            Line l_s = fb_s.GetLine( k );
-            Line l_l = fb_l.GetLine( k );
-
-            if( !l_s.equals( l_l ) )
-            {
-              files_are_same = false;
-            }
+            files_are_same = false;
           }
         }
       }

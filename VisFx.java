@@ -3739,6 +3739,7 @@ public class VisFx extends Application
         vl.get( f ).m_in_diff = false;
       }
     }
+    m_diff.ClearDiff();
   }
 
   void Exe_Colon_ReDiff()
