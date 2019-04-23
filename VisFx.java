@@ -4783,7 +4783,7 @@ public class VisFx extends Application
         Exe_Colon_e_Directory( pname, files_read );
       }
       else {
-        Exe_Colon_e_Files( pname, files_read );
+        Exe_Colon_e_File( pname, files_read );
       }
       if( 0 < files_read.val )
       {
@@ -4833,7 +4833,7 @@ public class VisFx extends Application
     }
   }
 
-  void Exe_Colon_e_Files( String pname, Ptr_Int files_read )
+  void Exe_Colon_e_File( String pname, Ptr_Int files_read )
   {
     String dname = Utils.Pname_2_Dname( pname );
 
@@ -4842,68 +4842,19 @@ public class VisFx extends Application
     {
       files_read.val++;
     }
+    if( NotHaveFileAddFile( pname ) )
+    {
+      files_read.val++;
+    }
     Ptr_Int file_index = new Ptr_Int( 0 );
 
-    if( HaveFile( dname, file_index ) )
+    if( HaveFile( pname, file_index ) )
     {
-      FileBuf fb = m_files.get( file_index.val );
-      ArrayList<String> file_list
-        = Exe_Colon_e_Get_File_list( pname, dname, fb );
-
-      for( int k=0; k<file_list.size(); k++ )
-      {
-        String fnm = file_list.get( k );
-
-        if( NotHaveFileAddFile( fnm ) )
-        {
-          files_read.val++;
-        }
-      }
-      if( 0 < file_list.size() )
-      {
-        if( HaveFile( file_list.get( 0 ), file_index ) )
-        {
-          GoToBuffer( file_index.val );
-        }
-      }
+      GoToBuffer( file_index.val );
     }
   }
 
-  ArrayList<String> Exe_Colon_e_Get_File_list( String pname, String dname, FileBuf fb )
-  {
-    ArrayList<String> file_list = new ArrayList<>();
-
-    String fname = Utils.Pname_2_Fname( pname );
-
-    // Replace "." with "\."
-    fname = fname.replaceAll("\\.", "\\\\.");
-    // Replace "*" with ".*"
-    // Replace "**" with ".*"
-    // Replace "***" with ".*" and so forth
-    fname = fname.replaceAll("\\*+", ".*");
-
-    Pattern m_pattern = Pattern.compile( fname );
-
-    for( int k=0; k<fb.NumLines(); k++ )
-    {
-      String fnm = fb.GetLine( k ).toString();
-
-      if( m_pattern.matcher( fnm ).find() )
-      {
-        file_list.add( dname + fnm );
-      }
-    }
-    Collections.sort( file_list );
-
-    if( 0 == file_list.size() )
-    {
-      // fname does not match any files in directory dname,
-      // so create a new file named pname
-      file_list.add( pname );
-    }
-    return file_list;
-  }
-
+  // Returns true if file was added, else false
   public
   boolean NotHaveFileAddFile( String pname )
   {
