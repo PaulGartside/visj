@@ -147,8 +147,8 @@ class Line
     for( int i=start; i<finish; i++ )
     {
       chk_sum ^= m_primes[(i-start)%m_num_primes] ^ m_sb.charAt( i );
-      chk_sum = ((chk_sum <<  7)&0xFFFFFF80)
-              | ((chk_sum >> 25)&0x0000007F);
+      chk_sum = ((chk_sum << 13)&0xFFFFE000)
+              | ((chk_sum >> 19)&0x00001FFF);
     }
 //Utils.Log(chk_sum+":'"+toString()+"'");
     return chk_sum;
@@ -166,8 +166,8 @@ class Line
     for( int i=start; i<=finish; i++ )
     {
       chk_sum ^= m_primes[(i-start)%m_num_primes] ^ m_sb.charAt( i );
-      chk_sum = ((chk_sum <<  7)&0xFFFFFF80)
-              | ((chk_sum >> 25)&0x0000007F);
+      chk_sum = ((chk_sum << 13)&0xFFFFE000)
+              | ((chk_sum >> 19)&0x00001FFF);
     }
     return chk_sum;
   }

@@ -2912,7 +2912,18 @@ class View
   // Go to next pattern
   void Do_n()
   {
-    if( 0<m_fb.NumLines() )
+    if( 0 < m_vis.get_regex().length() )
+    {
+      Do_n_Pattern();
+    }
+    else if( m_vis.Is_BE_FILE( m_fb ) )
+    {
+      Do_n_NextDir();
+    }
+  }
+  void Do_n_Pattern()
+  {
+    if( 0 < m_fb.NumLines() )
     {
       Set_Cmd_Line_Msg( '/' + m_vis.get_regex() );
 
@@ -2993,8 +3004,141 @@ class View
     }
     return found_next_star ? ncp : null;
   }
+  void Do_n_NextDir()
+  {
+    if( 1 < m_fb.NumLines() )
+    {
+      Set_Cmd_Line_Msg("Searching down for dir");
+      Ptr_Int dl = new Ptr_Int( CrsLine() ); // Dir line, changed by search methods below
+
+      boolean found_line = true;
+
+      if( Do_n_NextDir_cursor_on_dir( CrsLine() ) )
+      {
+        // If currently on a dir, go to next line before searching for dir
+        found_line = Do_n_NextDir_Next_Line( dl );
+      }
+      if( found_line )
+      {
+        boolean found_dir = Do_n_NextDir_Search_for_Dir( dl );
+
+        if( found_dir )
+        {
+          final int NCL = dl.val;
+          final int NCP = Utils.LLM1( m_fb.LineLen( NCL ) );
+
+          GoToCrsPos_Write( NCL, NCP );
+        }
+      }
+    }
+  }
+  boolean Do_n_NextDir_cursor_on_dir( final int CL )
+  {
+    boolean cursor_on_dir = false;
+
+    String fname = m_fb.GetLine( CL ).toString();
+
+    FileBuf fb = m_vis.get_FileBuf( fname );
+
+    if( null != fb && fb.m_isDir )
+    {
+      cursor_on_dir = true;
+    }
+    return cursor_on_dir;
+  }
+//boolean Do_n_NextDir_Search_for_File( Ptr_Int dl )
+//{
+//  final int NUM_LINES = m_fb.NumLines();
+//  final int dl_st = dl.val;
+//
+//  // Search forward for file line
+//  boolean found = false;
+//
+//  if( 1 < NUM_LINES )
+//  {
+//    while( !found && dl.val<NUM_LINES )
+//    {
+//      if( ! Do_n_NextDir_cursor_on_dir( dl.val ) )
+//      {
+//        found = true;
+//      }
+//      else dl.val++;
+//    }
+//    if( !found )
+//    {
+//      // Wrap around back to top and search again:
+//      dl.val = 0;
+//      while( !found && dl.val<dl_st )
+//      {
+//        if( ! Do_n_NextDir_cursor_on_dir( dl.val ) )
+//        {
+//          found = true;
+//        }
+//        else dl.val++;
+//      }
+//    }
+//  }
+//  return found;
+//}
+  boolean Do_n_NextDir_Next_Line( Ptr_Int dl )
+  {
+    final int NUM_LINES = m_fb.NumLines();
+
+    // Search forward for next line
+    boolean found = false;
+
+    if( 1 < NUM_LINES )
+    {
+      dl.val = ( NUM_LINES-1 <= dl.val ) ? 0 : dl.val+1;
+
+      found = true;
+    }
+    return found;
+  }
+  boolean Do_n_NextDir_Search_for_Dir( Ptr_Int dl )
+  {
+    boolean found_dir = false;
+
+    final int NUM_LINES = m_fb.NumLines();
+    final int dl_st = dl.val;
+
+    // Search forward from dl_st:
+    while( !found_dir && dl.val<NUM_LINES )
+    {
+      if( Do_n_NextDir_cursor_on_dir( dl.val ) )
+      {
+        found_dir = true;
+      }
+      else dl.val++;
+    }
+    if( !found_dir )
+    {
+      // Wrap around back to top and search down to dl_st:
+      dl.val = 0;
+      while( !found_dir && dl.val<dl_st )
+      {
+        if( Do_n_NextDir_cursor_on_dir( dl.val ) )
+        {
+          found_dir = true;
+        }
+        else dl.val++;
+      }
+    }
+    return found_dir;
+  }
   // Go to previous pattern
   void Do_N()
+  {
+    if( 0 < m_vis.get_regex().length() )
+    {
+      Do_N_Pattern();
+    }
+    else if( m_vis.Is_BE_FILE( m_fb ) )
+    {
+      Do_N_PrevDir();
+    }
+  }
+  void Do_N_Pattern()
   {
     if( 0 < m_fb.NumLines() )
     {
@@ -3072,6 +3216,80 @@ class View
       }
     }
     return found_prev_star ? ncp : null;
+  }
+  void Do_N_PrevDir()
+  {
+    if( 1 < m_fb.NumLines() )
+    {
+      Set_Cmd_Line_Msg("Searching up for dir");
+      Ptr_Int dl = new Ptr_Int( CrsLine() ); // Dir line, changed by search methods below
+
+      boolean found_line = true;
+
+      if( Do_n_NextDir_cursor_on_dir( CrsLine() ) )
+      {
+        // If currently on a dir, go to prev line before searching for dir
+        found_line = Do_n_PrevDir_Prev_Line( dl );
+      }
+      if( found_line )
+      {
+        boolean found_dir = Do_n_PrevDir_Search_for_Dir( dl );
+
+        if( found_dir )
+        {
+          final int NCL = dl.val;
+          final int NCP = Utils.LLM1( m_fb.LineLen( NCL ) );
+
+          GoToCrsPos_Write( NCL, NCP );
+        }
+      }
+    }
+  }
+  boolean Do_n_PrevDir_Prev_Line( Ptr_Int dl )
+  {
+    final int NUM_LINES = m_fb.NumLines();
+
+    // Search forward for next line
+    boolean found = false;
+
+    if( 1 < NUM_LINES )
+    {
+      dl.val = ( dl.val <= 0 ) ? NUM_LINES-1 : dl.val-1;
+
+      found = true;
+    }
+    return found;
+  }
+  boolean Do_n_PrevDir_Search_for_Dir( Ptr_Int dl )
+  {
+    boolean found_dir = false;
+
+    final int NUM_LINES = m_fb.NumLines();
+    final int dl_st = dl.val;
+
+    // Search backward from dl_st:
+    while( !found_dir && 0<=dl.val )
+    {
+      if( Do_n_NextDir_cursor_on_dir( dl.val ) )
+      {
+        found_dir = true;
+      }
+      else dl.val--;
+    }
+    if( !found_dir )
+    {
+      // Wrap around back to bottom and search up to dl_st:
+      dl.val = NUM_LINES-1;
+      while( !found_dir && dl_st<dl.val )
+      {
+        if( Do_n_NextDir_cursor_on_dir( dl.val ) )
+        {
+          found_dir = true;
+        }
+        else dl.val--;
+      }
+    }
+    return found_dir;
   }
   void Do_v()
   {

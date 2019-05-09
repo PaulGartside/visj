@@ -164,10 +164,11 @@ class Highlight_MIB extends Highlight_Base
       boolean slash_escaped = false;
       for( ; m_p<LL; m_p++ )
       {
-        final char c1 = 0<m_p ? m_fb.Get( m_l, m_p-1 ) : m_fb.Get( m_l, m_p );
-        final char c0 = 0<m_p ? m_fb.Get( m_l, m_p   ) : 0;
+        // c0 is ahead of c1: (c1,c0)
+        final char c1 = (0<m_p) ? m_fb.Get( m_l, m_p-1 ) : 0;
+        final char c0 =           m_fb.Get( m_l, m_p );
 
-        if( (c1=='\'' && c0==0   )
+        if( (c1==0    && c0=='\'')
          || (c1!='\\' && c0=='\'')
          || (c1=='\\' && c0=='\'' && slash_escaped) )
         {
@@ -176,7 +177,7 @@ class Highlight_MIB extends Highlight_Base
           m_state = Hi_State.In_None;
         }
         else {
-          if( c1=='\\' && c0=='\\' ) slash_escaped = true;
+          if( c1=='\\' && c0=='\\' ) slash_escaped = !slash_escaped;
           else                       slash_escaped = false;
 
           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
@@ -199,10 +200,11 @@ class Highlight_MIB extends Highlight_Base
       boolean slash_escaped = false;
       for( ; m_p<LL; m_p++ )
       {
-        final char c1 = 0<m_p ? m_fb.Get( m_l, m_p-1 ) : m_fb.Get( m_l, m_p );
-        final char c0 = 0<m_p ? m_fb.Get( m_l, m_p   ) : 0;
+        // c0 is ahead of c1: (c1,c0)
+        final char c1 = (0<m_p) ? m_fb.Get( m_l, m_p-1 ) : 0;
+        final char c0 =           m_fb.Get( m_l, m_p );
 
-        if( (c1=='\"' && c0==0   )
+        if( (c1==0    && c0=='\"')
          || (c1!='\\' && c0=='\"')
          || (c1=='\\' && c0=='\"' && slash_escaped) )
         {
@@ -211,7 +213,7 @@ class Highlight_MIB extends Highlight_Base
           m_state = Hi_State.In_None;
         }
         else {
-          if( c1=='\\' && c0=='\\' ) slash_escaped = true;
+          if( c1=='\\' && c0=='\\' ) slash_escaped = !slash_escaped;
           else                       slash_escaped = false;
 
           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
@@ -234,10 +236,11 @@ class Highlight_MIB extends Highlight_Base
       boolean slash_escaped = false;
       for( ; m_p<LL; m_p++ )
       {
-        final char c1 = 0<m_p ? m_fb.Get( m_l, m_p-1 ) : m_fb.Get( m_l, m_p );
-        final char c0 = 0<m_p ? m_fb.Get( m_l, m_p   ) : 0;
+        // c0 is ahead of c1: (c1,c0)
+        final char c1 = (0<m_p) ? m_fb.Get( m_l, m_p-1 ) : 0;
+        final char c0 =           m_fb.Get( m_l, m_p );
 
-        if( (c1=='`' && c0==0   )
+        if( (c1==0    && c0=='`')
          || (c1!='\\' && c0=='`')
          || (c1=='\\' && c0=='`' && slash_escaped) )
         {
@@ -246,7 +249,7 @@ class Highlight_MIB extends Highlight_Base
           m_state = Hi_State.In_None;
         }
         else {
-          if( c1=='\\' && c0=='\\' ) slash_escaped = true;
+          if( c1=='\\' && c0=='\\' ) slash_escaped = !slash_escaped;
           else                       slash_escaped = false;
 
           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );

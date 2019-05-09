@@ -29,12 +29,8 @@ class Highlight_SQL extends Highlight_Base
     Beg_Comment   ,
     In__Comment   ,
     End_Comment   ,
-    BegSingleQuote,
     In_SingleQuote,
-    EndSingleQuote,
-    BegDoubleQuote,
     In_DoubleQuote,
-    EndDoubleQuote,
     NumberBeg     ,
     NumberIn      ,
     NumberHex     ,
@@ -55,12 +51,8 @@ class Highlight_SQL extends Highlight_Base
     case Beg_Comment   : Hi_Beg_Comment   (); break;
     case In__Comment   : Hi_In__Comment   (); break;
     case End_Comment   : Hi_End_Comment   (); break;
-    case BegSingleQuote: Hi_BegSingleQuote(); break;
     case In_SingleQuote: Hi_In_SingleQuote(); break;
-    case EndSingleQuote: Hi_EndSingleQuote(); break;
-    case BegDoubleQuote: Hi_BegDoubleQuote(); break;
     case In_DoubleQuote: Hi_In_DoubleQuote(); break;
-    case EndDoubleQuote: Hi_EndDoubleQuote(); break;
     case NumberBeg     : Hi_NumberBeg     (); break;
     case NumberIn      : Hi_NumberIn      (); break;
     case NumberHex     : Hi_NumberHex     (); break;
@@ -131,8 +123,8 @@ class Highlight_SQL extends Highlight_Base
         final char c0 =           m_fb.Get( m_l, m_p );
 
         if     ( c1=='-' && c0 == '-' ) { m_p--; m_state = Hi_State.Beg_Comment; }
-        else if(            c0 == '\'') { m_state = Hi_State.BegSingleQuote; }
-        else if(            c0 == '\"') { m_state = Hi_State.BegDoubleQuote; }
+        else if(            c0 == '\'') { m_state = Hi_State.In_SingleQuote; }
+        else if(            c0 == '\"') { m_state = Hi_State.In_DoubleQuote; }
         else if( !Utils.IsIdent( c1 )
                && Character.isDigit(c0)){ m_state = Hi_State.NumberBeg; }
  
@@ -188,14 +180,10 @@ class Highlight_SQL extends Highlight_Base
     m_p=0; m_l++;
     m_state = Hi_State.In_None;
   }
-  void Hi_BegSingleQuote()
+  void Hi_In_SingleQuote()
   {
     m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
     m_p++;
-    m_state = Hi_State.In_SingleQuote;
-  }
-  void Hi_In_SingleQuote()
-  {
     for( ; m_l<m_fb.NumLines(); m_l++ )
     {
       final int LL = m_fb.LineLen( m_l );
@@ -203,17 +191,20 @@ class Highlight_SQL extends Highlight_Base
       boolean slash_escaped = false;
       for( ; m_p<LL; m_p++ )
       {
-        final char c1 = 0<m_p ? m_fb.Get( m_l, m_p-1 ) : m_fb.Get( m_l, m_p );
-        final char c0 = 0<m_p ? m_fb.Get( m_l, m_p   ) : 0;
+        // c0 is ahead of c1: (c1,c0)
+        final char c1 = (0<m_p) ? m_fb.Get( m_l, m_p-1 ) : 0;
+        final char c0 =           m_fb.Get( m_l, m_p );
 
-        if( (c1=='\'' && c0==0   )
+        if( (c1==0    && c0=='\'')
          || (c1!='\\' && c0=='\'')
          || (c1=='\\' && c0=='\'' && slash_escaped) )
         {
-          m_state = Hi_State.EndSingleQuote;
+          m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+          m_p++;
+          m_state = Hi_State.In_None;
         }
         else {
-          if( c1=='\\' && c0=='\\' ) slash_escaped = true;
+          if( c1=='\\' && c0=='\\' ) slash_escaped = !slash_escaped;
           else                       slash_escaped = false;
 
           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
@@ -224,21 +215,11 @@ class Highlight_SQL extends Highlight_Base
     }
     m_state = Hi_State.Done;
   }
-  void Hi_EndSingleQuote()
-  {
-    m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
-    m_p++; //m_p++;
-    m_state = Hi_State.In_None;
-  }
 
-  void Hi_BegDoubleQuote()
+  void Hi_In_DoubleQuote()
   {
     m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
     m_p++;
-    m_state = Hi_State.In_DoubleQuote;
-  }
-  void Hi_In_DoubleQuote()
-  {
     for( ; m_l<m_fb.NumLines(); m_l++ )
     {
       final int LL = m_fb.LineLen( m_l );
@@ -246,17 +227,20 @@ class Highlight_SQL extends Highlight_Base
       boolean slash_escaped = false;
       for( ; m_p<LL; m_p++ )
       {
-        final char c1 = 0<m_p ? m_fb.Get( m_l, m_p-1 ) : m_fb.Get( m_l, m_p );
-        final char c0 = 0<m_p ? m_fb.Get( m_l, m_p   ) : 0;
-  
-        if( (c1=='\"' && c0==0   )
+        // c0 is ahead of c1: (c1,c0)
+        final char c1 = (0<m_p) ? m_fb.Get( m_l, m_p-1 ) : 0;
+        final char c0 =           m_fb.Get( m_l, m_p );
+
+        if( (c1==0    && c0=='\"')
          || (c1!='\\' && c0=='\"')
          || (c1=='\\' && c0=='\"' && slash_escaped) )
         {
-          m_state = Hi_State.EndDoubleQuote;
+          m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+          m_p++;
+          m_state = Hi_State.In_None;
         }
         else {
-          if( c1=='\\' && c0=='\\' ) slash_escaped = true;
+          if( c1=='\\' && c0=='\\' ) slash_escaped = !slash_escaped;
           else                       slash_escaped = false;
   
           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
@@ -266,12 +250,6 @@ class Highlight_SQL extends Highlight_Base
       m_p = 0;
     }
     m_state = Hi_State.Done;
-  }
-  void Hi_EndDoubleQuote()
-  {
-    m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
-    m_p++; //m_p++;
-    m_state = Hi_State.In_None;
   }
   void Hi_NumberBeg()
   {

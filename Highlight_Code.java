@@ -33,12 +33,8 @@ abstract class Highlight_Code extends Highlight_Base
     BegCPP_Comment,
     In_CPP_Comment,
     EndCPP_Comment,
-    BegSingleQuote,
     In_SingleQuote,
-    EndSingleQuote,
-    BegDoubleQuote,
     In_DoubleQuote,
-    EndDoubleQuote,
     NumberBeg     ,
     NumberIn      ,
     NumberHex     ,
@@ -74,12 +70,8 @@ abstract class Highlight_Code extends Highlight_Base
     case BegCPP_Comment: Hi_BegCPP_Comment(); break;
     case In_CPP_Comment: Hi_In_CPP_Comment(); break;
     case EndCPP_Comment: Hi_EndCPP_Comment(); break;
-    case BegSingleQuote: Hi_BegSingleQuote(); break;
     case In_SingleQuote: Hi_In_SingleQuote(); break;
-    case EndSingleQuote: Hi_EndSingleQuote(); break;
-    case BegDoubleQuote: Hi_BegDoubleQuote(); break;
     case In_DoubleQuote: Hi_In_DoubleQuote(); break;
-    case EndDoubleQuote: Hi_EndDoubleQuote(); break;
     case NumberBeg     : Hi_NumberBeg     (); break;
     case NumberIn      : Hi_NumberIn      (); break;
     case NumberHex     : Hi_NumberHex     (); break;
@@ -104,6 +96,15 @@ abstract class Highlight_Code extends Highlight_Base
       Run_State();
     }
     Find_Styles_Keys_In_Range( st, fn );
+  }
+  boolean Quote_Start( final char qt
+                     , final char c2
+                     , final char c1
+                     , final char c0 )
+  {
+    return (c1==0    && c0==qt ) //< Quote at beginning of line
+        || (c1!='\\' && c0==qt ) //< Non-escaped quote
+        || (c2=='\\' && c1=='\\' && c0==qt ); //< Escaped escape before quote
   }
   boolean OneVarType( final char c0 )
   {
@@ -140,7 +141,7 @@ abstract class Highlight_Code extends Highlight_Base
     {
       final int  LL = m_fb.LineLen( m_l );
     //final Line lr = m_fb.GetLine( m_l );
- 
+
       for( ; m_p<LL; m_p++ )
       {
         m_fb.ClearSyntaxStyles( m_l, m_p );
@@ -153,11 +154,13 @@ abstract class Highlight_Code extends Highlight_Base
         if     ( c1=='/' && c0 == '/' ) { m_p--; m_state = Hi_State.BegCPP_Comment; }
         else if( c1=='/' && c0 == '*' ) { m_p--; m_state = Hi_State.BegC_Comment; }
         else if(            c0 == '#' ) { m_state = Hi_State.In_Define; }
-        else if(            c0 == '\'') { m_state = Hi_State.BegSingleQuote; }
-        else if(            c0 == '\"') { m_state = Hi_State.BegDoubleQuote; }
+      //else if(            c0 == '\'') { m_state = Hi_State.In_SingleQuote; }
+      //else if(            c0 == '\"') { m_state = Hi_State.In_DoubleQuote; }
+        else if( Quote_Start('\'',c2,c1,c0) ) { m_state = Hi_State.In_SingleQuote; }
+        else if( Quote_Start('\"',c2,c1,c0) ) { m_state = Hi_State.In_DoubleQuote; }
         else if( !Utils.IsIdent( c1 )
                && Character.isDigit(c0)){ m_state = Hi_State.NumberBeg; }
- 
+
         else if( c1==':' && c0==':'
               || c1=='-' && c0=='>' )
         {
@@ -272,14 +275,11 @@ abstract class Highlight_Code extends Highlight_Base
     m_p=0; m_l++;
     m_state = Hi_State.In_None;
   }
-  void Hi_BegSingleQuote()
+
+  void Hi_In_SingleQuote()
   {
     m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
     m_p++;
-    m_state = Hi_State.In_SingleQuote;
-  }
-  void Hi_In_SingleQuote()
-  {
     for( ; m_l<m_fb.NumLines(); m_l++ )
     {
       final int LL = m_fb.LineLen( m_l );
@@ -287,17 +287,20 @@ abstract class Highlight_Code extends Highlight_Base
       boolean slash_escaped = false;
       for( ; m_p<LL; m_p++ )
       {
-        final char c1 = 0<m_p ? m_fb.Get( m_l, m_p-1 ) : m_fb.Get( m_l, m_p );
-        final char c0 = 0<m_p ? m_fb.Get( m_l, m_p   ) : 0;
+        // c0 is ahead of c1: (c1,c0)
+        final char c1 = 0<m_p ? m_fb.Get( m_l, m_p-1 ) : 0;
+        final char c0 =         m_fb.Get( m_l, m_p );
 
-        if( (c1=='\'' && c0==0   )
+        if( (c1==0    && c0=='\'')
          || (c1!='\\' && c0=='\'')
          || (c1=='\\' && c0=='\'' && slash_escaped) )
         {
-          m_state = Hi_State.EndSingleQuote;
+          m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+          m_p++;
+          m_state = Hi_State.In_None;
         }
         else {
-          if( c1=='\\' && c0=='\\' ) slash_escaped = true;
+          if( c1=='\\' && c0=='\\' ) slash_escaped = !slash_escaped;
           else                       slash_escaped = false;
 
           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
@@ -308,41 +311,34 @@ abstract class Highlight_Code extends Highlight_Base
     }
     m_state = Hi_State.Done;
   }
-  void Hi_EndSingleQuote()
-  {
-    m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
-    m_p++; //m_p++;
-    m_state = Hi_State.In_None;
-  }
 
-  void Hi_BegDoubleQuote()
+  void Hi_In_DoubleQuote()
   {
     m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
     m_p++;
-    m_state = Hi_State.In_DoubleQuote;
-  }
-  void Hi_In_DoubleQuote()
-  {
     for( ; m_l<m_fb.NumLines(); m_l++ )
     {
       final int LL = m_fb.LineLen( m_l );
-  
+
       boolean slash_escaped = false;
       for( ; m_p<LL; m_p++ )
       {
-        final char c1 = 0<m_p ? m_fb.Get( m_l, m_p-1 ) : m_fb.Get( m_l, m_p );
-        final char c0 = 0<m_p ? m_fb.Get( m_l, m_p   ) : 0;
-  
-        if( (c1=='\"' && c0==0   )
+        // c0 is ahead of c1: (c1,c0)
+        final char c1 = (0<m_p) ? m_fb.Get( m_l, m_p-1 ) : 0;
+        final char c0 =           m_fb.Get( m_l, m_p );
+
+        if( (c1==0    && c0=='\"')
          || (c1!='\\' && c0=='\"')
          || (c1=='\\' && c0=='\"' && slash_escaped) )
         {
-          m_state = Hi_State.EndDoubleQuote;
+          m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+          m_p++;
+          m_state = Hi_State.In_None;
         }
         else {
-          if( c1=='\\' && c0=='\\' ) slash_escaped = true;
+          if( c1=='\\' && c0=='\\' ) slash_escaped = !slash_escaped;
           else                       slash_escaped = false;
-  
+
           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
         }
         if( Hi_State.In_DoubleQuote != m_state ) return;
@@ -350,12 +346,6 @@ abstract class Highlight_Code extends Highlight_Base
       m_p = 0;
     }
     m_state = Hi_State.Done;
-  }
-  void Hi_EndDoubleQuote()
-  {
-    m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
-    m_p++; //m_p++;
-    m_state = Hi_State.In_None;
   }
   void Hi_NumberBeg()
   {
@@ -382,7 +372,7 @@ abstract class Highlight_Code extends Highlight_Base
     if( LL <= m_p ) m_state = Hi_State.In_None;
     else {
       final char c1 = m_fb.Get( m_l, m_p );
-  
+
       if( '.'==c1 )
       {
         m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
