@@ -2752,7 +2752,9 @@ public class VisFx extends Application
     else if( m_sb.toString().equals("dos2unix")) Exe_dos2unix();
     else if( m_sb.toString().equals("unix2dos")) Exe_unix2dos();
     else if( m_sb.toString().equals("sort"))     Exe_Colon_Sort();
-    else if( m_sb.toString().equals("gc"))       Exe_gc();
+    else if( m_sb.toString().equals("gc"))       Exe_Colon_gc();
+    else if( m_sb.toString().equals("comment"))  Exe_Colon_Comment();
+    else if( m_sb.toString().equals("uncomment"))  Exe_Colon_UnComment();
     else if( m_sb.toString().startsWith("cd"))   Exe_Colon_cd();
     else if( m_sb.toString().startsWith("syn="))  Exe_Colon_Syntax();
     else if( m_sb.toString().startsWith("detab="))Exe_Colon_Detab();
@@ -3855,11 +3857,20 @@ public class VisFx extends Application
     }
   }
 
-  void Exe_gc()
+  void Exe_Colon_gc()
   {
     System.gc();
 
     CmdLineMessage("Performed garbage collection");
+  }
+
+  void Exe_Colon_Comment()
+  {
+    CV().m_fb.Comment();
+  }
+  void Exe_Colon_UnComment()
+  {
+    CV().m_fb.UnComment();
   }
 
   void Exe_Colon_Decoding()

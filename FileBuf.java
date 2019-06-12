@@ -2480,6 +2480,198 @@ class FileBuf
     m_encoding = enc;
     m_LF_at_EOF = LF_at_EOF;
   }
+  void Comment()
+  {
+    if( Comment_CPP()
+     || Comment_Script()
+     || Comment_MIB() )
+    {
+      Update();
+    }
+  }
+  boolean Comment_CPP()
+  {
+    boolean commented = false;
+
+    if( File_Type.CS   == m_file_type
+     || File_Type.CPP  == m_file_type
+     || File_Type.IDL  == m_file_type
+     || File_Type.JAVA == m_file_type
+     || File_Type.JS   == m_file_type
+     || File_Type.STL  == m_file_type )
+    {
+      final int NUM_LINES = NumLines();
+
+      // Comment all lines:
+      for( int k=0; k<NUM_LINES; k++ )
+      {
+        InsertChar( k, 0, '/' );
+        InsertChar( k, 0, '/' );
+      }
+      commented = true;
+    }
+    return commented;
+  }
+  boolean Comment_Script()
+  {
+    boolean commented = false;
+
+    if( File_Type.BASH  == m_file_type
+     || File_Type.CMAKE == m_file_type
+     || File_Type.MAKE  == m_file_type
+     || File_Type.PY    == m_file_type )
+    {
+      final int NUM_LINES = NumLines();
+
+      // Comment all lines:
+      for( int k=0; k<NUM_LINES; k++ )
+      {
+        InsertChar( k, 0, '#' );
+      }
+      commented = true;
+    }
+    return commented;
+  }
+  boolean Comment_MIB()
+  {
+    boolean commented = false;
+
+    if( File_Type.MIB == m_file_type
+     || File_Type.SQL == m_file_type )
+    {
+      final int NUM_LINES = NumLines();
+
+      // Comment all lines:
+      for( int k=0; k<NUM_LINES; k++ )
+      {
+        InsertChar( k, 0, '-' );
+        InsertChar( k, 0, '-' );
+      }
+      commented = true;
+    }
+    return commented;
+  }
+  void UnComment()
+  {
+    if( UnComment_CPP()
+     || UnComment_Script()
+     || UnComment_MIB() )
+    {
+      Update();
+    }
+  }
+  boolean UnComment_CPP()
+  {
+    boolean uncommented = false;
+
+    if( File_Type.CS   == m_file_type
+     || File_Type.CPP  == m_file_type
+     || File_Type.IDL  == m_file_type
+     || File_Type.JAVA == m_file_type
+     || File_Type.JS   == m_file_type
+     || File_Type.STL  == m_file_type )
+    {
+      boolean all_lines_commented = true;
+
+      final int NUM_LINES = NumLines();
+
+      // Determine if all lines are commented:
+      for( int k=0; all_lines_commented && k<NUM_LINES; k++ )
+      {
+        Line l_k = GetLine( k );
+
+        if( (l_k.length() < 2)
+         || ('/' != l_k.charAt( 0 ))
+         || ('/' != l_k.charAt( 1 )) )
+        {
+          all_lines_commented = false;
+        }
+      }
+      // Un-Comment all lines:
+      if( all_lines_commented )
+      {
+        for( int k=0; k<NUM_LINES; k++ )
+        {
+          RemoveChar( k, 0 );
+          RemoveChar( k, 0 );
+        }
+        uncommented = true;
+      }
+    }
+    return uncommented;
+  }
+  boolean UnComment_Script()
+  {
+    boolean uncommented = false;
+
+    if( File_Type.BASH  == m_file_type
+     || File_Type.CMAKE == m_file_type
+     || File_Type.MAKE  == m_file_type
+     || File_Type.PY    == m_file_type )
+    {
+      boolean all_lines_commented = true;
+
+      final int NUM_LINES = NumLines();
+
+      // Determine if all lines are commented:
+      for( int k=0; all_lines_commented && k<NUM_LINES; k++ )
+      {
+        Line l_k = GetLine( k );
+
+        if( (l_k.length() < 1)
+         || ('#' != l_k.charAt( 0 )) )
+        {
+          all_lines_commented = false;
+        }
+      }
+      // Un-Comment all lines:
+      if( all_lines_commented )
+      {
+        for( int k=0; k<NUM_LINES; k++ )
+        {
+          RemoveChar( k, 0 );
+        }
+        uncommented = true;
+      }
+    }
+    return uncommented;
+  }
+  boolean UnComment_MIB()
+  {
+    boolean uncommented = false;
+
+    if( File_Type.MIB == m_file_type
+     || File_Type.SQL == m_file_type )
+    {
+      boolean all_lines_commented = true;
+
+      final int NUM_LINES = NumLines();
+
+      // Determine if all lines are commented:
+      for( int k=0; all_lines_commented && k<NUM_LINES; k++ )
+      {
+        Line l_k = GetLine( k );
+
+        if( (l_k.length() < 2)
+         || ('-' != l_k.charAt( 0 ))
+         || ('-' != l_k.charAt( 1 )) )
+        {
+          all_lines_commented = false;
+        }
+      }
+      // Un-Comment all lines:
+      if( all_lines_commented )
+      {
+        for( int k=0; k<NUM_LINES; k++ )
+        {
+          RemoveChar( k, 0 );
+          RemoveChar( k, 0 );
+        }
+        uncommented = true;
+      }
+    }
+    return uncommented;
+  }
   VisIF                 m_vis;   // Not sure if we need this or should use m_views
   final String          m_pname; // Full path      = m_dname + m_fname
   final String          m_dname; // Full directory = m_pname - m_fname, (for directories this is the same a m_pname)
