@@ -282,7 +282,7 @@ class Highlight_CMAKE extends Highlight_Base
 
           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
         }
-        if( Hi_State.In_DoubleQuote != m_state ) return;
+        if( Hi_State.In_96_Quote != m_state ) return;
       }
       m_p = 0;
     }

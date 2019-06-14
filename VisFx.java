@@ -2635,16 +2635,21 @@ public class VisFx extends Application
 
     if( cv.m_in_diff ) m_diff.GoToBegOfNextLine();
     else {
-      if( SLASH_FILE != Curr_FileNum() )
+      if( BE_FILE == Curr_FileNum() )
       {
-        // Normal case:
-        cv.GoToBegOfNextLine();
+        // In buffer editor, so go to end of next line:
+        cv.GoToEndOfNextLine();
       }
-      else {
+      else if( SLASH_FILE == Curr_FileNum() )
+      {
         // In search buffer, search for pattern on current line:
         Line line = cv.m_fb.GetLine( cv.CrsLine() );
 
         Handle_Slash_GotPattern( line.toString(), false );
+      }
+      else {
+        // Normal case:
+        cv.GoToBegOfNextLine();
       }
     }
   }
@@ -3136,7 +3141,7 @@ public class VisFx extends Application
   }
   void Quit_JoinTiles_TOP__LEFT_8TH()
   {
-    if( Have_BOT__LEFT_QTR() )
+    if( Have_BOT__HALF() || Have_BOT__LEFT_QTR() )
     {
       for( int k=0; k<m_num_wins; k++ )
       {
@@ -3158,7 +3163,7 @@ public class VisFx extends Application
   }
   void Quit_JoinTiles_TOP__RITE_8TH()
   {
-    if( Have_BOT__RITE_QTR() )
+    if( Have_BOT__HALF() || Have_BOT__RITE_QTR() )
     {
       for( int k=0; k<m_num_wins; k++ )
       {
@@ -3180,7 +3185,7 @@ public class VisFx extends Application
   }
   void Quit_JoinTiles_TOP__LEFT_CTR_8TH()
   {
-    if( Have_BOT__LEFT_QTR() )
+    if( Have_BOT__HALF() || Have_BOT__LEFT_QTR() )
     {
       for( int k=0; k<m_num_wins; k++ )
       {
@@ -3202,7 +3207,7 @@ public class VisFx extends Application
   }
   void Quit_JoinTiles_TOP__RITE_CTR_8TH()
   {
-    if( Have_BOT__RITE_QTR() )
+    if( Have_BOT__HALF() || Have_BOT__RITE_QTR() )
     {
       for( int k=0; k<m_num_wins; k++ )
       {
@@ -3224,7 +3229,7 @@ public class VisFx extends Application
   }
   void Quit_JoinTiles_BOT__LEFT_8TH()
   {
-    if( Have_TOP__LEFT_QTR() )
+    if( Have_TOP__HALF() || Have_TOP__LEFT_QTR() )
     {
       for( int k=0; k<m_num_wins; k++ )
       {
@@ -3246,7 +3251,7 @@ public class VisFx extends Application
   }
   void Quit_JoinTiles_BOT__RITE_8TH()
   {
-    if( Have_TOP__RITE_QTR() )
+    if( Have_TOP__HALF() || Have_TOP__RITE_QTR() )
     {
       for( int k=0; k<m_num_wins; k++ )
       {
@@ -3268,7 +3273,7 @@ public class VisFx extends Application
   }
   void Quit_JoinTiles_BOT__LEFT_CTR_8TH()
   {
-    if( Have_TOP__LEFT_QTR() )
+    if( Have_TOP__HALF() || Have_TOP__LEFT_QTR() )
     {
       for( int k=0; k<m_num_wins; k++ )
       {
@@ -3290,7 +3295,7 @@ public class VisFx extends Application
   }
   void Quit_JoinTiles_BOT__RITE_CTR_8TH()
   {
-    if( Have_TOP__RITE_QTR() )
+    if( Have_TOP__HALF() || Have_TOP__RITE_QTR() )
     {
       for( int k=0; k<m_num_wins; k++ )
       {

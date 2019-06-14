@@ -518,34 +518,37 @@ class FileBuf
 
   void CheckFileModTime()
   {
-    final long NOW = System.currentTimeMillis();
-
-    // Check for updates to current file once per second:
-    if( 1000 <= (NOW - m_mod_check_time) )
+    if( m_isRegular || m_isDir )
     {
-      final long curr_mod_time = Utils.ModificationTime( m_path );
+      final long NOW = System.currentTimeMillis();
 
-      if( m_mod_time < curr_mod_time )
+      // Check for updates to current file once per second:
+      if( 1000 <= (NOW - m_mod_check_time) )
       {
-        if( m_isRegular )
-        {
-          // Update file modification time so that the message window
-          // will not keep popping up:
-          m_mod_time = curr_mod_time;
-          m_changed_externally = true;
-          Update();
-          m_vis.CmdLineMessage(m_fname +" changed on file system");
-        }
-        else if( m_isDir )
-        {
-          // Dont ask the user, just read in the directory.
-          // m_mod_time will get updated in ReReadFile()
-          ReReadFile();
+        final long curr_mod_time = Utils.ModificationTime( m_path );
 
-          Update();
+        if( m_mod_time < curr_mod_time )
+        {
+          if( m_isRegular )
+          {
+            // Update file modification time so that the message window
+            // will not keep popping up:
+            m_mod_time = curr_mod_time;
+            m_changed_externally = true;
+            Update();
+            m_vis.CmdLineMessage(m_fname +" changed on file system");
+          }
+          else if( m_isDir )
+          {
+            // Dont ask the user, just read in the directory.
+            // m_mod_time will get updated in ReReadFile()
+            ReReadFile();
+
+            Update();
+          }
         }
+        m_mod_check_time = NOW;
       }
-      m_mod_check_time = NOW;
     }
   }
 

@@ -140,7 +140,6 @@ abstract class Highlight_Code extends Highlight_Base
     for( ; m_l<m_fb.NumLines(); m_l++ )
     {
       final int  LL = m_fb.LineLen( m_l );
-    //final Line lr = m_fb.GetLine( m_l );
 
       for( ; m_p<LL; m_p++ )
       {
@@ -154,8 +153,6 @@ abstract class Highlight_Code extends Highlight_Base
         if     ( c1=='/' && c0 == '/' ) { m_p--; m_state = Hi_State.BegCPP_Comment; }
         else if( c1=='/' && c0 == '*' ) { m_p--; m_state = Hi_State.BegC_Comment; }
         else if(            c0 == '#' ) { m_state = Hi_State.In_Define; }
-      //else if(            c0 == '\'') { m_state = Hi_State.In_SingleQuote; }
-      //else if(            c0 == '\"') { m_state = Hi_State.In_DoubleQuote; }
         else if( Quote_Start('\'',c2,c1,c0) ) { m_state = Hi_State.In_SingleQuote; }
         else if( Quote_Start('\"',c2,c1,c0) ) { m_state = Hi_State.In_DoubleQuote; }
         else if( !Utils.IsIdent( c1 )

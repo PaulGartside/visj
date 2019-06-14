@@ -561,6 +561,24 @@ class View
     }
   }
 
+  void GoToEndOfNextLine()
+  {
+    final int NUM_LINES = m_fb.NumLines();
+
+    if( 0<NUM_LINES )
+    {
+      final int OCL = CrsLine(); // Old cursor line
+
+      if( OCL < (NUM_LINES-1) )
+      {
+        // Before last line, so can go down
+        final int LL = m_fb.LineLen( OCL+1 );
+
+        GoToCrsPos_Write( OCL+1, Utils.LLM1( LL ) );
+      }
+    }
+  }
+
   void GoToLine( final int user_line_num )
   {
     // Internal line number is 1 less than user line number:
