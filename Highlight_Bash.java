@@ -184,6 +184,41 @@ class Highlight_Bash extends Highlight_Base
     m_state = Hi_State.In_None;
   }
 
+//void Hi_In_SingleQuote()
+//{
+//  m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+//  m_p++;
+//  for( ; m_l<m_fb.NumLines(); m_l++ )
+//  {
+//    final int LL = m_fb.LineLen( m_l );
+//
+//    boolean slash_escaped = false;
+//    for( ; m_p<LL; m_p++ )
+//    {
+//      // c0 is ahead of c1: (c1,c0)
+//      final char c1 = (0<m_p) ? m_fb.Get( m_l, m_p-1 ) : 0;
+//      final char c0 =           m_fb.Get( m_l, m_p );
+//
+//      if( (c1==0    && c0=='\'')
+//       || (c1!='\\' && c0=='\'')
+//       || (c1=='\\' && c0=='\'' && slash_escaped) )
+//      {
+//        m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+//        m_p++;
+//        m_state = Hi_State.In_None;
+//      }
+//      else {
+//        if( c1=='\\' && c0=='\\' ) slash_escaped = !slash_escaped;
+//        else                       slash_escaped = false;
+//
+//        m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+//      }
+//      if( Hi_State.In_SingleQuote != m_state ) return;
+//    }
+//    m_p = 0;
+//  }
+//  m_state = Hi_State.Done;
+//}
   void Hi_In_SingleQuote()
   {
     m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
@@ -203,15 +238,21 @@ class Highlight_Bash extends Highlight_Base
          || (c1!='\\' && c0=='\'')
          || (c1=='\\' && c0=='\'' && slash_escaped) )
         {
+          // End of single quote:
           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
           m_p++;
           m_state = Hi_State.In_None;
         }
         else {
-          if( c1=='\\' && c0=='\\' ) slash_escaped = !slash_escaped;
-          else                       slash_escaped = false;
-
-          m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+          if( (c1!='\\' && c0=='$')
+           || (c1=='\\' && c0=='$' && slash_escaped) )
+          {
+            m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.DEFINE.val );
+          }
+          else {
+            m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+          }
+          slash_escaped = (c1=='\\' && c0=='\\') ? !slash_escaped : false;
         }
         if( Hi_State.In_SingleQuote != m_state ) return;
       }
@@ -220,6 +261,41 @@ class Highlight_Bash extends Highlight_Base
     m_state = Hi_State.Done;
   }
 
+//void Hi_In_DoubleQuote()
+//{
+//  m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+//  m_p++;
+//  for( ; m_l<m_fb.NumLines(); m_l++ )
+//  {
+//    final int LL = m_fb.LineLen( m_l );
+//
+//    boolean slash_escaped = false;
+//    for( ; m_p<LL; m_p++ )
+//    {
+//      // c0 is ahead of c1: (c1,c0)
+//      final char c1 = (0<m_p) ? m_fb.Get( m_l, m_p-1 ) : 0;
+//      final char c0 =           m_fb.Get( m_l, m_p );
+//
+//      if( (c1==0    && c0=='\"')
+//       || (c1!='\\' && c0=='\"')
+//       || (c1=='\\' && c0=='\"' && slash_escaped) )
+//      {
+//        m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+//        m_p++;
+//        m_state = Hi_State.In_None;
+//      }
+//      else {
+//        if( c1=='\\' && c0=='\\' ) slash_escaped = !slash_escaped;
+//        else                       slash_escaped = false;
+//
+//        m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+//      }
+//      if( Hi_State.In_DoubleQuote != m_state ) return;
+//    }
+//    m_p = 0;
+//  }
+//  m_state = Hi_State.Done;
+//}
   void Hi_In_DoubleQuote()
   {
     m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
@@ -239,15 +315,21 @@ class Highlight_Bash extends Highlight_Base
          || (c1!='\\' && c0=='\"')
          || (c1=='\\' && c0=='\"' && slash_escaped) )
         {
+          // End of double quote:
           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
           m_p++;
           m_state = Hi_State.In_None;
         }
         else {
-          if( c1=='\\' && c0=='\\' ) slash_escaped = !slash_escaped;
-          else                       slash_escaped = false;
-
-          m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+          if( (c1!='\\' && c0=='$')
+           || (c1=='\\' && c0=='$' && slash_escaped) )
+          {
+            m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.DEFINE.val );
+          }
+          else {
+            m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+          }
+          slash_escaped = (c1=='\\' && c0=='\\') ? !slash_escaped : false;
         }
         if( Hi_State.In_DoubleQuote != m_state ) return;
       }
@@ -255,7 +337,6 @@ class Highlight_Bash extends Highlight_Base
     }
     m_state = Hi_State.Done;
   }
-
 
   void Hi_NumberBeg()
   {
@@ -396,7 +477,7 @@ class Highlight_Bash extends Highlight_Base
     new HiKeyVal( "if"      , Highlight_Type.CONTROL ),
     new HiKeyVal( "fi"      , Highlight_Type.CONTROL ),
     new HiKeyVal( "else"    , Highlight_Type.CONTROL ),
-    new HiKeyVal( "elsif"   , Highlight_Type.CONTROL ),
+    new HiKeyVal( "elif"    , Highlight_Type.CONTROL ),
     new HiKeyVal( "for"     , Highlight_Type.CONTROL ),
     new HiKeyVal( "done"    , Highlight_Type.CONTROL ),
     new HiKeyVal( "while"   , Highlight_Type.CONTROL ),

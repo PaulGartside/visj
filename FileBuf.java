@@ -235,7 +235,10 @@ class FileBuf
   {
     if( m_pname.endsWith(".idl"    )
      || m_pname.endsWith(".idl.new")
-     || m_pname.endsWith(".idl.old") )
+     || m_pname.endsWith(".idl.old")
+     || m_pname.endsWith(".idl.in"    )
+     || m_pname.endsWith(".idl.in.new")
+     || m_pname.endsWith(".idl.in.old") )
     {
       m_file_type = File_Type.IDL;
       m_Hi = new Highlight_IDL( this );
@@ -1925,6 +1928,19 @@ class FileBuf
 
     m_save_history = true;
   }
+//void UndoAll( final View rV )
+//{
+//  m_save_history = false;
+//
+//  try {
+//    m_history.UndoAll( rV );
+//  }
+//  catch( Throwable t )
+//  {
+//    Utils.Log( t.toString() );
+//  }
+//  m_save_history = true;
+//}
 
   void RemoveTabs_SpacesAtEOLs( final int tab_sz )
   {

@@ -319,8 +319,9 @@ class Shell
   Process           m_sh_proc;
   InputStream       m_sh_is;
   Long              m_sh_T1;
-  Thread            m_run_sh_st  = new Thread() { public void run() { run_sh_st  (); m_vis.Give(); } };
-  Thread            m_run_sh_wait= new Thread() { public void run() { run_sh_wait(); m_vis.Give(); } };
-  Thread            m_run_sh_done= new Thread() { public void run() { run_sh_done(); m_vis.Give(); } };
+
+  Thread m_run_sh_st   = new Thread( ()->{ run_sh_st  (); m_vis.Give(); } );
+  Thread m_run_sh_wait = new Thread( ()->{ run_sh_wait(); m_vis.Give(); } );
+  Thread m_run_sh_done = new Thread( ()->{ run_sh_done(); m_vis.Give(); } );
 }
 

@@ -61,6 +61,7 @@ GENERIC_SOURCES = ChangeHist \
                   Highlight_Text \
                   Highlight_Type \
                   Highlight_XML \
+                  Image_data \
                   IntList \
                   Line \
                   LineView \

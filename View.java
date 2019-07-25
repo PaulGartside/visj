@@ -56,6 +56,7 @@ class View
         m_image_mode = true;
       }
     }
+    m_image_file = m_image_mode;
   }
   int X()           { return m_x; }
   int Y()           { return m_y; }
@@ -149,28 +150,9 @@ class View
     m_crsRow = row;
     m_crsCol = col;
   }
-  void Move_Console_CrsCell()
+  void Set_Console_CrsCell()
   {
-    if( !m_image_mode )
-    {
-      m_console.Move_Crs_Cell( Row_Win_2_GL( m_crsRow )
-                             , Col_Win_2_GL( m_crsCol ) );
-    }
-  }
-  void Remove_Console_CrsCell()
-  {
-    if( !m_image_mode )
-    {
-      m_console.Remove_Crs_Cell();
-    }
-  }
-  void Add_Console_CrsCell()
-  {
-    if( !m_image_mode )
-    {
-      m_console.Add_Crs_Cell( Row_Win_2_GL( m_crsRow )
-                            , Col_Win_2_GL( m_crsCol ) );
-    }
+    m_console.Set_Crs_Cell( this, m_crsRow, m_crsCol );
   }
 
   void Update()
@@ -540,12 +522,9 @@ class View
   }
   void PrintCursor()
   {
-    if( !m_image_mode )
+    if( m_vis.CV() == this )
     {
-      if( m_vis.CV() == this )
-      {
-        Move_Console_CrsCell();
-      }
+      Set_Console_CrsCell();
     }
   }
 
@@ -811,7 +790,7 @@ class View
   }
   void GoToTopLineInView()
   {
-    GoToCrsPos_Write( m_topLine, 0 );
+    GoToCrsPos_Write( m_topLine, CrsChar() );
   }
   void GoToBotLineInView()
   {
@@ -821,7 +800,7 @@ class View
 
     bottom_line_in_view = Math.min( NUM_LINES-1, bottom_line_in_view );
 
-    GoToCrsPos_Write( bottom_line_in_view, 0 );
+    GoToCrsPos_Write( bottom_line_in_view, CrsChar() );
   }
 
   void GoToMidLineInView()
@@ -952,7 +931,7 @@ class View
           // This line places the cursor at the top of the screen, which I prefer:
           m_crsRow = 0;
         }
-        Move_Console_CrsCell();
+        Set_Console_CrsCell();
 
         Update();
       }
@@ -987,7 +966,7 @@ class View
       else {
         m_topLine -= WorkingRows() - 1;
       }
-      Move_Console_CrsCell();
+      Set_Console_CrsCell();
 
       Update();
     }
@@ -1128,7 +1107,7 @@ class View
     else if( MOVE_LEFT  ) m_leftChar = ncp_crsChar;
     m_crsCol   = ncp_crsChar - m_leftChar;
 
-    Move_Console_CrsCell();
+    Set_Console_CrsCell();
   }
 
   Style Get_Style( final int line, final int pos )
@@ -2904,7 +2883,7 @@ class View
       // Make changes manually:
       m_topLine += m_crsRow;
       m_crsRow = 0;
-      Move_Console_CrsCell();
+      Set_Console_CrsCell();
 
       Update();
     }
@@ -2921,7 +2900,7 @@ class View
       // CrsLine() does not change:
       m_crsRow += m_topLine;
       m_topLine = 0;
-      Move_Console_CrsCell();
+      Set_Console_CrsCell();
 
       Update();
     }
@@ -2930,7 +2909,7 @@ class View
     {
       m_topLine += m_crsRow - center;
       m_crsRow = center;
-      Move_Console_CrsCell();
+      Set_Console_CrsCell();
 
       Update();
     }
@@ -2946,7 +2925,7 @@ class View
       {
         m_topLine -= WR - m_crsRow - 1;
         m_crsRow = WR-1;
-        Move_Console_CrsCell();
+        Set_Console_CrsCell();
 
         Update();
       }
@@ -2955,7 +2934,7 @@ class View
         // CrsLine() does not change:
         m_crsRow += m_topLine;
         m_topLine = 0;
-        Move_Console_CrsCell();
+        Set_Console_CrsCell();
 
         Update();
       }
@@ -4340,7 +4319,8 @@ class View
   {
     Image I = m_fb.m_image;
 
-    m_img_d.zoom = (int)(m_img_d.zoom*1.1 + 0.5);
+  //m_img_d.zoom = (int)(m_img_d.zoom*1.1 + 0.5);
+    m_img_d.inc_zoom();
 
     m_console.DrawImage( I, this, m_img_d.sx, m_img_d.sy, m_img_d.zoom/100.0 );
     PrintStsLine_Image();
@@ -4360,7 +4340,8 @@ class View
   {
     Image I = m_fb.m_image;
 
-    m_img_d.zoom = (int)(m_img_d.zoom/1.1 + 0.5);
+  //m_img_d.zoom = (int)(m_img_d.zoom/1.1 + 0.5);
+    m_img_d.dec_zoom();
 
     final double zoom = m_img_d.zoom/100.0;
     final double I_w = I.getWidth ();  // Image width
@@ -4418,50 +4399,42 @@ class View
   private int m_num_rows; // number of columns in buffer view
   private int m_i_count;
 
+  final boolean m_image_file;
   boolean  m_image_mode;
   Image_data m_img_d = new Image_data();
 
-  Thread m_run_i_beg    = new Thread() { public void run() { run_i_beg   (); m_vis.Give(); } };
-  Thread m_run_i_mid    = new Thread() { public void run() { run_i_mid   (); m_vis.Give(); } };
-  Thread m_run_i_end    = new Thread() { public void run() { run_i_end   (); m_vis.Give(); } };
-  Thread m_run_R_beg    = new Thread() { public void run() { run_R_beg   (); m_vis.Give(); } };
-  Thread m_run_R_mid    = new Thread() { public void run() { run_R_mid   (); m_vis.Give(); } };
-  Thread m_run_R_end    = new Thread() { public void run() { run_R_end   (); m_vis.Give(); } };
-  Thread m_run_v_beg    = new Thread() { public void run() { run_v_beg   (); m_vis.Give(); } };
-  Thread m_run_v_mid    = new Thread() { public void run() { run_v_mid   (); m_vis.Give(); } };
-  Thread m_run_v_end    = new Thread() { public void run() { run_v_end   (); m_vis.Give(); } };
-  Thread m_run_i_vb_beg = new Thread() { public void run() { run_i_vb_beg(); m_vis.Give(); } };
-  Thread m_run_i_vb_mid = new Thread() { public void run() { run_i_vb_mid(); m_vis.Give(); } };
-  Thread m_run_i_vb_end = new Thread() { public void run() { run_i_vb_end(); m_vis.Give(); } };
-  Thread m_run_g_v      = new Thread() { public void run() { run_g_v     (); m_vis.Give(); } };
-  Thread m_run_z        = new Thread() { public void run() { run_z       (); m_vis.Give(); } };
-  Thread m_run_f        = new Thread() { public void run() { run_f       (); m_vis.Give(); } };
+  // Create threads using lambdas:
+  Thread m_run_i_beg    = new Thread( ()->{ run_i_beg   (); m_vis.Give(); } );
+  Thread m_run_i_mid    = new Thread( ()->{ run_i_mid   (); m_vis.Give(); } );
+  Thread m_run_i_end    = new Thread( ()->{ run_i_end   (); m_vis.Give(); } );
+  Thread m_run_R_beg    = new Thread( ()->{ run_R_beg   (); m_vis.Give(); } );
+  Thread m_run_R_mid    = new Thread( ()->{ run_R_mid   (); m_vis.Give(); } );
+  Thread m_run_R_end    = new Thread( ()->{ run_R_end   (); m_vis.Give(); } );
+  Thread m_run_v_beg    = new Thread( ()->{ run_v_beg   (); m_vis.Give(); } );
+  Thread m_run_v_mid    = new Thread( ()->{ run_v_mid   (); m_vis.Give(); } );
+  Thread m_run_v_end    = new Thread( ()->{ run_v_end   (); m_vis.Give(); } );
+  Thread m_run_i_vb_beg = new Thread( ()->{ run_i_vb_beg(); m_vis.Give(); } );
+  Thread m_run_i_vb_mid = new Thread( ()->{ run_i_vb_mid(); m_vis.Give(); } );
+  Thread m_run_i_vb_end = new Thread( ()->{ run_i_vb_end(); m_vis.Give(); } );
+  Thread m_run_g_v      = new Thread( ()->{ run_g_v     (); m_vis.Give(); } );
+  Thread m_run_z        = new Thread( ()->{ run_z       (); m_vis.Give(); } );
+  Thread m_run_f        = new Thread( ()->{ run_f       (); m_vis.Give(); } );
 }
 
-class Image_data
-{
-  int sx;
-  int sy;
-  int zoom = 100; // Percent zoom
-}
-
-// Run threads using lambdas.
-// The syntax is more concise, but according to my research,
-// a new is done every time the lambda is called because the lambda
-// captures a method outside the lambda, so dont use for now.
-//Thread   m_run_i_beg    = new Thread( ()->run_i_beg   () );
-//Thread   m_run_i_mid    = new Thread( ()->run_i_mid   () );
-//Thread   m_run_i_end    = new Thread( ()->run_i_end   () );
-//Thread   m_run_R_beg    = new Thread( ()->run_R_beg   () );
-//Thread   m_run_R_mid    = new Thread( ()->run_R_mid   () );
-//Thread   m_run_R_end    = new Thread( ()->run_R_end   () );
-//Thread   m_run_v_beg    = new Thread( ()->run_v_beg   () );
-//Thread   m_run_v_mid    = new Thread( ()->run_v_mid   () );
-//Thread   m_run_v_end    = new Thread( ()->run_v_end   () );
-//Thread   m_run_i_vb_beg = new Thread( ()->run_i_vb_beg() );
-//Thread   m_run_i_vb_mid = new Thread( ()->run_i_vb_mid() );
-//Thread   m_run_i_vb_end = new Thread( ()->run_i_vb_end() );
-//Thread   m_run_g_v      = new Thread( ()->run_g_v     () );
-//Thread   m_run_z        = new Thread( ()->run_z       () );
-//Thread   m_run_f        = new Thread( ()->run_f       () );
+// Create threads without lambdas:
+//Thread m_run_i_beg    = new Thread() { public void run() { run_i_beg   (); m_vis.Give(); } };
+//Thread m_run_i_mid    = new Thread() { public void run() { run_i_mid   (); m_vis.Give(); } };
+//Thread m_run_i_end    = new Thread() { public void run() { run_i_end   (); m_vis.Give(); } };
+//Thread m_run_R_beg    = new Thread() { public void run() { run_R_beg   (); m_vis.Give(); } };
+//Thread m_run_R_mid    = new Thread() { public void run() { run_R_mid   (); m_vis.Give(); } };
+//Thread m_run_R_end    = new Thread() { public void run() { run_R_end   (); m_vis.Give(); } };
+//Thread m_run_v_beg    = new Thread() { public void run() { run_v_beg   (); m_vis.Give(); } };
+//Thread m_run_v_mid    = new Thread() { public void run() { run_v_mid   (); m_vis.Give(); } };
+//Thread m_run_v_end    = new Thread() { public void run() { run_v_end   (); m_vis.Give(); } };
+//Thread m_run_i_vb_beg = new Thread() { public void run() { run_i_vb_beg(); m_vis.Give(); } };
+//Thread m_run_i_vb_mid = new Thread() { public void run() { run_i_vb_mid(); m_vis.Give(); } };
+//Thread m_run_i_vb_end = new Thread() { public void run() { run_i_vb_end(); m_vis.Give(); } };
+//Thread m_run_g_v      = new Thread() { public void run() { run_g_v     (); m_vis.Give(); } };
+//Thread m_run_z        = new Thread() { public void run() { run_z       (); m_vis.Give(); } };
+//Thread m_run_f        = new Thread() { public void run() { run_f       (); m_vis.Give(); } };
 

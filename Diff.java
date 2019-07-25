@@ -52,6 +52,7 @@ class Diff
         DiffArea CA = new DiffArea( 0, m_fS.NumLines(), 0, m_fL.NumLines() );
         RunDiff( CA );
 
+      //m_console.Clear_Crs_Cell(); //< Not sure if this is needed
         Find_Context();
       }
       ran_diff = true;
@@ -216,7 +217,7 @@ class Diff
     m_vS.PrintFileLine();
     PrintCmdLine( m_vS );
 
-    Move_Console_CrsCell();
+    Set_Console_CrsCell();
 
     if( ! m_printed_diff_ms )
     {
@@ -253,7 +254,8 @@ class Diff
     }
     return 0;
   }
-  int GetLeftChar() { return m_leftChar;  }
+  int GetTopLine () { return m_topLine;  }
+  int GetLeftChar() { return m_leftChar; }
   int GetCrsRow  () { return m_crsRow;  }
   int GetCrsCol  () { return m_crsCol;  }
 
@@ -484,7 +486,7 @@ class Diff
 
   void PrintCursor()
   {
-    Move_Console_CrsCell();
+    Set_Console_CrsCell();
   //m_console.Print_Cursor();
   }
   void PrintWorkingView( View pV )
@@ -727,6 +729,7 @@ class Diff
 
     FileBuf fb = pV.m_fb;
 
+    // VL and pos are checked here:
     if( VL < fb.NumLines() && pos < fb.LineLen( VL ) )
     {
       S = Style.NORMAL;
@@ -782,20 +785,20 @@ class Diff
     // L_DT == Diff_Type.CHANGED && di.pLineInfo.size() <= pos
     return Style.NORMAL;
   }
-  char Get_Char_2( View  pV
-                 , final int DL // Diff line
-                 , final int VL // View line
-                 , final int pos )
-  {
-    final Diff_Type L_DT = DiffType( pV, DL ); // Line Diff_Type
-
-    if( L_DT == Diff_Type.UNKNOWN
-     || L_DT == Diff_Type.DELETED )
-    {
-      return '-';
-    }
-    return pV.m_fb.Get( VL, pos );
-  }
+//char Get_Char_2( View  pV
+//               , final int DL // Diff line
+//               , final int VL // View line
+//               , final int pos )
+//{
+//  final Diff_Type L_DT = DiffType( pV, DL ); // Line Diff_Type
+//
+//  if( L_DT == Diff_Type.UNKNOWN
+//   || L_DT == Diff_Type.DELETED )
+//  {
+//    return '-';
+//  }
+//  return pV.m_fb.Get( VL, pos );
+//}
 
   // Translation of non-diff styles to diff styles for diff areas
   Style DiffStyle( final Style s )
@@ -1622,26 +1625,26 @@ class Diff
   {
     m_crsCol = col;
 
-    Move_Console_CrsCell();
+    Set_Console_CrsCell();
   }
   void Set_crsRowCol( final int row, final int col )
   {
     m_crsRow = row;
     m_crsCol = col;
 
-    Move_Console_CrsCell();
+    Set_Console_CrsCell();
   }
-  void Move_Console_CrsCell()
+  void Set_Console_CrsCell()
   {
-    // Set console current cursor cell to cursor hightlighted value:
     View pV = m_vis.CV();
 
-    Move_Console_CrsCell( pV );
+  //m_console.Set_Crs_Cell( this, pV, pV, m_crsRow, m_crsCol );
+    m_console.Set_Crs_Cell( this, pV, m_crsRow, m_crsCol );
   }
-  void Move_Console_CrsCell( View V )
+  void Set_Console_CrsCell( View pV_old, View pV_new )
   {
-    m_console.Move_Crs_Cell( Row_Win_2_GL( V, m_crsRow )
-                           , Col_Win_2_GL( V, m_crsCol ) );
+  //m_console.Set_Crs_Cell( this, pV_old, pV_new, m_crsRow, m_crsCol );
+    m_console.Set_Crs_Cell( this, pV_new, m_crsRow, m_crsCol );
   }
 
   void GoToCrsPos_Write( final int ncp_crsLine
@@ -1680,10 +1683,6 @@ class Diff
 
         if     ( MOVE_RIGHT ) m_leftChar = NCP - WorkingCols( pV ) + 1;
         else if( MOVE_LEFT  ) m_leftChar = NCP;
-
-        // m_crsRow and m_crsCol must be set to new values before calling CalcNewCrsByte
-        m_crsRow = NCL - m_topLine;
-        m_crsCol = NCP - m_leftChar;
 
         Set_crsRowCol( NCL - m_topLine, NCP - m_leftChar );
 
@@ -1925,7 +1924,7 @@ class Diff
     else if( MOVE_LEFT  ) m_leftChar = ncp_crsChar;
     m_crsCol   = ncp_crsChar - m_leftChar;
 
-    Move_Console_CrsCell();
+    Set_Console_CrsCell();
   }
 
   void PageDown()
@@ -2093,7 +2092,7 @@ class Diff
   }
   void GoToTopLineInView()
   {
-    GoToCrsPos_Write( m_topLine, 0 );
+    GoToCrsPos_Write( m_topLine, CrsChar() );
   }
 
   void GoToBotLineInView()
@@ -2106,7 +2105,7 @@ class Diff
 
     bottom_line_in_view = Math.min( NUM_LINES-1, bottom_line_in_view );
 
-    GoToCrsPos_Write( bottom_line_in_view, 0 );
+    GoToCrsPos_Write( bottom_line_in_view, CrsChar() );
   }
 
   void GoToMidLineInView()
@@ -3387,7 +3386,7 @@ class Diff
       // Make changes manually:
       m_topLine += m_crsRow;
       m_crsRow = 0;
-      Move_Console_CrsCell();
+      Set_Console_CrsCell();
 
       Update();
     }
@@ -3407,7 +3406,7 @@ class Diff
       // CrsLine() does not change:
       m_crsRow += m_topLine;
       m_topLine = 0;
-      Move_Console_CrsCell();
+      Set_Console_CrsCell();
 
       if( write ) Update();
     }
@@ -3416,7 +3415,7 @@ class Diff
     {
       m_topLine += m_crsRow - center;
       m_crsRow = center;
-      Move_Console_CrsCell();
+      Set_Console_CrsCell();
 
       if( write ) Update();
     }
@@ -3435,7 +3434,7 @@ class Diff
       {
         m_topLine -= WR - m_crsRow - 1;
         m_crsRow = WR-1;
-        Move_Console_CrsCell();
+        Set_Console_CrsCell();
 
         Update();
       }
@@ -3444,7 +3443,7 @@ class Diff
         // CrsLine() does not change:
         m_crsRow += m_topLine;
         m_topLine = 0;
-        Move_Console_CrsCell();
+        Set_Console_CrsCell();
 
         Update();
       }
@@ -6120,32 +6119,22 @@ class Diff
   boolean m_printed_diff_ms;
   int     m_i_count;
 
-  Thread m_run_i_beg = new Thread() { public void run() { run_i_beg(); m_vis.Give(); } };
-  Thread m_run_i_mid = new Thread() { public void run() { run_i_mid(); m_vis.Give(); } };
-  Thread m_run_i_end = new Thread() { public void run() { run_i_end(); m_vis.Give(); } };
-  Thread m_run_R_beg = new Thread() { public void run() { run_R_beg(); m_vis.Give(); } };
-  Thread m_run_R_mid = new Thread() { public void run() { run_R_mid(); m_vis.Give(); } };
-  Thread m_run_R_end = new Thread() { public void run() { run_R_end(); m_vis.Give(); } };
-  Thread m_run_v_beg = new Thread() { public void run() { run_v_beg(); m_vis.Give(); } };
-  Thread m_run_v_mid = new Thread() { public void run() { run_v_mid(); m_vis.Give(); } };
-  Thread m_run_v_end = new Thread() { public void run() { run_v_end(); m_vis.Give(); } };
-  Thread m_run_g_v   = new Thread() { public void run() { run_g_v  (); m_vis.Give(); } };
-  Thread m_run_z     = new Thread() { public void run() { run_z    (); m_vis.Give(); } };
-  Thread m_run_f     = new Thread() { public void run() { run_f    (); m_vis.Give(); } };
-  Thread m_run_i_vb_beg = new Thread() { public void run() { run_i_vb_beg(); m_vis.Give(); } };
-  Thread m_run_i_vb_mid = new Thread() { public void run() { run_i_vb_mid(); m_vis.Give(); } };
-  Thread m_run_i_vb_end = new Thread() { public void run() { run_i_vb_end(); m_vis.Give(); } };
+  Thread m_run_i_beg    = new Thread( ()->{ run_i_beg   (); m_vis.Give(); } );
+  Thread m_run_i_mid    = new Thread( ()->{ run_i_mid   (); m_vis.Give(); } );
+  Thread m_run_i_end    = new Thread( ()->{ run_i_end   (); m_vis.Give(); } );
+  Thread m_run_R_beg    = new Thread( ()->{ run_R_beg   (); m_vis.Give(); } );
+  Thread m_run_R_mid    = new Thread( ()->{ run_R_mid   (); m_vis.Give(); } );
+  Thread m_run_R_end    = new Thread( ()->{ run_R_end   (); m_vis.Give(); } );
+  Thread m_run_v_beg    = new Thread( ()->{ run_v_beg   (); m_vis.Give(); } );
+  Thread m_run_v_mid    = new Thread( ()->{ run_v_mid   (); m_vis.Give(); } );
+  Thread m_run_v_end    = new Thread( ()->{ run_v_end   (); m_vis.Give(); } );
+  Thread m_run_g_v      = new Thread( ()->{ run_g_v     (); m_vis.Give(); } );
+  Thread m_run_z        = new Thread( ()->{ run_z       (); m_vis.Give(); } );
+  Thread m_run_f        = new Thread( ()->{ run_f       (); m_vis.Give(); } );
+  Thread m_run_i_vb_beg = new Thread( ()->{ run_i_vb_beg(); m_vis.Give(); } );
+  Thread m_run_i_vb_mid = new Thread( ()->{ run_i_vb_mid(); m_vis.Give(); } );
+  Thread m_run_i_vb_end = new Thread( ()->{ run_i_vb_end(); m_vis.Give(); } );
 }
-
-// Run threads using lambdas.
-// The syntax is more concise, but according to my research,
-// a new is done every time the lambda is called because the lambda
-// captures a method outside the lambda, so dont use for now.
-//Thread m_run_i_beg = new Thread( ()->run_i_beg() );
-//Thread m_run_i_mid = new Thread( ()->run_i_mid() );
-//Thread m_run_i_end = new Thread( ()->run_i_end() );
-//Thread m_run_z     = new Thread( ()->run_z    () );
-//Thread m_run_f     = new Thread( ()->run_f    () );
 
 // Diff or Comparison area
 class DiffArea

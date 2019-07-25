@@ -66,9 +66,9 @@ class LineView
   }
 
   // Translates zero based working view row to zero based global row
-  int Row_Win_2_GL( final int win_row )
+  int GL_Row()
   {
-    return m_y + 1 + win_row;
+    return m_y;
   }
   // Translates zero based working view column to zero based global column
   int Col_Win_2_GL( final int win_col )
@@ -101,7 +101,7 @@ class LineView
 
   void Set_Console_CrsCell()
   {
-    m_console.Move_Crs_Cell( m_y, Col_Win_2_GL( m_crsCol ) );
+    m_console.Set_Crs_Cell( this, m_crsCol );
   }
 
   void ClearLine()
@@ -2549,8 +2549,7 @@ class LineView
 
     final int G_COL = m_x + 1;
     m_console.SetS( m_y, G_COL, m_cover_msg, Style.NORMAL );
-    m_console.Move_Crs_Cell( m_y, G_COL + m_cover_msg_len );
-  //m_console.Print_Cursor();
+    m_console.Set_Crs_Cell( this, m_cover_msg_len-2 );
 
     m_vis.get_states().addFirst( m_run_cover_key );
   }
@@ -2582,16 +2581,18 @@ class LineView
 
           // Output cd and move cursor forward:
           m_console.Set( m_y, m_x + local_COL  , '*', Style.NORMAL );
-          m_console.Move_Crs_Cell( m_y, m_x + local_COL+1 );
+        //m_console.Set_Crs_Cell( this, local_COL+1 );
+          m_console.Set_Crs_Cell( this, local_COL-2 );
         }
         else {
           if( 0 < m_sb.length() )
           {
             final int local_COL = Math.min( m_cover_msg_len+m_sb.length(), WC-1 );
 
-            m_console.Set( m_y, m_x + local_COL+1, ' ', Style.NORMAL );
-            m_console.Move_Crs_Cell( m_y, m_x + local_COL );
-          //m_console.Print_Cursor();
+          //m_console.Set( m_y, m_x + local_COL+1, ' ', Style.NORMAL );
+            m_console.Set( m_y, m_x + local_COL, ' ', Style.NORMAL );
+          //m_console.Set_Crs_Cell( this, local_COL );
+            m_console.Set_Crs_Cell( this, local_COL-3 );
 
             m_sb.deleteCharAt( m_sb.length()-1 );
           }
@@ -2684,19 +2685,19 @@ class LineView
   final String          m_cover_msg     = "Enter cover key:";
   final int             m_cover_msg_len = m_cover_msg.length();
 
-  Thread m_run_i_beg    = new Thread() { public void run() { run_i_beg    (); m_vis.Give(); } };
-  Thread m_run_i_normal = new Thread() { public void run() { run_i_normal (); m_vis.Give(); } };
-  Thread m_run_i_tabs   = new Thread() { public void run() { run_i_tabs   (); m_vis.Give(); } };
-  Thread m_run_i_end    = new Thread() { public void run() { run_i_end    (); m_vis.Give(); } };
-  Thread m_run_R_beg    = new Thread() { public void run() { run_R_beg    (); m_vis.Give(); } };
-  Thread m_run_R_mid    = new Thread() { public void run() { run_R_mid    (); m_vis.Give(); } };
-  Thread m_run_R_end    = new Thread() { public void run() { run_R_end    (); m_vis.Give(); } };
-  Thread m_run_v_beg    = new Thread() { public void run() { run_v_beg    (); m_vis.Give(); } };
-  Thread m_run_v_mid    = new Thread() { public void run() { run_v_mid    (); m_vis.Give(); } };
-  Thread m_run_v_end    = new Thread() { public void run() { run_v_end    (); m_vis.Give(); } };
-  Thread m_run_g_v      = new Thread() { public void run() { run_g_v      (); m_vis.Give(); } };
-  Thread m_run_f        = new Thread() { public void run() { run_f        (); m_vis.Give(); } };
-  Thread m_run_cover_key= new Thread() { public void run() { run_cover_key(); m_vis.Give(); } };
+  Thread m_run_i_beg    = new Thread( ()->{ run_i_beg    (); m_vis.Give(); } );
+  Thread m_run_i_normal = new Thread( ()->{ run_i_normal (); m_vis.Give(); } );
+  Thread m_run_i_tabs   = new Thread( ()->{ run_i_tabs   (); m_vis.Give(); } );
+  Thread m_run_i_end    = new Thread( ()->{ run_i_end    (); m_vis.Give(); } );
+  Thread m_run_R_beg    = new Thread( ()->{ run_R_beg    (); m_vis.Give(); } );
+  Thread m_run_R_mid    = new Thread( ()->{ run_R_mid    (); m_vis.Give(); } );
+  Thread m_run_R_end    = new Thread( ()->{ run_R_end    (); m_vis.Give(); } );
+  Thread m_run_v_beg    = new Thread( ()->{ run_v_beg    (); m_vis.Give(); } );
+  Thread m_run_v_mid    = new Thread( ()->{ run_v_mid    (); m_vis.Give(); } );
+  Thread m_run_v_end    = new Thread( ()->{ run_v_end    (); m_vis.Give(); } );
+  Thread m_run_g_v      = new Thread( ()->{ run_g_v      (); m_vis.Give(); } );
+  Thread m_run_f        = new Thread( ()->{ run_f        (); m_vis.Give(); } );
+  Thread m_run_cover_key= new Thread( ()->{ run_cover_key(); m_vis.Give(); } );
 }
 
 enum ColonOp
@@ -2705,24 +2706,4 @@ enum ColonOp
   e,
   w
 }
-
-// Run threads using lambdas.
-// The syntax is more concise, but according to my research,
-// a new is done every time the lambda is called because the lambda
-// captures a method outside the lambda, so dont use for now.
-//Thread   m_run_i_beg    = new Thread( ()->run_i_beg   () );
-//Thread   m_run_i_mid    = new Thread( ()->run_i_mid   () );
-//Thread   m_run_i_end    = new Thread( ()->run_i_end   () );
-//Thread   m_run_R_beg    = new Thread( ()->run_R_beg   () );
-//Thread   m_run_R_mid    = new Thread( ()->run_R_mid   () );
-//Thread   m_run_R_end    = new Thread( ()->run_R_end   () );
-//Thread   m_run_v_beg    = new Thread( ()->run_v_beg   () );
-//Thread   m_run_v_mid    = new Thread( ()->run_v_mid   () );
-//Thread   m_run_v_end    = new Thread( ()->run_v_end   () );
-//Thread   m_run_i_vb_beg = new Thread( ()->run_i_vb_beg() );
-//Thread   m_run_i_vb_mid = new Thread( ()->run_i_vb_mid() );
-//Thread   m_run_i_vb_end = new Thread( ()->run_i_vb_end() );
-//Thread   m_run_g_v      = new Thread( ()->run_g_v     () );
-//Thread   m_run_z        = new Thread( ()->run_z       () );
-//Thread   m_run_f        = new Thread( ()->run_f       () );
 

@@ -4045,23 +4045,23 @@ public class VisSw implements VisIF
 
   String[]           m_args;
   Deque<Thread>      m_states     = new ArrayDeque<Thread>();
-  Thread             m_run_init   = new Thread() { public void run() { run_init  (); } };
-  Thread             m_run_focus  = new Thread() { public void run() { run_focus (); } };
-  Thread             m_run_idle   = new Thread() { public void run() { run_idle  (); } };
-  Thread             m_run_resize = new Thread() { public void run() { run_resize(); } };
-  Thread             m_run_c      = new Thread() { public void run() { run_c     (); } };
-  Thread             m_run_L_c    = new Thread() { public void run() { run_L_c   (); } };
-  Thread             m_run_d      = new Thread() { public void run() { run_d     (); } };
-  Thread             m_run_L_d    = new Thread() { public void run() { run_L_d   (); } };
-  Thread             m_run_g      = new Thread() { public void run() { run_g     (); } };
-  Thread             m_run_L_g    = new Thread() { public void run() { run_L_g   (); } };
-  Thread             m_run_W      = new Thread() { public void run() { run_W     (); } };
-  Thread             m_run_y      = new Thread() { public void run() { run_y     (); } };
-  Thread             m_run_L_y    = new Thread() { public void run() { run_L_y   (); } };
-  Thread             m_run_dot    = new Thread() { public void run() { run_dot   (); } };
-  Thread             m_run_map    = new Thread() { public void run() { run_map   (); } };
-  Thread             m_run_Q      = new Thread() { public void run() { run_Q     (); } };
-  Thread             m_run_L_Ha_i = new Thread() { public void run() { run_L_Ha_i(); } };
+  Thread             m_run_init   = new Thread( ()->{ run_init  (); } );
+  Thread             m_run_focus  = new Thread( ()->{ run_focus (); } );
+  Thread             m_run_idle   = new Thread( ()->{ run_idle  (); } );
+  Thread             m_run_resize = new Thread( ()->{ run_resize(); } );
+  Thread             m_run_c      = new Thread( ()->{ run_c     (); } );
+  Thread             m_run_L_c    = new Thread( ()->{ run_L_c   (); } );
+  Thread             m_run_d      = new Thread( ()->{ run_d     (); } );
+  Thread             m_run_L_d    = new Thread( ()->{ run_L_d   (); } );
+  Thread             m_run_g      = new Thread( ()->{ run_g     (); } );
+  Thread             m_run_L_g    = new Thread( ()->{ run_L_g   (); } );
+  Thread             m_run_W      = new Thread( ()->{ run_W     (); } );
+  Thread             m_run_y      = new Thread( ()->{ run_y     (); } );
+  Thread             m_run_L_y    = new Thread( ()->{ run_L_y   (); } );
+  Thread             m_run_dot    = new Thread( ()->{ run_dot   (); } );
+  Thread             m_run_map    = new Thread( ()->{ run_map   (); } );
+  Thread             m_run_Q      = new Thread( ()->{ run_Q     (); } );
+  Thread             m_run_L_Ha_i = new Thread( ()->{ run_L_Ha_i(); } );
   int                m_win;
   int                m_num_wins = 1; // Number of sub-windows currently on screen
   JFrame             m_frame;
@@ -4094,20 +4094,4 @@ public class VisSw implements VisIF
   String             m_cwd = Utils.GetCWD();
   Shell              m_shell;
 }
-
-// Run threads using lambdas.
-// The syntax is more concise, but according to my research,
-// a new is done every time the lambda is called because the lambda
-// captures a method outside the lambda, so dont use for now.
-//Thread             m_run_init   = new Thread( ()->run_init  () );
-//Thread             m_run_focus  = new Thread( ()->run_focus () );
-//Thread             m_run_idle   = new Thread( ()->run_idle  () );
-//Thread             m_run_resize = new Thread( ()->run_resize() );
-//Thread             m_run_c      = new Thread( ()->run_c     () );
-//Thread             m_run_d      = new Thread( ()->run_d     () );
-//Thread             m_run_g      = new Thread( ()->run_g     () );
-//Thread             m_run_W      = new Thread( ()->run_W     () );
-//Thread             m_run_y      = new Thread( ()->run_y     () );
-//Thread             m_run_dot    = new Thread( ()->run_dot   () );
-//Thread             m_run_Q      = new Thread( ()->run_Q     () );
 

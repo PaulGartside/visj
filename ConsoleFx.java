@@ -411,11 +411,14 @@ class ConsoleFx extends Canvas
                       , final int col_st
                       , final int col_fn )
   {
-    for( int row=row_st; row<row_fn; row++ )
+    if( row_fn <= m_siz_rows && col_fn <= m_siz_cols )
     {
-      for( int col=col_st; col<col_fn; col++ )
+      for( int row=row_st; row<row_fn; row++ )
       {
-        m_styles_w[row][col] = Style.UNKNOWN;
+        for( int col=col_st; col<col_fn; col++ )
+        {
+          m_styles_w[row][col] = Style.UNKNOWN;
+        }
       }
     }
   }
@@ -585,77 +588,473 @@ class ConsoleFx extends Canvas
       Set( ROW, COL+k, str.charAt(k), S );
     }
   }
+
+////////////////////////////////////////////////////////////
+//public
+//void Set_Crs_Cell( View V, final int V_ROW, final int V_COL )
+//{
+//  if( null != m_crs_v
+//   && null == m_crs_d
+//   && !m_crs_v.m_image_mode
+//   && m_vis.View_is_Displayed( m_crs_v ) )
+//  {
+//    // If moving cursor in the same view,
+//    // and the view has moved, the old cursur has been drawn over
+//    if( ( V != m_crs_v )
+//     || ( V.TopLine () == m_crs_v_top_line
+//       && V.LeftChar() == m_crs_v_left_pos ) )
+//    {
+//      Remove_Cursor_View();
+//    }
+//  }
+//  else if( null != m_crs_v
+//        && null != m_crs_d
+//        && m_vis.View_is_Displayed( m_crs_v ) )
+//  {
+//    Remove_Cursor_Diff();
+//  }
+//  else if( null != m_crs_lv )
+//  {
+//    Remove_Cursor_LineView();
+//  }
+//  m_crs_v      = V;
+//  m_crs_lv     = null;
+//  m_crs_d      = null;
+//  m_crs_g_row  = V.Row_Win_2_GL( V_ROW );
+//  m_crs_g_col  = V.Col_Win_2_GL( V_COL );
+//  m_crs_v_line = V.TopLine()  + V_ROW;
+//  m_crs_v_pos  = V.LeftChar() + V_COL;
+//  m_crs_v_top_line = V.TopLine() ;
+//  m_crs_v_left_pos = V.LeftChar();
+//
+//  if( !V.m_image_mode )
+//  {
+//    // Print the new cursor:
+//    PrintC( m_crs_g_row, m_crs_g_col
+//          , m_chars__w[m_crs_g_row][m_crs_g_col]
+//          , Style.CURSOR );
+//
+//    m_styles_w[m_crs_g_row][m_crs_g_col] = Style.CURSOR;
+//  }
+//}
+//public
+//void Set_Crs_Cell( LineView LV, final int V_COL )
+//{
+//  if( null != m_crs_v
+//   && null == m_crs_d
+//   && !m_crs_v.m_image_mode
+//   && m_vis.View_is_Displayed( m_crs_v ) )
+//  {
+//    Remove_Cursor_View();
+//  }
+//  else if( null != m_crs_v
+//        && null != m_crs_d
+//        && m_vis.View_is_Displayed( m_crs_v ) )
+//  {
+//    Remove_Cursor_Diff();
+//  }
+//  else if( null != m_crs_lv )
+//  {
+//    Remove_Cursor_LineView();
+//  }
+//  m_crs_v     = null;
+//  m_crs_lv    = LV;
+//  m_crs_d     = null;
+//  m_crs_g_row = LV.GL_Row();
+//  m_crs_g_col = LV.Col_Win_2_GL( V_COL );
+//  m_crs_v_line = LV.TopLine();
+//  m_crs_v_pos  = LV.LeftChar() + V_COL;
+//
+//  // Print the new cursor:
+//  PrintC( m_crs_g_row, m_crs_g_col
+//        , m_chars__w[m_crs_g_row][m_crs_g_col]
+//        , Style.CURSOR );
+//
+//  m_styles_w[m_crs_g_row][m_crs_g_col] = Style.CURSOR;
+//}
+//public void
+//Set_Crs_Cell( Diff D, View V, final int V_ROW, final int V_COL )
+//{
+//  if( null != m_crs_v
+//   && null == m_crs_d
+//   && !m_crs_v.m_image_mode
+//   && m_vis.View_is_Displayed( m_crs_v ) )
+//  {
+//    Remove_Cursor_View();
+//  }
+//  else if( null != m_crs_v
+//        && null != m_crs_d
+//        && m_vis.View_is_Displayed( m_crs_v ) )
+//  {
+//    Remove_Cursor_Diff();
+//  }
+//  else if( null != m_crs_lv )
+//  {
+//    Remove_Cursor_LineView();
+//  }
+//  m_crs_v      = V;
+//  m_crs_lv     = null;
+//  m_crs_d      = D;
+//  m_crs_g_row  = D.Row_Win_2_GL( V, V_ROW );
+//  m_crs_g_col  = D.Col_Win_2_GL( V, V_COL );
+//  m_crs_d_line = D.GetTopLine() + V_ROW;
+//  m_crs_v_line = D.ViewLine( V, m_crs_d_line );
+//  m_crs_d_pos  = D.GetLeftChar() + V_COL;
+//
+//  // Print the new cursor:
+//  PrintC( m_crs_g_row, m_crs_g_col
+//        , m_chars__w[m_crs_g_row][m_crs_g_col]
+//        , Style.CURSOR );
+//
+//  m_styles_w[m_crs_g_row][m_crs_g_col] = Style.CURSOR;
+//}
+//void Remove_Cursor_View()
+//{
+//  if( Style.CURSOR == m_styles_w[m_crs_g_row][m_crs_g_col] )
+//  {
+//    Style V_style = m_crs_v.Get_Style( m_crs_v_line, m_crs_v_pos );
+//
+//    // Remove the old cursor:
+//    PrintC( m_crs_g_row, m_crs_g_col
+//          , m_chars__w[m_crs_g_row][m_crs_g_col]
+//          , V_style );
+//
+//    m_styles_w[m_crs_g_row][m_crs_g_col] = V_style;
+//  }
+//}
+//void Remove_Cursor_LineView()
+//{
+//  if( Style.CURSOR == m_styles_w[m_crs_g_row][m_crs_g_col] )
+//  {
+//    Style V_style = m_crs_lv.Get_Style( m_crs_v_line, m_crs_v_pos );
+//
+//    // Remove the old cursor:
+//    PrintC( m_crs_g_row, m_crs_g_col
+//          , m_chars__w[m_crs_g_row][m_crs_g_col]
+//          , V_style );
+//
+//    m_styles_w[m_crs_g_row][m_crs_g_col] = V_style;
+//  }
+//}
+//void Remove_Cursor_Diff()
+//{
+//  if( Style.CURSOR == m_styles_w[m_crs_g_row][m_crs_g_col] )
+//  {
+//    Style V_style = m_crs_d.Get_Style_2( m_crs_v
+//                                       , m_crs_d_line
+//                                       , m_crs_v_line
+//                                       , m_crs_d_pos );
+//    // Remove the old cursor:
+//    PrintC( m_crs_g_row, m_crs_g_col
+//          , m_chars__w[m_crs_g_row][m_crs_g_col]
+//          , V_style );
+//
+//    m_styles_w[m_crs_g_row][m_crs_g_col] = V_style;
+//  }
+//}
+
+////////////////////////////////////////////////////////////
+//public
+//void Set_Crs_Cell( View V, final int V_ROW, final int V_COL )
+//{
+//  if( null != m_crs_v
+//   && null == m_crs_d
+//   && !m_crs_v.m_image_mode )
+//  {
+//    Remove_Cursor_View();
+//  }
+//  else if( null != m_crs_v
+//        && null != m_crs_d )
+//  {
+//    Remove_Cursor_Diff();
+//  }
+//  else if( null != m_crs_lv )
+//  {
+//    Remove_Cursor_LineView();
+//  }
+//  m_crs_v      = V;
+//  m_crs_lv     = null;
+//  m_crs_d      = null;
+//  m_crs_g_row  = V.Row_Win_2_GL( V_ROW );
+//  m_crs_g_col  = V.Col_Win_2_GL( V_COL );
+//  m_crs_v_line = V.TopLine()  + V_ROW;
+//  m_crs_v_pos  = V.LeftChar() + V_COL;
+////m_crs_v_top_line = V.TopLine() ;
+////m_crs_v_left_pos = V.LeftChar();
+//
+//  if( !V.m_image_mode )
+//  {
+//    // Print the new cursor:
+//    PrintC( m_crs_g_row, m_crs_g_col
+//          , m_chars__w[m_crs_g_row][m_crs_g_col]
+//          , Style.CURSOR );
+//
+//    m_styles_w[m_crs_g_row][m_crs_g_col] = Style.CURSOR;
+//  }
+//}
+//public
+//void Set_Crs_Cell( LineView LV, final int V_COL )
+//{
+//  if( null != m_crs_v
+//   && null == m_crs_d
+//   && !m_crs_v.m_image_mode )
+//  {
+//    Remove_Cursor_View();
+//  }
+//  else if( null != m_crs_v
+//        && null != m_crs_d )
+//  {
+//    Remove_Cursor_Diff();
+//  }
+//  else if( null != m_crs_lv )
+//  {
+//    Remove_Cursor_LineView();
+//  }
+//  m_crs_v     = null;
+//  m_crs_lv    = LV;
+//  m_crs_d     = null;
+//  m_crs_g_row = LV.GL_Row();
+//  m_crs_g_col = LV.Col_Win_2_GL( V_COL );
+//  m_crs_v_line = LV.TopLine();
+//  m_crs_v_pos  = LV.LeftChar() + V_COL;
+//
+//  // Print the new cursor:
+//  PrintC( m_crs_g_row, m_crs_g_col
+//        , m_chars__w[m_crs_g_row][m_crs_g_col]
+//        , Style.CURSOR );
+//
+//  m_styles_w[m_crs_g_row][m_crs_g_col] = Style.CURSOR;
+//}
+//public void
+//Set_Crs_Cell( Diff D, View V, final int V_ROW, final int V_COL )
+//{
+//  if( null != m_crs_v
+//   && null == m_crs_d
+//   && !m_crs_v.m_image_mode )
+//  {
+//    Remove_Cursor_View();
+//  }
+//  else if( null != m_crs_v
+//        && null != m_crs_d )
+//  {
+//    Remove_Cursor_Diff();
+//  }
+//  else if( null != m_crs_lv )
+//  {
+//    Remove_Cursor_LineView();
+//  }
+//  m_crs_v      = V;
+//  m_crs_lv     = null;
+//  m_crs_d      = D;
+//  m_crs_g_row  = D.Row_Win_2_GL( V, V_ROW );
+//  m_crs_g_col  = D.Col_Win_2_GL( V, V_COL );
+//  m_crs_d_line = D.GetTopLine() + V_ROW;
+//  m_crs_v_line = D.ViewLine( V, m_crs_d_line );
+//  m_crs_d_pos  = D.GetLeftChar() + V_COL;
+//
+//  // Print the new cursor:
+//  PrintC( m_crs_g_row, m_crs_g_col
+//        , m_chars__w[m_crs_g_row][m_crs_g_col]
+//        , Style.CURSOR );
+//
+//  m_styles_w[m_crs_g_row][m_crs_g_col] = Style.CURSOR;
+//}
+//void Remove_Cursor_View()
+//{
+//  if( Style.CURSOR == m_styles_w[m_crs_g_row][m_crs_g_col] )
+//  {
+//    Style V_style = m_crs_v.Get_Style( m_crs_v_line, m_crs_v_pos );
+//
+//    // Remove the old cursor:
+//    PrintC( m_crs_g_row, m_crs_g_col
+//          , m_chars__w[m_crs_g_row][m_crs_g_col]
+//          , V_style );
+//
+//    m_styles_w[m_crs_g_row][m_crs_g_col] = V_style;
+//  }
+//}
+//void Remove_Cursor_LineView()
+//{
+//  if( Style.CURSOR == m_styles_w[m_crs_g_row][m_crs_g_col] )
+//  {
+//    Style V_style = m_crs_lv.Get_Style( m_crs_v_line, m_crs_v_pos );
+//
+//    // Remove the old cursor:
+//    PrintC( m_crs_g_row, m_crs_g_col
+//          , m_chars__w[m_crs_g_row][m_crs_g_col]
+//          , V_style );
+//
+//    m_styles_w[m_crs_g_row][m_crs_g_col] = V_style;
+//  }
+//}
+//void Remove_Cursor_Diff()
+//{
+//  if( Style.CURSOR == m_styles_w[m_crs_g_row][m_crs_g_col] )
+//  {
+//    Style V_style = m_crs_d.Get_Style_2( m_crs_v
+//                                       , m_crs_d_line
+//                                       , m_crs_v_line
+//                                       , m_crs_d_pos );
+//    // Remove the old cursor:
+//    PrintC( m_crs_g_row, m_crs_g_col
+//          , m_chars__w[m_crs_g_row][m_crs_g_col]
+//          , V_style );
+//
+//    m_styles_w[m_crs_g_row][m_crs_g_col] = V_style;
+//  }
+//}
+
+  //////////////////////////////////////////////////////////
   public
-  void Move_Crs_Cell( final int ROW, final int COL )
+  void Set_Crs_Cell( View V, final int V_ROW, final int V_COL )
   {
-    if( 0 <= m_crs_row && m_crs_row < m_num_rows
-     && 0 <= m_crs_col && m_crs_col < m_num_cols )
+    Remove_Cursor();
+
+    m_crs_v      = V;
+    m_crs_lv     = null;
+    m_crs_d      = null;
+    m_crs_g_row  = V.Row_Win_2_GL( V_ROW );
+    m_crs_g_col  = V.Col_Win_2_GL( V_COL );
+    m_crs_v_line = V.TopLine()  + V_ROW;
+    m_crs_v_pos  = V.LeftChar() + V_COL;
+
+    if( !V.m_image_mode )
     {
-      if( null != m_crs_pos_style_saved )
-      {
-        // Remove the old cursor:
-        PrintC( m_crs_row
-              , m_crs_col
-              , m_chars__w[m_crs_row][m_crs_col]
-              , m_crs_pos_style_saved );
-
-        m_styles_w[m_crs_row][m_crs_col] = m_crs_pos_style_saved;
-      }
-      m_crs_row = ROW;
-      m_crs_col = COL;
-
-      // Save the style at new cursor position:
-      m_crs_pos_style_saved = m_styles_w[m_crs_row][m_crs_col];
-
       // Print the new cursor:
-      PrintC( m_crs_row
-            , m_crs_col
-            , m_chars__w[m_crs_row][m_crs_col]
+      Print_Cursor();
+    }
+  }
+  public
+  void Set_Crs_Cell( LineView LV, final int V_COL )
+  {
+    Remove_Cursor();
+
+    m_crs_v     = null;
+    m_crs_lv    = LV;
+    m_crs_d     = null;
+    m_crs_g_row = LV.GL_Row();
+    m_crs_g_col = LV.Col_Win_2_GL( V_COL );
+    m_crs_v_line = LV.TopLine();
+    m_crs_v_pos  = LV.LeftChar() + V_COL;
+
+    // Print the new cursor:
+    Print_Cursor();
+  }
+  public void
+  Set_Crs_Cell( Diff D, View V, final int V_ROW, final int V_COL )
+  {
+    Remove_Cursor();
+
+    m_crs_v      = V;
+    m_crs_lv     = null;
+    m_crs_d      = D;
+    m_crs_g_row  = D.Row_Win_2_GL( V, V_ROW );
+    m_crs_g_col  = D.Col_Win_2_GL( V, V_COL );
+    m_crs_d_line = D.GetTopLine() + V_ROW;
+    m_crs_v_line = D.ViewLine( V, m_crs_d_line );
+    m_crs_d_pos  = D.GetLeftChar() + V_COL;
+
+    // Print the new cursor:
+    Print_Cursor();
+  }
+  void Print_Cursor()
+  {
+    if( m_crs_g_row < m_siz_rows && m_crs_g_col < m_siz_cols )
+    {
+      PrintC( m_crs_g_row, m_crs_g_col
+            , m_chars__w[m_crs_g_row][m_crs_g_col]
             , Style.CURSOR );
 
-      m_styles_w[m_crs_row][m_crs_col] = Style.CURSOR;
+      m_styles_w[m_crs_g_row][m_crs_g_col] = Style.CURSOR;
     }
   }
-  void Remove_Crs_Cell()
+  void Remove_Cursor()
   {
-    if( 0 <= m_crs_row && m_crs_row < m_num_rows
-     && 0 <= m_crs_col && m_crs_col < m_num_cols )
+    if( null != m_crs_v
+     && null == m_crs_d
+     && !m_crs_v.m_image_mode
+     && m_vis.View_is_Displayed( m_crs_v ) )
     {
-      if( null != m_crs_pos_style_saved )
+      Remove_Cursor_View();
+    }
+    else if( null != m_crs_v
+          && null != m_crs_d
+          && m_vis.View_is_Displayed( m_crs_v ) )
+    {
+      Remove_Cursor_Diff();
+    }
+    else if( null != m_crs_lv )
+    {
+      Remove_Cursor_LineView();
+    }
+  }
+  void Remove_Cursor_View()
+  {
+    if( m_crs_g_row < m_siz_rows && m_crs_g_col < m_siz_cols )
+    {
+      if( Style.CURSOR == m_styles_w[m_crs_g_row][m_crs_g_col] )
       {
-        // Remove the old cursor:
-        PrintC( m_crs_row
-              , m_crs_col
-              , m_chars__w[m_crs_row][m_crs_col]
-              , m_crs_pos_style_saved );
+        if( m_crs_v_line < m_crs_v.m_fb.NumLines() )
+        {
+          Style V_style = m_crs_v.Get_Style( m_crs_v_line, m_crs_v_pos );
 
-        m_styles_w[m_crs_row][m_crs_col] = m_crs_pos_style_saved;
+          // Remove the old cursor:
+          PrintC( m_crs_g_row, m_crs_g_col
+                , m_chars__w[m_crs_g_row][m_crs_g_col]
+                , V_style );
 
-        m_crs_pos_style_saved = null;
+          m_styles_w[m_crs_g_row][m_crs_g_col] = V_style;
+        }
       }
     }
   }
-  public
-  void Add_Crs_Cell( final int ROW, final int COL )
+  void Remove_Cursor_LineView()
   {
-    if( 0 <= m_crs_row && m_crs_row < m_num_rows
-     && 0 <= m_crs_col && m_crs_col < m_num_cols )
+    if( m_crs_g_row < m_siz_rows && m_crs_g_col < m_siz_cols )
     {
-      m_crs_row = ROW;
-      m_crs_col = COL;
+      if( Style.CURSOR == m_styles_w[m_crs_g_row][m_crs_g_col] )
+      {
+        Style V_style = m_crs_lv.Get_Style( m_crs_v_line, m_crs_v_pos );
 
-      // Save the style at new cursor position:
-      m_crs_pos_style_saved = m_styles_w[m_crs_row][m_crs_col];
+        // Remove the old cursor:
+        PrintC( m_crs_g_row, m_crs_g_col
+              , m_chars__w[m_crs_g_row][m_crs_g_col]
+              , V_style );
 
-      // Print the new cursor:
-      PrintC( m_crs_row
-            , m_crs_col
-            , m_chars__w[m_crs_row][m_crs_col]
-            , Style.CURSOR );
-
-      m_styles_w[m_crs_row][m_crs_col] = Style.CURSOR;
+        m_styles_w[m_crs_g_row][m_crs_g_col] = V_style;
+      }
     }
   }
+  void Remove_Cursor_Diff()
+  {
+    if( m_crs_g_row < m_siz_rows && m_crs_g_col < m_siz_cols )
+    {
+      if( Style.CURSOR == m_styles_w[m_crs_g_row][m_crs_g_col] )
+      {
+        if( m_crs_d_line < m_crs_d.NumLines()
+         && m_crs_v_line < m_crs_v.m_fb.NumLines() )
+        {
+          Style V_style = m_crs_d.Get_Style_2( m_crs_v
+                                             , m_crs_d_line
+                                             , m_crs_v_line
+                                             , m_crs_d_pos );
+          // Remove the old cursor:
+          PrintC( m_crs_g_row, m_crs_g_col
+                , m_chars__w[m_crs_g_row][m_crs_g_col]
+                , V_style );
+
+          m_styles_w[m_crs_g_row][m_crs_g_col] = V_style;
+        }
+      }
+    }
+  }
+
+//void Clear_Crs_Cell()
+//{
+//  m_crs_v  = null;
+//  m_crs_lv = null;
+//  m_crs_d  = null;
+//}
 
   private
   void PrintC( final int row, final int col, final char C, final Style S )
@@ -688,26 +1087,6 @@ class ConsoleFx extends Canvas
     }
   }
 
-//void DrawImage( Image I, View V, int sx, int sy )
-//{
-//  final int row = V.Y()+1;
-//  final int col = V.X()+1;
-//  final int w_row = V.WorkingRows();
-//  final int w_col = V.WorkingCols();
-//
-//  final double sw = Math.min( w_col*m_text_W, I.getWidth() );
-//  final double sh = Math.min( w_row*m_text_H, I.getHeight() );
-//  final double dx = col*m_text_W;
-//  final double dy = row*m_text_H;
-//  final double dw = sw;
-//  final double dh = sh;
-//
-//  // Fill in background with gray:
-//  m_gc.setFill( m_d_gray );
-//  m_gc.fillRect( dx, dy, w_col*m_text_W, w_row*m_text_H );
-//
-//  m_gc.drawImage( I, sx, sy, sw, sh, dx, dy, dw, dh );
-//}
   void DrawImage( Image I, View V, int sx, int sy, double zoom )
   {
     final int row = V.Y()+1;
@@ -1271,9 +1650,21 @@ class ConsoleFx extends Canvas
   StringBuilder    m_map_buf = new StringBuilder();
   private int      m_dot_buf_index;
   private int      m_map_buf_index;
-  private int      m_crs_row;
-  private int      m_crs_col;
-  private Style    m_crs_pos_style_saved;
+
+  private View     m_crs_v;
+  private LineView m_crs_lv;
+  private Diff     m_crs_d;
+//private int      m_crs_v_row;  // view row within pane
+//private int      m_crs_v_col;  // view col within pane
+  private int      m_crs_g_row;  // global row within editor
+  private int      m_crs_g_col;  // global col within editor
+  private int      m_crs_v_line; // view line in file
+  private int      m_crs_v_pos;  // view position on line
+  private int      m_crs_d_line; // line in diff
+  private int      m_crs_d_pos;  // position on line in diff
+//private int      m_crs_v_top_line;
+//private int      m_crs_v_left_pos;
+
   StringBuilder    m_sb = new StringBuilder();
   Clipboard        m_cb;
   ClipboardContent m_cbc;

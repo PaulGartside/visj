@@ -1679,7 +1679,7 @@ public class VisFx extends Application
       pV_old.Print_Borders();
       pV_new.Print_Borders();
 
-      MoveCursor( pV_old, pV_new ); // Calls m_console.Update();
+      MoveCursor( pV_old, pV_new );
     }
   }
   void MoveCursor( View pV_old, View pV_new )
@@ -1688,31 +1688,10 @@ public class VisFx extends Application
 
     if( cv.m_in_diff )
     {
-      m_diff.Move_Console_CrsCell( pV_new );
+      m_diff.Set_Console_CrsCell( pV_old, pV_new );
     }
     else {
-      if( !pV_old.m_image_mode
-       && !pV_new.m_image_mode )
-      {
-      //pV_new.Move_Console_CrsCell();
-        pV_old.Remove_Console_CrsCell();
-        pV_new.Add_Console_CrsCell();
-      }
-      else if( pV_old.m_image_mode
-           && !pV_new.m_image_mode )
-      {
-        pV_new.Add_Console_CrsCell();
-      }
-      else if( !pV_old.m_image_mode
-            &&  pV_new.m_image_mode )
-      {
-        pV_old.Remove_Console_CrsCell();
-      }
-      else /* pV_old.m_image_mode
-           && pV_new.m_image_mode */
-      {
-        // Do nothing
-      }
+      pV_new.Set_Console_CrsCell();
     }
   }
   void GoToNextWindow_l()
@@ -1725,15 +1704,13 @@ public class VisFx extends Application
       // If next view to go to is found, m_win will be updated to new value
       if( GoToNextWindow_l_Find() )
       {
-        View pV     = GetView_Win( m_win   );
+        View pV_new = GetView_Win( m_win   );
         View pV_old = GetView_Win( win_old );
 
         pV_old.Print_Borders();
-        pV    .Print_Borders();
+        pV_new.Print_Borders();
 
-      //m_console.Update();
-
-        MoveCursor( pV, pV_old ); // Calls m_console.Update();
+        MoveCursor( pV_old, pV_new );
       }
     }
   }
@@ -1949,13 +1926,13 @@ public class VisFx extends Application
       // If next view to go to is found, m_win will be updated to new value
       if( GoToNextWindow_h_Find() )
       {
-        View pV     = GetView_Win( m_win   );
+        View pV_new = GetView_Win( m_win   );
         View pV_old = GetView_Win( win_old );
 
         pV_old.Print_Borders();
-        pV    .Print_Borders();
+        pV_new.Print_Borders();
 
-        MoveCursor( pV, pV_old ); // Calls m_console.Update();
+        MoveCursor( pV_old, pV_new );
       }
     }
   }
@@ -2173,13 +2150,13 @@ public class VisFx extends Application
       // If next view to go to is found, m_win will be updated to new value
       if( GoToNextWindow_jk_Find() )
       {
-        View pV     = GetView_Win( m_win   );
+        View pV_new = GetView_Win( m_win   );
         View pV_old = GetView_Win( win_old );
 
         pV_old.Print_Borders();
-        pV    .Print_Borders();
+        pV_new.Print_Borders();
 
-        MoveCursor( pV, pV_old ); // Calls m_console.Update();
+        MoveCursor( pV_old, pV_new );
       }
     }
   }
@@ -2789,7 +2766,9 @@ public class VisFx extends Application
     else if( m_sb.toString().equals("sort"))     Exe_Colon_Sort();
     else if( m_sb.toString().equals("gc"))       Exe_Colon_gc();
     else if( m_sb.toString().equals("comment"))  Exe_Colon_Comment();
-    else if( m_sb.toString().equals("uncomment"))  Exe_Colon_UnComment();
+    else if( m_sb.toString().equals("uncomment")) Exe_Colon_UnComment();
+    else if( m_sb.toString().equals("bytes"))  Exe_Colon_Bytes();
+    else if( m_sb.toString().equals("image"))  Exe_Colon_Image();
     else if( m_sb.toString().startsWith("cd"))   Exe_Colon_cd();
     else if( m_sb.toString().startsWith("syn="))  Exe_Colon_Syntax();
     else if( m_sb.toString().startsWith("detab="))Exe_Colon_Detab();
@@ -3906,6 +3885,27 @@ public class VisFx extends Application
   void Exe_Colon_UnComment()
   {
     CV().m_fb.UnComment();
+  }
+
+  void Exe_Colon_Bytes()
+  {
+    View cv = CV();
+
+    if( cv.m_image_mode )
+    {
+      cv.m_image_mode = false;
+      cv.Update();
+    }
+  }
+  void Exe_Colon_Image()
+  {
+    View cv = CV();
+
+    if( cv.m_image_file )
+    {
+      cv.m_image_mode = true;
+      cv.Update();
+    }
   }
 
   void Exe_Colon_Decoding()
@@ -5151,6 +5151,17 @@ public class VisFx extends Application
     }
     return -1;
   }
+  boolean View_is_Displayed( View V )
+  {
+    for( int w=0; w<m_num_wins; w++ )
+    {
+      if( V == GetView_Win( w ) )
+      {
+        return true;
+      }
+    }
+    return false;
+  }
   public ConsoleIF get_Console()
   {
     return m_console;
@@ -5247,26 +5258,7 @@ public class VisFx extends Application
   int             m_width;
   int             m_height;
 
-  Deque<Thread>      m_states     = new ArrayDeque<Thread>();
-  Thread             m_scheduler  = new Thread() { public void run() { Scheduler (); } };
-  Thread             m_run_init   = new Thread() { public void run() { run_init  (); Give(); } };
-  Thread             m_run_idle   = new Thread() { public void run() { run_idle  (); Give(); } };
-  Thread             m_run_redraw = new Thread() { public void run() { run_redraw(); Give(); } };
-  Thread             m_run_c      = new Thread() { public void run() { run_c     (); Give(); } };
-  Thread             m_run_L_c    = new Thread() { public void run() { run_L_c   (); Give(); } };
-  Thread             m_run_C      = new Thread() { public void run() { run_C     (); Give(); } };
-  Thread             m_run_d      = new Thread() { public void run() { run_d     (); Give(); } };
-  Thread             m_run_L_d    = new Thread() { public void run() { run_L_d   (); Give(); } };
-  Thread             m_run_g      = new Thread() { public void run() { run_g     (); Give(); } };
-  Thread             m_run_L_g    = new Thread() { public void run() { run_L_g   (); Give(); } };
-  Thread             m_run_W      = new Thread() { public void run() { run_W     (); Give(); } };
-  Thread             m_run_y      = new Thread() { public void run() { run_y     (); Give(); } };
-  Thread             m_run_L_y    = new Thread() { public void run() { run_L_y   (); Give(); } };
-  Thread             m_run_dot    = new Thread() { public void run() { run_dot   (); Give(); } };
-  Thread             m_run_L_dot  = new Thread() { public void run() { run_L_dot (); Give(); } };
-  Thread             m_run_map    = new Thread() { public void run() { run_map   (); Give(); } };
-  Thread             m_run_Q      = new Thread() { public void run() { run_Q     (); Give(); } };
-  Thread             m_run_L_Ha_i = new Thread() { public void run() { run_L_Ha_i(); Give(); } };
+  Deque<Thread>      m_states = new ArrayDeque<Thread>();
   int                m_win;
   int                m_num_wins = 1; // Number of window panes currently on screen
   boolean            m_initialized;
@@ -5274,7 +5266,7 @@ public class VisFx extends Application
   boolean            m_run_mode; // True if running shell command
   boolean            m_sort_by_time;
   private
-  Semaphore          m_run_sem = new Semaphore( 1 );
+  Semaphore          m_run_sem   = new Semaphore( 1 );
   Diff               m_diff;
   StringBuilder      m_sb        = new StringBuilder();
   StringBuilder      m_sb2       = new StringBuilder();
@@ -5294,12 +5286,32 @@ public class VisFx extends Application
   String             m_cwd = Utils.GetCWD();
   Shell              m_shell;
   int                m_repeat = 1;
-  StringBuilder      m_repeat_buf= new StringBuilder();
+  StringBuilder      m_repeat_buf = new StringBuilder();
 
   // Stage size and position variables:
   double m_old_X;
   double m_old_Y;
   double m_old_W;
   double m_old_H;
+
+  Thread m_scheduler  = new Thread( ()->{ Scheduler (); } );
+  Thread m_run_init   = new Thread( ()->{ run_init  (); Give(); } );
+  Thread m_run_idle   = new Thread( ()->{ run_idle  (); Give(); } );
+  Thread m_run_redraw = new Thread( ()->{ run_redraw(); Give(); } );
+  Thread m_run_c      = new Thread( ()->{ run_c     (); Give(); } );
+  Thread m_run_L_c    = new Thread( ()->{ run_L_c   (); Give(); } );
+  Thread m_run_C      = new Thread( ()->{ run_C     (); Give(); } );
+  Thread m_run_d      = new Thread( ()->{ run_d     (); Give(); } );
+  Thread m_run_L_d    = new Thread( ()->{ run_L_d   (); Give(); } );
+  Thread m_run_g      = new Thread( ()->{ run_g     (); Give(); } );
+  Thread m_run_L_g    = new Thread( ()->{ run_L_g   (); Give(); } );
+  Thread m_run_W      = new Thread( ()->{ run_W     (); Give(); } );
+  Thread m_run_y      = new Thread( ()->{ run_y     (); Give(); } );
+  Thread m_run_L_y    = new Thread( ()->{ run_L_y   (); Give(); } );
+  Thread m_run_dot    = new Thread( ()->{ run_dot   (); Give(); } );
+  Thread m_run_L_dot  = new Thread( ()->{ run_L_dot (); Give(); } );
+  Thread m_run_map    = new Thread( ()->{ run_map   (); Give(); } );
+  Thread m_run_Q      = new Thread( ()->{ run_Q     (); Give(); } );
+  Thread m_run_L_Ha_i = new Thread( ()->{ run_L_Ha_i(); Give(); } );
 }
 
