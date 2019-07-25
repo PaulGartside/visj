@@ -130,7 +130,7 @@ class Shell
   // Returns true if m_sh_cmd was run:
   void Run_Shell_Cmd()
   {
-    String divider = "######################################";
+    String divider = "########################################";
     m_sh_fb.PushLine( divider );
 
     m_sh_cmd_list = Get_Shell_Cmd_List( m_sh_cmd );
@@ -298,7 +298,7 @@ class Shell
       }
       m_vis.set_run_mode( false );
 
-      String divider = "######################################";
+      String divider = "########################################";
       m_sh_fb.PushLine( divider );
       m_sh_fb.PushLine();
 

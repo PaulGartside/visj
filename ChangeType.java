@@ -23,9 +23,9 @@
 
 enum ChangeType
 { 
-   Insert_Line, 
-   Remove_Line, 
-   Insert_Text, 
+   Insert_Line,
+   Remove_Line,
+   Insert_Text,
    Remove_Text,
   Replace_Text
 }

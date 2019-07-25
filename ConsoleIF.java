@@ -36,10 +36,10 @@ interface ConsoleIF
   int Num_Rows();
   int Num_Cols();
 
-  boolean Update();
+//boolean Update();
   int     KeysIn();
 
-  void    Set_Crs_Cell( final int ROW, final int COL );
+//void    Set_Crs_Cell( final int ROW, final int COL );
   void    Set( final int ROW, final int COL, final char C, final Style S );
   void    SetS( final int ROW, final int COL, final String str, final Style S );
   char    GetKey();

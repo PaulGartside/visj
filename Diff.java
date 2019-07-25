@@ -29,7 +29,7 @@ import java.nio.file.Paths;
 
 class Diff
 {
-  Diff( VisIF vis, ConsoleIF console )
+  Diff( VisIF vis, ConsoleFx console )
   {
     m_vis     = vis;
     m_console = console;
@@ -216,14 +216,14 @@ class Diff
     m_vS.PrintFileLine();
     PrintCmdLine( m_vS );
 
-    Set_Console_CrsCell();
+    Move_Console_CrsCell();
 
     if( ! m_printed_diff_ms )
     {
       m_vis.CmdLineMessage( "Diff took: "+ m_diff_ms +" ms" );
       m_printed_diff_ms = true;
     }
-    m_console.Update();
+  //m_console.Print_Cursor();
   }
 
   void RepositionViews()
@@ -484,8 +484,8 @@ class Diff
 
   void PrintCursor()
   {
-    Set_Console_CrsCell();
-    m_console.Update();
+    Move_Console_CrsCell();
+  //m_console.Print_Cursor();
   }
   void PrintWorkingView( View pV )
   {
@@ -1622,26 +1622,26 @@ class Diff
   {
     m_crsCol = col;
 
-    Set_Console_CrsCell();
+    Move_Console_CrsCell();
   }
   void Set_crsRowCol( final int row, final int col )
   {
     m_crsRow = row;
     m_crsCol = col;
 
-    Set_Console_CrsCell();
+    Move_Console_CrsCell();
   }
-  void Set_Console_CrsCell()
+  void Move_Console_CrsCell()
   {
     // Set console current cursor cell to cursor hightlighted value:
     View pV = m_vis.CV();
 
-    Set_Console_CrsCell( pV );
+    Move_Console_CrsCell( pV );
   }
-  void Set_Console_CrsCell( View V )
+  void Move_Console_CrsCell( View V )
   {
-    m_console.Set_Crs_Cell( Row_Win_2_GL( V, m_crsRow )
-                          , Col_Win_2_GL( V, m_crsCol ) );
+    m_console.Move_Crs_Cell( Row_Win_2_GL( V, m_crsRow )
+                           , Col_Win_2_GL( V, m_crsCol ) );
   }
 
   void GoToCrsPos_Write( final int ncp_crsLine
@@ -1925,7 +1925,7 @@ class Diff
     else if( MOVE_LEFT  ) m_leftChar = ncp_crsChar;
     m_crsCol   = ncp_crsChar - m_leftChar;
 
-    Set_Console_CrsCell();
+    Move_Console_CrsCell();
   }
 
   void PageDown()
@@ -3387,7 +3387,7 @@ class Diff
       // Make changes manually:
       m_topLine += m_crsRow;
       m_crsRow = 0;
-      Set_Console_CrsCell();
+      Move_Console_CrsCell();
 
       Update();
     }
@@ -3407,7 +3407,7 @@ class Diff
       // CrsLine() does not change:
       m_crsRow += m_topLine;
       m_topLine = 0;
-      Set_Console_CrsCell();
+      Move_Console_CrsCell();
 
       if( write ) Update();
     }
@@ -3416,7 +3416,7 @@ class Diff
     {
       m_topLine += m_crsRow - center;
       m_crsRow = center;
-      Set_Console_CrsCell();
+      Move_Console_CrsCell();
 
       if( write ) Update();
     }
@@ -3435,7 +3435,7 @@ class Diff
       {
         m_topLine -= WR - m_crsRow - 1;
         m_crsRow = WR-1;
-        Set_Console_CrsCell();
+        Move_Console_CrsCell();
 
         Update();
       }
@@ -3444,7 +3444,7 @@ class Diff
         // CrsLine() does not change:
         m_crsRow += m_topLine;
         m_topLine = 0;
-        Set_Console_CrsCell();
+        Move_Console_CrsCell();
 
         Update();
       }
@@ -6080,7 +6080,7 @@ class Diff
   static final char DEL = 127; // Delete
 
   VisIF     m_vis;
-  ConsoleIF m_console;
+  ConsoleFx m_console;
   StringBuilder m_sb = new StringBuilder();
   StringBuilder m_cmd_line_sb = new StringBuilder();
 

@@ -178,7 +178,7 @@ public class VisFx extends Application
     run_init_files();
     UpdateViews( false );
 
-    m_console.Update();
+  //m_console.Update();
 
     m_states.removeFirst();
   }
@@ -535,7 +535,7 @@ public class VisFx extends Application
       m_console.Init_Clear();
       UpdateViewsPositions();
       UpdateViews( false );
-      m_console.Update();
+    //m_console.Update();
 
       m_states.removeFirst();
 
@@ -656,8 +656,8 @@ public class VisFx extends Application
     case '\n':Handle_Return();    break;
     case '-': m_console.Prev_Font();break;
     case '=': m_console.Next_Font();break;
-    case '+': m_console.Inc_Font();break;
-    case '_': m_console.Dec_Font();break;
+    case '+': Handle_Plus();      break;
+    case '_': Handle_Underscore();break;
     }
   }
 
@@ -1673,27 +1673,47 @@ public class VisFx extends Application
 
       m_win = (++m_win) % m_num_wins;
 
-      View pV     = GetView_Win( m_win   );
+      View pV_new = GetView_Win( m_win   );
       View pV_old = GetView_Win( win_old );
 
       pV_old.Print_Borders();
-      pV    .Print_Borders();
+      pV_new.Print_Borders();
 
-      MoveCursor( pV, pV_old ); // Calls m_console.Update();
+      MoveCursor( pV_old, pV_new ); // Calls m_console.Update();
     }
   }
-  void MoveCursor( View pV_new, View pV_old )
+  void MoveCursor( View pV_old, View pV_new )
   {
     View cv = CV();
 
     if( cv.m_in_diff )
     {
-      m_diff.Set_Console_CrsCell( pV_new );
+      m_diff.Move_Console_CrsCell( pV_new );
     }
     else {
-      pV_new.Set_Console_CrsCell();
+      if( !pV_old.m_image_mode
+       && !pV_new.m_image_mode )
+      {
+      //pV_new.Move_Console_CrsCell();
+        pV_old.Remove_Console_CrsCell();
+        pV_new.Add_Console_CrsCell();
+      }
+      else if( pV_old.m_image_mode
+           && !pV_new.m_image_mode )
+      {
+        pV_new.Add_Console_CrsCell();
+      }
+      else if( !pV_old.m_image_mode
+            &&  pV_new.m_image_mode )
+      {
+        pV_old.Remove_Console_CrsCell();
+      }
+      else /* pV_old.m_image_mode
+           && pV_new.m_image_mode */
+      {
+        // Do nothing
+      }
     }
-    m_console.Update();
   }
   void GoToNextWindow_l()
   {
@@ -1711,7 +1731,7 @@ public class VisFx extends Application
         pV_old.Print_Borders();
         pV    .Print_Borders();
 
-        m_console.Update();
+      //m_console.Update();
 
         MoveCursor( pV, pV_old ); // Calls m_console.Update();
       }
@@ -2652,6 +2672,16 @@ public class VisFx extends Application
         cv.GoToBegOfNextLine();
       }
     }
+  }
+
+  void Handle_Plus()
+  {
+    CV().Handle_Plus();
+
+  }
+  void Handle_Underscore()
+  {
+    CV().Handle_Underscore();
   }
 
   void run_dot()
@@ -4213,7 +4243,7 @@ public class VisFx extends Application
       if( Update_Change_Statuses() )
       {
         if( cv.m_in_diff ) m_diff.PrintCursor(); // Does m_console.Update()
-        else               m_console.Update();
+      //else               m_console.Update();
       }
     }
   }
@@ -5263,7 +5293,7 @@ public class VisFx extends Application
   Paste_Mode         m_paste_mode;
   String             m_cwd = Utils.GetCWD();
   Shell              m_shell;
-  int                m_repeat;
+  int                m_repeat = 1;
   StringBuilder      m_repeat_buf= new StringBuilder();
 
   // Stage size and position variables:

@@ -25,16 +25,37 @@ import java.lang.Math;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import javafx.scene.image.Image;
 
 class View
 {
-  View( VisIF vis, FileBuf fb, ConsoleIF console )
+  View( VisIF vis, FileBuf fb, ConsoleFx console )
   {
     m_vis      = vis;
     m_fb       = fb;
     m_console  = console;
     m_num_rows = m_console.Num_Rows();
     m_num_cols = m_console.Num_Cols();
+
+    if( m_fb.m_isRegular )
+    {
+      if( m_fb.m_fname.endsWith(".png")
+       || m_fb.m_fname.endsWith(".PNG")
+
+       || m_fb.m_fname.endsWith(".jpg")
+       || m_fb.m_fname.endsWith(".JPG")
+       || m_fb.m_fname.endsWith(".jpeg")
+       || m_fb.m_fname.endsWith(".JPEG")
+
+       || m_fb.m_fname.endsWith(".gif")
+       || m_fb.m_fname.endsWith(".GIF")
+
+       || m_fb.m_fname.endsWith(".bmp")
+       || m_fb.m_fname.endsWith(".BMP") )
+      {
+        m_image_mode = true;
+      }
+    }
   }
   int X()           { return m_x; }
   int Y()           { return m_y; }
@@ -49,6 +70,7 @@ class View
   int CrsRow()      { return m_crsRow; }
   int CrsCol()      { return m_crsCol; }
   int WinCols()     { return m_num_cols; }
+  int WinRows()     { return m_num_rows; }
 
   void SetTopLine ( final int val )
   {
@@ -118,31 +140,37 @@ class View
   {
     return m_x + 1 + line_char - m_leftChar;
   }
-//void Set_crsRow( final int row )
-//{
-//  Clear_Console_CrsCell();
-//
-//  m_crsRow = row;
-//
-//  Set_Console_CrsCell();
-//}
   void Set_crsCol( final int col )
   {
     m_crsCol = col;
-
-    Set_Console_CrsCell();
   }
   void Set_crsRowCol( final int row, final int col )
   {
     m_crsRow = row;
     m_crsCol = col;
-
-    Set_Console_CrsCell();
   }
-  void Set_Console_CrsCell()
+  void Move_Console_CrsCell()
   {
-    m_console.Set_Crs_Cell( Row_Win_2_GL( m_crsRow )
-                          , Col_Win_2_GL( m_crsCol ) );
+    if( !m_image_mode )
+    {
+      m_console.Move_Crs_Cell( Row_Win_2_GL( m_crsRow )
+                             , Col_Win_2_GL( m_crsCol ) );
+    }
+  }
+  void Remove_Console_CrsCell()
+  {
+    if( !m_image_mode )
+    {
+      m_console.Remove_Crs_Cell();
+    }
+  }
+  void Add_Console_CrsCell()
+  {
+    if( !m_image_mode )
+    {
+      m_console.Add_Crs_Cell( Row_Win_2_GL( m_crsRow )
+                            , Col_Win_2_GL( m_crsCol ) );
+    }
   }
 
   void Update()
@@ -178,7 +206,7 @@ class View
       PrintFileLine();
       PrintCmdLine();
 
-      m_console.Update();
+    //m_console.Update();
     }
   }
   void RepositionView()
@@ -307,6 +335,24 @@ class View
 
   private void PrintWorkingView()
   {
+    if( m_image_mode )
+    {
+      PrintWorkingView_Image();
+    }
+    else {
+      PrintWorkingView_Text();
+    }
+  }
+  private void PrintWorkingView_Image()
+  {
+    m_fb.Create_Image();
+
+    m_console.DrawImage( m_fb.m_image, this, m_img_d.sx, m_img_d.sy, m_img_d.zoom/100.0 );
+    m_console.Invalidate_Text( m_y, m_y+m_num_rows
+                             , m_x, m_x+m_num_cols );
+  }
+  private void PrintWorkingView_Text()
+  {
     final int NUM_LINES = m_fb.NumLines();
     final int WR        = WorkingRows();
     final int WC        = WorkingCols();
@@ -360,7 +406,45 @@ class View
       m_console.Set( G_ROW, Col_Win_2_GL( col ), C, s );
     }
   }
+
   void PrintStsLine()
+  {
+    if( m_image_mode ) PrintStsLine_Image();
+    else               PrintStsLine_Text();
+  }
+  void PrintStsLine_Image()
+  {
+    final int CL = CrsLine(); // Line position
+    final int CC = CrsChar(); // Char position
+    final int LL = m_fb.LineLen( CL );
+    final int WC = WorkingCols();
+
+    if( 0 < WC )
+    {
+      Image I = m_fb.m_image;
+
+      final double zoom = m_img_d.zoom/100.0;
+      final int WR   = WorkingRows();
+      final int I_W  = (int)(I.getWidth () + 0.5);
+      final int I_H  = (int)(I.getHeight() + 0.5);
+      final int i_sx = m_img_d.sx;
+      final int i_sy = m_img_d.sy;
+      final int P_w  = WC*m_console.m_text_W; // Pane width
+      final int P_h  = WR*m_console.m_text_H; // Pane height
+      final int i_fx = Math.min( (int)(i_sx + P_w/zoom + 0.5), I_W );
+      final int i_fy = Math.min( (int)(i_sy + P_h/zoom + 0.5), I_H );
+
+      // Fill in m_sb with information to display:
+      m_sb.setLength( 0 );
+      m_sb.append( "Bytes="+m_fb.GetSize()
+                 + ", Pos=("+i_sx+"->"+i_fx+"/"+I_W
+                 + ", "+     i_sy+"->"+i_fy+"/"+I_H
+                 + ") zoom="+m_img_d.zoom );
+
+      PrintStsLine_Display( m_sb );
+    }
+  }
+  void PrintStsLine_Text()
   {
     final int CL = CrsLine(); // Line position
     final int CC = CrsChar(); // Char position
@@ -381,23 +465,30 @@ class View
       final int fileSize = m_fb.GetSize();
       final int  crsByte = m_fb.GetCursorByte( CL, CC );
       int percent = (char)(100*(double)crsByte/(double)fileSize + 0.5);
-      // Screen width so far
+
+      // Fill in m_sb with information to display:
       m_sb.setLength( 0 );
       m_sb.append( "Pos=("+(CL+1)+","+(CC+1)+")"
                  + "  ("+percent+"%, "+crsByte+"/"+fileSize+")"
                  + "  Char=("+str+")  ");
 
-      final int SW = m_sb.length(); // Screen width so far
-
-      if     ( SW < WC ) { for( int k=SW; k<WC; k++ ) m_sb.append(' '); }
-      else if( WC < SW ) { m_sb.setLength( WC ); } //< Truncate extra part
-
-      m_console.SetS( Sts__Line_Row()
-                    , Col_Win_2_GL( 0 )
-                    , m_sb.toString()
-                    , Style.STATUS );
+      PrintStsLine_Display( m_sb );
     }
   }
+  void PrintStsLine_Display( StringBuilder sb )
+  {
+    final int WC = WorkingCols();
+    final int SW = sb.length(); // Screen width so far
+
+    if     ( SW < WC ) { for( int k=SW; k<WC; k++ ) sb.append(' '); }
+    else if( WC < SW ) { sb.setLength( WC ); } //< Truncate extra part
+
+    m_console.SetS( Sts__Line_Row()
+                  , Col_Win_2_GL( 0 )
+                  , sb.toString()
+                  , Style.STATUS );
+  }
+
   void PrintFileLine()
   {
     StringBuilder buf = new StringBuilder( m_fb.m_pname );
@@ -449,14 +540,39 @@ class View
   }
   void PrintCursor()
   {
-    if( m_vis.CV() == this )
+    if( !m_image_mode )
     {
-      Set_Console_CrsCell();
+      if( m_vis.CV() == this )
+      {
+        Move_Console_CrsCell();
+      }
     }
-    m_console.Update();
   }
 
   void GoDown( final int num )
+  {
+    if( m_image_mode ) GoDown_Image( num );
+    else               GoDown_Text( num );
+  }
+  void GoDown_Image( final int num )
+  {
+    Image I = m_fb.m_image;
+
+    final double zoom = m_img_d.zoom/100.0;
+    final int I_h = (int)(I.getHeight()*zoom + 0.5);  // Image height
+    final int P_h = WorkingRows()*m_console.m_text_H; // Pane height
+
+    if( P_h < I_h )
+    {
+      m_img_d.sy += m_console.m_text_H*num;
+      // m.image_sy <= I_h - P_h
+    //m_img_d.sy = Math.min( m_img_d.sy, I_h - P_h );
+      m_img_d.sy = (int)(Math.min( m_img_d.sy*zoom, I_h - P_h )/zoom);
+      m_console.DrawImage( I, this, m_img_d.sx, m_img_d.sy, zoom );
+      PrintStsLine_Image();
+    }
+  }
+  void GoDown_Text( final int num )
   {
     final int NUM_LINES = m_fb.NumLines();
     final int OCL       = CrsLine(); // Old cursor line
@@ -469,7 +585,31 @@ class View
       GoToCrsPos_Write( NCL, OCP );
     }
   }
+
   void GoUp( final int num )
+  {
+    if( m_image_mode ) GoUp_Image( num );
+    else               GoUp_Text( num );
+  }
+  void GoUp_Image( final int num )
+  {
+    Image I = m_fb.m_image;
+
+    final double zoom = m_img_d.zoom/100.0;
+    final int I_h = (int)(I.getHeight()*zoom + 0.5);  // Image height
+    final int P_h = WorkingRows()*m_console.m_text_H; // Pane height
+
+    if( P_h < I_h )
+    {
+      m_img_d.sy -= m_console.m_text_H*num;
+      // 0 <= m.image_sy
+    //m_img_d.sy = Math.max( m_img_d.sy, 0 );
+      m_img_d.sy = (int)(Math.max( m_img_d.sy*zoom, 0 )/zoom);
+      m_console.DrawImage( I, this, m_img_d.sx, m_img_d.sy, zoom );
+      PrintStsLine_Image();
+    }
+  }
+  void GoUp_Text( final int num )
   {
     final int NUM_LINES = m_fb.NumLines();
     final int OCL       = CrsLine(); // Old cursor line
@@ -485,6 +625,29 @@ class View
 
   void GoLeft( final int num )
   {
+    if( m_image_mode ) GoLeft_Image( num );
+    else               GoLeft_Text( num );
+  }
+  void GoLeft_Image( final int num )
+  {
+    Image I = m_fb.m_image;
+
+    final double zoom = m_img_d.zoom/100.0;
+    final int I_w = (int)(I.getWidth()*zoom + 0.5);   // Image width
+    final int P_w = WorkingCols()*m_console.m_text_W; // Pane width
+
+    if( P_w < I_w )
+    {
+      m_img_d.sx -= m_console.m_text_W*num;
+      // 0 <= m_img_d.sx
+    //m_img_d.sx = Math.max( m_img_d.sx, 0 );
+      m_img_d.sx = (int)(Math.max( m_img_d.sx*zoom, 0 )/zoom);
+      m_console.DrawImage( I, this, m_img_d.sx, m_img_d.sy, zoom );
+      PrintStsLine_Image();
+    }
+  }
+  void GoLeft_Text( final int num )
+  {
     final int OCP = CrsChar(); // Old cursor position
 
     if( 0<m_fb.NumLines() && 0<OCP )
@@ -495,7 +658,31 @@ class View
       GoToCrsPos_Write( CL, NCP );
     }
   }
+
   void GoRight( final int num )
+  {
+    if( m_image_mode ) GoRight_Image( num );
+    else               GoRight_Text( num );
+  }
+  void GoRight_Image( final int num )
+  {
+    Image I = m_fb.m_image;
+
+    final double zoom = m_img_d.zoom/100.0;
+    final int I_w = (int)(I.getWidth()*zoom + 0.5);   // Image width
+    final int P_w = WorkingCols()*m_console.m_text_W; // Pane width
+
+    if( P_w < I_w )
+    {
+      m_img_d.sx += m_console.m_text_W*num;
+      // m_img_d.sx <= I_w - P_w
+    //m_img_d.sx = Math.min( m_img_d.sx, I_w - P_w );
+      m_img_d.sx = (int)(Math.min( m_img_d.sx*zoom, I_w - P_w )/zoom+0.5);
+      m_console.DrawImage( I, this, m_img_d.sx, m_img_d.sy, zoom );
+      PrintStsLine_Image();
+    }
+  }
+  void GoRight_Text( final int num )
   {
     if( 0<m_fb.NumLines() )
     {
@@ -514,13 +701,42 @@ class View
 
   void GoToBegOfLine()
   {
+    if( m_image_mode ) GoToBegOfLine_Image();
+    else               GoToBegOfLine_Text();
+  }
+  void GoToBegOfLine_Image()
+  {
+    Image I = m_fb.m_image;
+
+    // Image width in columns
+    final int I_w_c = (int)(I.getWidth()/m_console.m_text_W + 0.5);
+
+    GoLeft_Image( I_w_c );
+  }
+  void GoToBegOfLine_Text()
+  {
     if( 0==m_fb.NumLines() ) return;
 
     final int OCL = CrsLine(); // Old cursor line
 
     GoToCrsPos_Write( OCL, 0 );
   }
+
   void GoToEndOfLine()
+  {
+    if( m_image_mode ) GoToEndOfLine_Image();
+    else               GoToEndOfLine_Text();
+  }
+  void GoToEndOfLine_Image()
+  {
+    Image I = m_fb.m_image;
+
+    // Image width in columns
+    final int I_w_c = (int)(I.getWidth()/m_console.m_text_W + 0.5);
+
+    GoRight_Image( I_w_c );
+  }
+  void GoToEndOfLine_Text()
   {
     if( 0==m_fb.NumLines() ) return;
 
@@ -607,7 +823,29 @@ class View
 
     GoToCrsPos_Write( bottom_line_in_view, 0 );
   }
+
   void GoToMidLineInView()
+  {
+    if( m_image_mode ) GoToMiddle_Image();
+    else               GoToMidLineInView_Text();
+  }
+  void GoToMiddle_Image()
+  {
+    Image I = m_fb.m_image;
+
+    final double zoom = m_img_d.zoom/100.0;
+    final int I_w = (int)(I.getWidth ()*zoom + 0.5);  // Image width
+    final int I_h = (int)(I.getHeight()*zoom + 0.5);  // Image height
+    final int P_w = WorkingCols()*m_console.m_text_W; // Pane width
+    final int P_h = WorkingRows()*m_console.m_text_H; // Pane height
+
+    m_img_d.sx = ( P_w < I_w ) ? (int)(0.5*(I_w - P_w)/zoom) : 0;
+    m_img_d.sy = ( P_h < I_h ) ? (int)(0.5*(I_h - P_h)/zoom) : 0;
+
+    m_console.DrawImage( I, this, m_img_d.sx, m_img_d.sy, zoom );
+    PrintStsLine_Image();
+  }
+  void GoToMidLineInView_Text()
   {
     final int NUM_LINES = m_fb.NumLines();
 
@@ -621,16 +859,47 @@ class View
     }
     GoToCrsPos_Write( NCL, 0 );
   }
+
   void GoToTopOfFile()
+  {
+    if( m_image_mode ) GoToTopOfFile_Image();
+    else               GoToTopOfFile_Text();
+  }
+  void GoToTopOfFile_Image()
+  {
+    Image I = m_fb.m_image;
+
+    // Image height in rows
+    final int I_h_r = (int)(I.getHeight()/m_console.m_text_H + 0.5);
+
+    GoUp_Image( I_h_r );
+  }
+  void GoToTopOfFile_Text()
   {
     GoToCrsPos_Write( 0, 0 );
   }
+
   void GoToEndOfFile()
+  {
+    if( m_image_mode ) GoToEndOfFile_Image();
+    else               GoToEndOfFile_Text();
+  }
+  void GoToEndOfFile_Image()
+  {
+    Image I = m_fb.m_image;
+
+    // Image height in rows
+    final int I_h_r = (int)(I.getHeight()/m_console.m_text_H + 0.5);
+
+    GoDown_Image( I_h_r );
+  }
+  void GoToEndOfFile_Text()
   {
     final int NUM_LINES = m_fb.NumLines();
 
     GoToCrsPos_Write( NUM_LINES-1, 0 );
   }
+
   void GoToStartOfRow()
   {
     if( 0<m_fb.NumLines() )
@@ -655,7 +924,17 @@ class View
       }
     }
   }
+
   void PageDown()
+  {
+    if( m_image_mode ) PageDown_Image();
+    else               PageDown_Text();
+  }
+  void PageDown_Image()
+  {
+    GoDown_Image( WorkingRows()-1 );
+  }
+  void PageDown_Text()
   {
     final int NUM_LINES = m_fb.NumLines();
     if( 0<NUM_LINES )
@@ -673,13 +952,23 @@ class View
           // This line places the cursor at the top of the screen, which I prefer:
           m_crsRow = 0;
         }
-        Set_Console_CrsCell();
+        Move_Console_CrsCell();
 
         Update();
       }
     }
   }
+
   void PageUp()
+  {
+    if( m_image_mode ) PageUp_Image();
+    else               PageUp_Text();
+  }
+  void PageUp_Image()
+  {
+    GoUp_Image( WorkingRows()-1 );
+  }
+  void PageUp_Text()
   {
     final int OCL = CrsLine(); // Old cursor line
     final int OCP = CrsChar(); // Old cursor position
@@ -698,7 +987,7 @@ class View
       else {
         m_topLine -= WorkingRows() - 1;
       }
-      Set_Console_CrsCell();
+      Move_Console_CrsCell();
 
       Update();
     }
@@ -768,8 +1057,7 @@ class View
     PrintCursor(); // Does m_console.Update()
   }
 
-  void GoToCrsPos_Write( int ncp_crsLine
-                       , int ncp_crsChar )
+  void GoToCrsPos_Write( int ncp_crsLine, int ncp_crsChar )
   {
     // Limit range of ncp_crsLine to [ 0 to m_fb.NumLines()-1 ]
     ncp_crsLine = Math.max( ncp_crsLine, 0 );
@@ -780,12 +1068,8 @@ class View
     final int NCL = ncp_crsLine;
     final int NCP = ncp_crsChar;
 
-    if( OCL == NCL && OCP == NCP )
+    if( OCL != NCL || OCP != NCP )
     {
-      // Not moving to new cursor position so do an update
-      m_console.Update();
-    }
-    else {
       if( m_inVisualMode )
       {
         v_fn_line = NCL;
@@ -844,7 +1128,7 @@ class View
     else if( MOVE_LEFT  ) m_leftChar = ncp_crsChar;
     m_crsCol   = ncp_crsChar - m_leftChar;
 
-    Set_Console_CrsCell();
+    Move_Console_CrsCell();
   }
 
   Style Get_Style( final int line, final int pos )
@@ -1067,25 +1351,6 @@ class View
     PrintCursor(); // Does m_console.Update()
   }
 
-  void GoToCmdLineClear( final String S )
-  {
-    final int ROW = Cmd__Line_Row();
-
-    // Clear command line:
-    for( int k=0; k<WorkingCols(); k++ )
-    {
-      m_console.Set( ROW, Col_Win_2_GL( k ), ' ', Style.NORMAL );
-    }
-    final int S_LEN = S.length();
-    final int ST    = Col_Win_2_GL( 0 );
-
-    for( int k=0; k<S_LEN; k++ )
-    {
-      m_console.Set( ROW, ST+k, S.charAt(k), Style.NORMAL );
-    }
-    m_console.Set_Crs_Cell( ROW, Col_Win_2_GL( S_LEN ) );
-    m_console.Update();
-  }
   boolean InComment( final int line, final int pos )
   {
     return m_fb.HasStyle( line, pos, Highlight_Type.COMMENT.val );
@@ -2639,7 +2904,7 @@ class View
       // Make changes manually:
       m_topLine += m_crsRow;
       m_crsRow = 0;
-      Set_Console_CrsCell();
+      Move_Console_CrsCell();
 
       Update();
     }
@@ -2656,7 +2921,7 @@ class View
       // CrsLine() does not change:
       m_crsRow += m_topLine;
       m_topLine = 0;
-      Set_Console_CrsCell();
+      Move_Console_CrsCell();
 
       Update();
     }
@@ -2665,7 +2930,7 @@ class View
     {
       m_topLine += m_crsRow - center;
       m_crsRow = center;
-      Set_Console_CrsCell();
+      Move_Console_CrsCell();
 
       Update();
     }
@@ -2681,7 +2946,7 @@ class View
       {
         m_topLine -= WR - m_crsRow - 1;
         m_crsRow = WR-1;
-        Set_Console_CrsCell();
+        Move_Console_CrsCell();
 
         Update();
       }
@@ -2690,7 +2955,7 @@ class View
         // CrsLine() does not change:
         m_crsRow += m_topLine;
         m_topLine = 0;
-        Set_Console_CrsCell();
+        Move_Console_CrsCell();
 
         Update();
       }
@@ -3576,25 +3841,6 @@ class View
     }
     m_inVisualMode = false;
   }
-//void Do_s_v()
-//{
-//  final int LL = m_fb.LineLen( CrsLine() );
-//  final boolean
-//  CURSOR_AT_END_OF_LINE = 0<v_st_char
-//                       && 0<LL ? LL-1 <= CrsChar() : false;
-//  Do_x_v();
-//
-//  if( m_inVisualBlock )
-//  {
-//    if( CURSOR_AT_END_OF_LINE ) Do_a_vb();
-//    else                        Do_i_vb();
-//  }
-//  else {
-//    if( CURSOR_AT_END_OF_LINE ) Do_a();
-//    else                        Do_i();
-//  }
-//  m_inVisualMode = false;
-//}
   void Do_s_v()
   {
     final int LL = m_fb.LineLen( CrsLine() );
@@ -4080,13 +4326,71 @@ class View
     m_cmd_line_sb.append( msg );
   }
 
+  void Handle_Plus()
+  {
+    if( m_image_mode )
+    {
+      Handle_Plus_Image();
+    }
+    else {
+      m_console.Inc_Font();
+    }
+  }
+  void Handle_Plus_Image()
+  {
+    Image I = m_fb.m_image;
+
+    m_img_d.zoom = (int)(m_img_d.zoom*1.1 + 0.5);
+
+    m_console.DrawImage( I, this, m_img_d.sx, m_img_d.sy, m_img_d.zoom/100.0 );
+    PrintStsLine_Image();
+  }
+
+  void Handle_Underscore()
+  {
+    if( m_image_mode )
+    {
+      Handle_Underscore_Image();
+    }
+    else {
+      m_console.Dec_Font();
+    }
+  }
+  void Handle_Underscore_Image()
+  {
+    Image I = m_fb.m_image;
+
+    m_img_d.zoom = (int)(m_img_d.zoom/1.1 + 0.5);
+
+    final double zoom = m_img_d.zoom/100.0;
+    final double I_w = I.getWidth ();  // Image width
+    final double I_h = I.getHeight();  // Image height
+    final int P_w = WorkingCols()*m_console.m_text_W; // Pane width
+    final int P_h = WorkingRows()*m_console.m_text_H; // Pane height
+    final int I_w_s = (int)((I_w - m_img_d.sx)*zoom + 0.5); // Image width on screen
+    final int I_h_s = (int)((I_h - m_img_d.sy)*zoom + 0.5); // Image height on screen
+
+    if( 0 < m_img_d.sx && I_w_s < P_w )
+    {
+      // Reduce sx so that image width on screen equals pane width
+      m_img_d.sx = Math.max( 0, (int)(I_w - P_w/zoom + 0.5) );
+    }
+    if( 0 < m_img_d.sy && I_h_s < P_h )
+    {
+      // Reduce sy so that image height on screen equals pane height
+      m_img_d.sy = Math.max( 0, (int)(I_h - P_h/zoom + 0.5) );
+    }
+    m_console.DrawImage( I, this, m_img_d.sx, m_img_d.sy, zoom );
+    PrintStsLine_Image();
+  }
+
   static final char BS  =   8; // Backspace
   static final char ESC =  27; // Escape
   static final char DEL = 127; // Delete
 
   VisIF     m_vis;
   FileBuf   m_fb;
-  ConsoleIF m_console;
+  ConsoleFx m_console;
   private int m_x;        // Top left x-position of buffer view in parent window
   private int m_y;        // Top left y-position of buffer view in parent window
   private int m_topLine;  // top  of buffer view line number.
@@ -4114,6 +4418,9 @@ class View
   private int m_num_rows; // number of columns in buffer view
   private int m_i_count;
 
+  boolean  m_image_mode;
+  Image_data m_img_d = new Image_data();
+
   Thread m_run_i_beg    = new Thread() { public void run() { run_i_beg   (); m_vis.Give(); } };
   Thread m_run_i_mid    = new Thread() { public void run() { run_i_mid   (); m_vis.Give(); } };
   Thread m_run_i_end    = new Thread() { public void run() { run_i_end   (); m_vis.Give(); } };
@@ -4129,6 +4436,13 @@ class View
   Thread m_run_g_v      = new Thread() { public void run() { run_g_v     (); m_vis.Give(); } };
   Thread m_run_z        = new Thread() { public void run() { run_z       (); m_vis.Give(); } };
   Thread m_run_f        = new Thread() { public void run() { run_f       (); m_vis.Give(); } };
+}
+
+class Image_data
+{
+  int sx;
+  int sy;
+  int zoom = 100; // Percent zoom
 }
 
 // Run threads using lambdas.

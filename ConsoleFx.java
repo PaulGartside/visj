@@ -29,6 +29,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
+import javafx.scene.image.Image;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.geometry.VPos;
@@ -389,12 +390,8 @@ class ConsoleFx extends Canvas
       m_siz_rows = m_num_rows;
       m_siz_cols = m_num_cols;
 
-      m_chars__p    = new char [m_siz_rows][m_siz_cols];
       m_chars__w    = new char [m_siz_rows][m_siz_cols];
-      m_styles_p    = new Style[m_siz_rows][m_siz_cols];
       m_styles_w    = new Style[m_siz_rows][m_siz_cols];
-      m_min_touched = new int  [m_siz_rows];
-      m_max_touched = new int  [m_siz_rows];
     }
   }
   void Init_Clear()
@@ -402,14 +399,22 @@ class ConsoleFx extends Canvas
     // Clear everything:
     for( int row=0; row<m_num_rows; row++ )
     {
-      m_min_touched[row] = 0;          // Everything
-      m_max_touched[row] = m_num_cols; // touched
-
       for( int col=0; col<m_num_cols; col++ )
       {
-        m_chars__p[row][col] = ' ';
         m_chars__w[row][col] = ' ';
-        m_styles_p[row][col] = Style.UNKNOWN;
+        m_styles_w[row][col] = Style.UNKNOWN;
+      }
+    }
+  }
+  void Invalidate_Text( final int row_st
+                      , final int row_fn
+                      , final int col_st
+                      , final int col_fn )
+  {
+    for( int row=row_st; row<row_fn; row++ )
+    {
+      for( int col=col_st; col<col_fn; col++ )
+      {
         m_styles_w[row][col] = Style.UNKNOWN;
       }
     }
@@ -473,85 +478,6 @@ class ConsoleFx extends Canvas
 
     Init_FontMetrics();
   }
-//public int KeysIn()
-//{
-//  static final int KEY_IN_SLEEP_PERIOD =  10; // ms between key repeats
-//
-//  if( m_get_from_dot_buf_n )
-//  {
-//    // If there is something to process, process it right away,
-//    // else sleep to avoid hogging CPU:
-//    final int num_keys_in = m_dot_buf_n.length();
-//    if( num_keys_in <= 0 )
-//    {
-//      Utils.Sleep( KEY_IN_SLEEP_PERIOD );
-//    }
-//    return num_keys_in;
-//  }
-//  if( m_get_from_dot_buf_l )
-//  {
-//    // If there is something to process, process it right away,
-//    // else sleep to avoid hogging CPU:
-//    final int num_keys_in = m_dot_buf_l.length();
-//    if( num_keys_in <= 0 )
-//    {
-//      Utils.Sleep( KEY_IN_SLEEP_PERIOD );
-//    }
-//    return num_keys_in;
-//  }
-//  if( m_get_from_map_buf )
-//  {
-//    // If there is something to process, process it right away,
-//    // else sleep to avoid hogging CPU:
-//    final int num_keys_in = m_map_buf.length();
-//    if( num_keys_in <= 0 )
-//    {
-//      Utils.Sleep( KEY_IN_SLEEP_PERIOD );
-//    }
-//    return num_keys_in;
-//  }
-//  Utils.Sleep( KEY_IN_SLEEP_PERIOD );
-//
-//  return m_input.size();
-//}
-//public int KeysIn()
-//{
-//  static final int KEY_IN_SLEEP_PERIOD =  10; // ms between key repeats
-//
-//  if( m_get_from_dot_buf_n )
-//  {
-//    // If there is something to process, process it right away,
-//    // else sleep to avoid hogging CPU:
-//    final int num_keys_in = m_dot_buf_n.length();
-//
-//    if( num_keys_in <= 0 ) Utils.Sleep( KEY_IN_SLEEP_PERIOD );
-//
-//    return num_keys_in;
-//  }
-//  if( m_get_from_dot_buf_l )
-//  {
-//    // If there is something to process, process it right away,
-//    // else sleep to avoid hogging CPU:
-//    final int num_keys_in = m_dot_buf_l.length();
-//
-//    if( num_keys_in <= 0 ) Utils.Sleep( KEY_IN_SLEEP_PERIOD );
-//
-//    return num_keys_in;
-//  }
-//  if( m_get_from_map_buf )
-//  {
-//    // If there is something to process, process it right away,
-//    // else sleep to avoid hogging CPU:
-//    final int num_keys_in = m_map_buf.length();
-//
-//    if( num_keys_in <= 0 ) Utils.Sleep( KEY_IN_SLEEP_PERIOD );
-//
-//    return num_keys_in;
-//  }
-//  Utils.Sleep( KEY_IN_SLEEP_PERIOD );
-//
-//  return m_input.size();
-//}
 
   public int KeysIn()
   {
@@ -639,10 +565,16 @@ class ConsoleFx extends Canvas
     if( 0 <= ROW && ROW < m_num_rows
      && 0 <= COL && COL < m_num_cols )
     {
-      m_chars__p[ ROW ][ COL ] = C;
-      m_styles_p[ ROW ][ COL ] = S;
-      m_min_touched[ ROW ] = Math.min( m_min_touched[ ROW ], COL   );
-      m_max_touched[ ROW ] = Math.max( m_max_touched[ ROW ], COL+1 );
+      final char  C_w = m_chars__w[ROW][COL];
+      final Style S_w = m_styles_w[ROW][COL];
+
+      if( C != C_w || S != S_w )
+      {
+        PrintC( ROW, COL, C, S );
+
+        m_chars__w[ ROW ][ COL ] = C;
+        m_styles_w[ ROW ][ COL ] = S;
+      }
     }
   }
   public
@@ -654,10 +586,75 @@ class ConsoleFx extends Canvas
     }
   }
   public
-  void Set_Crs_Cell( final int ROW, final int COL )
+  void Move_Crs_Cell( final int ROW, final int COL )
   {
-    m_crs_row = ROW;
-    m_crs_col = COL;
+    if( 0 <= m_crs_row && m_crs_row < m_num_rows
+     && 0 <= m_crs_col && m_crs_col < m_num_cols )
+    {
+      if( null != m_crs_pos_style_saved )
+      {
+        // Remove the old cursor:
+        PrintC( m_crs_row
+              , m_crs_col
+              , m_chars__w[m_crs_row][m_crs_col]
+              , m_crs_pos_style_saved );
+
+        m_styles_w[m_crs_row][m_crs_col] = m_crs_pos_style_saved;
+      }
+      m_crs_row = ROW;
+      m_crs_col = COL;
+
+      // Save the style at new cursor position:
+      m_crs_pos_style_saved = m_styles_w[m_crs_row][m_crs_col];
+
+      // Print the new cursor:
+      PrintC( m_crs_row
+            , m_crs_col
+            , m_chars__w[m_crs_row][m_crs_col]
+            , Style.CURSOR );
+
+      m_styles_w[m_crs_row][m_crs_col] = Style.CURSOR;
+    }
+  }
+  void Remove_Crs_Cell()
+  {
+    if( 0 <= m_crs_row && m_crs_row < m_num_rows
+     && 0 <= m_crs_col && m_crs_col < m_num_cols )
+    {
+      if( null != m_crs_pos_style_saved )
+      {
+        // Remove the old cursor:
+        PrintC( m_crs_row
+              , m_crs_col
+              , m_chars__w[m_crs_row][m_crs_col]
+              , m_crs_pos_style_saved );
+
+        m_styles_w[m_crs_row][m_crs_col] = m_crs_pos_style_saved;
+
+        m_crs_pos_style_saved = null;
+      }
+    }
+  }
+  public
+  void Add_Crs_Cell( final int ROW, final int COL )
+  {
+    if( 0 <= m_crs_row && m_crs_row < m_num_rows
+     && 0 <= m_crs_col && m_crs_col < m_num_cols )
+    {
+      m_crs_row = ROW;
+      m_crs_col = COL;
+
+      // Save the style at new cursor position:
+      m_crs_pos_style_saved = m_styles_w[m_crs_row][m_crs_col];
+
+      // Print the new cursor:
+      PrintC( m_crs_row
+            , m_crs_col
+            , m_chars__w[m_crs_row][m_crs_col]
+            , Style.CURSOR );
+
+      m_styles_w[m_crs_row][m_crs_col] = Style.CURSOR;
+    }
   }
 
   private
@@ -689,6 +686,47 @@ class ConsoleFx extends Canvas
         m_gc.fillText( m_text_chars[C], x_p_t, y_p_t, m_text_W );
       }
     }
+  }
+
+//void DrawImage( Image I, View V, int sx, int sy )
+//{
+//  final int row = V.Y()+1;
+//  final int col = V.X()+1;
+//  final int w_row = V.WorkingRows();
+//  final int w_col = V.WorkingCols();
+//
+//  final double sw = Math.min( w_col*m_text_W, I.getWidth() );
+//  final double sh = Math.min( w_row*m_text_H, I.getHeight() );
+//  final double dx = col*m_text_W;
+//  final double dy = row*m_text_H;
+//  final double dw = sw;
+//  final double dh = sh;
+//
+//  // Fill in background with gray:
+//  m_gc.setFill( m_d_gray );
+//  m_gc.fillRect( dx, dy, w_col*m_text_W, w_row*m_text_H );
+//
+//  m_gc.drawImage( I, sx, sy, sw, sh, dx, dy, dw, dh );
+//}
+  void DrawImage( Image I, View V, int sx, int sy, double zoom )
+  {
+    final int row = V.Y()+1;
+    final int col = V.X()+1;
+    final int w_row = V.WorkingRows();
+    final int w_col = V.WorkingCols();
+
+    final double dw = Math.min( w_col*m_text_W, I.getWidth()*zoom );
+    final double dh = Math.min( w_row*m_text_H, I.getHeight()*zoom );
+    final double sw = dw/zoom;
+    final double sh = dh/zoom;
+    final double dx = col*m_text_W;
+    final double dy = row*m_text_H;
+
+    // Fill in background with gray:
+    m_gc.setFill( m_d_gray );
+    m_gc.fillRect( dx, dy, w_col*m_text_W, w_row*m_text_H );
+
+    m_gc.drawImage( I, sx, sy, sw, sh, dx, dy, dw, dh );
   }
 
   void Set_Color_Scheme_1()
@@ -1062,61 +1100,6 @@ class ConsoleFx extends Canvas
     Change_Font( m_font_size, new_font_name );
   }
 
-  public boolean Update()
-  {
-    boolean output_something = false;
-
-    if( !m_get_from_dot_buf_n
-     && !m_get_from_dot_buf_l )
-    {
-      for( int row=0; row<m_num_rows; row++ )
-      {
-        final int col_st = m_min_touched[ row ];
-        final int col_fn = m_max_touched[ row ];
-
-        for( int col=col_st; col<col_fn; col++ )
-        {
-          final char  c_p = m_chars__p[row][col]; // char pending
-          final char  c_w = m_chars__w[row][col]; // char written
-          final Style s_p = m_styles_p[row][col]; // style pending
-          final Style s_w = m_styles_w[row][col]; // style written
-
-          if( c_p != c_w || s_p != s_w || s_w == Style.UNKNOWN )
-          {
-            PrintC( row, col, c_p, s_p );
-
-            m_chars__w[row][col] = c_p;
-            m_styles_w[row][col] = s_p;
-
-            output_something = true;
-          }
-        }
-        m_min_touched[ row ] = m_num_cols; // Nothing
-        m_max_touched[ row ] = 0;          // touched
-      }
-      Print_Cursor();
-    }
-    return output_something;
-  }
-  void Print_Cursor()
-  {
-    if( 0 <= m_crs_row && m_crs_row < m_num_rows
-     && 0 <= m_crs_col && m_crs_col < m_num_cols )
-    {
-      // Print the cursor:
-      PrintC( m_crs_row
-            , m_crs_col
-            , m_chars__w[m_crs_row][m_crs_col]
-            , Style.CURSOR );
-
-      m_min_touched[ m_crs_row ] = m_crs_col;   // Cursor
-      m_max_touched[ m_crs_row ] = m_crs_col+1; // touched
-
-      // This will cause the old cursor cell to be put back to
-      // its highlighed value on the next call of Update():
-      m_styles_w[m_crs_row][m_crs_col] = Style.CURSOR;
-    }
-  }
   public void set_save_2_vis_buf( final boolean save )
   {
     m_save_2_vis_buf = save;
@@ -1267,12 +1250,8 @@ class ConsoleFx extends Canvas
   int              m_num_cols; // Current num rows
   int              m_siz_rows; // Allocated num rows
   int              m_siz_cols; // Allocated num rows
-  char[][]         m_chars__p; // char pending
   char[][]         m_chars__w; // char written
-  Style[][]        m_styles_p; // style pending
   Style[][]        m_styles_w; // style written
-  int[]            m_min_touched;
-  int[]            m_max_touched;
 
   boolean          m_save_2_dot_buf_n; // Normal view
   boolean          m_save_2_dot_buf_l; // Line view
@@ -1294,6 +1273,7 @@ class ConsoleFx extends Canvas
   private int      m_map_buf_index;
   private int      m_crs_row;
   private int      m_crs_col;
+  private Style    m_crs_pos_style_saved;
   StringBuilder    m_sb = new StringBuilder();
   Clipboard        m_cb;
   ClipboardContent m_cbc;
