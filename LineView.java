@@ -28,7 +28,7 @@ import java.util.ArrayList;
 
 class LineView
 {
-  LineView( VisIF vis, FileBuf fb, ConsoleIF console, final char banner_delim )
+  LineView( VisIF vis, FileBuf fb, ConsoleFx console, final char banner_delim )
   {
     m_vis          = vis;
     m_fb           = fb;
@@ -66,9 +66,9 @@ class LineView
   }
 
   // Translates zero based working view row to zero based global row
-  int Row_Win_2_GL( final int win_row )
+  int GL_Row()
   {
-    return m_y + 1 + win_row;
+    return m_y;
   }
   // Translates zero based working view column to zero based global column
   int Col_Win_2_GL( final int win_col )
@@ -101,7 +101,7 @@ class LineView
 
   void Set_Console_CrsCell()
   {
-    m_console.Set_Crs_Cell( m_y, Col_Win_2_GL( m_crsCol ) );
+    m_console.Set_Crs_Cell( this, m_crsCol );
   }
 
   void ClearLine()
@@ -167,7 +167,7 @@ class LineView
     }
     for( ; col<WC; col++ )
     {
-      m_console.Set( G_ROW, Col_Win_2_GL( col ), ' ', Style.EMPTY );
+      m_console.Set( G_ROW, Col_Win_2_GL( col ), ' ', Style.NORMAL );
     }
   }
 
@@ -194,7 +194,7 @@ class LineView
   {
     Set_Console_CrsCell();
 
-    m_console.Update();
+  //m_console.Print_Cursor();
   }
 
   void GoDown( final int num )
@@ -370,7 +370,7 @@ class LineView
       m_console.Set( m_y, G_COL, 'E', Style.CONTROL );
     }
     m_console.Set( m_y, G_COL+1, m_banner_delim, Style.CONTROL );
-    m_console.Update();
+  //m_console.Print_Cursor();
   }
 
   void DisplayBanner_PrintCursor()
@@ -2549,8 +2549,7 @@ class LineView
 
     final int G_COL = m_x + 1;
     m_console.SetS( m_y, G_COL, m_cover_msg, Style.NORMAL );
-    m_console.Set_Crs_Cell( m_y, G_COL + m_cover_msg_len );
-    m_console.Update();
+    m_console.Set_Crs_Cell( this, m_cover_msg_len );
 
     m_vis.get_states().addFirst( m_run_cover_key );
   }
@@ -2582,7 +2581,7 @@ class LineView
 
           // Output cd and move cursor forward:
           m_console.Set( m_y, m_x + local_COL  , '*', Style.NORMAL );
-          m_console.Set_Crs_Cell( m_y, m_x + local_COL+1 );
+          m_console.Set_Crs_Cell( this, local_COL+1 );
         }
         else {
           if( 0 < m_sb.length() )
@@ -2590,14 +2589,13 @@ class LineView
             final int local_COL = Math.min( m_cover_msg_len+m_sb.length(), WC-1 );
 
             m_console.Set( m_y, m_x + local_COL+1, ' ', Style.NORMAL );
-            m_console.Set_Crs_Cell( m_y, m_x + local_COL );
-            m_console.Update();
+            m_console.Set_Crs_Cell( this, local_COL );
 
             m_sb.deleteCharAt( m_sb.length()-1 );
           }
         }
       }
-      m_console.Update();
+    //m_console.Update();
     }
   }
   void Do_Cover()
@@ -2646,7 +2644,7 @@ class LineView
 
   VisIF     m_vis;
   FileBuf   m_fb;
-  ConsoleIF m_console;
+  ConsoleFx m_console;
   int       m_x; // Top left x-position of buffer view in parent window
   int       m_y; // Top left y-position of buffer view in parent window
   final

@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javafx.scene.image.Image;
 
 class FileBuf
 {
@@ -2675,6 +2676,14 @@ class FileBuf
     }
     return uncommented;
   }
+  void Create_Image()
+  {
+    if( null == m_image )
+    {
+      String url = "file:" + m_pname;
+      m_image = new Image( url );
+    }
+  }
   VisIF                 m_vis;   // Not sure if we need this or should use m_views
   final String          m_pname; // Full path      = m_dname + m_fname
   final String          m_dname; // Full directory = m_pname - m_fname, (for directories this is the same a m_pname)
@@ -2707,5 +2716,6 @@ class FileBuf
   Pattern               m_pattern; // Will hold compiled regex pattern
   ArrayList<Boolean>    m_lineRegexsValid = new ArrayList<>();
   Line                  m_line_buf = new Line();
+  Image                 m_image;
 }
 
