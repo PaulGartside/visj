@@ -238,8 +238,8 @@ public class VisFx extends Application
     // Command buffer, SHELL_FILE(4)
     FileBuf fb = new FileBuf( this, SHELL_BUF_NAME, false );
 
-    // Add ######################################
-    String divider = "######################################";
+    // Add ########################################
+    String divider = "########################################";
     fb.PushLine( divider );
 
     // Add an empty line
@@ -2626,18 +2626,43 @@ public class VisFx extends Application
 //  else                   cv.GoToBegOfNextLine();
 //}
 
+//void Handle_Return()
+//{
+//  View cv = CV();
+//
+//  if( cv.m_in_diff ) m_diff.GoToBegOfNextLine();
+//  else {
+//    if( BE_FILE == Curr_FileNum() )
+//    {
+//      // In buffer editor, so go to end of next line:
+//      cv.GoToEndOfNextLine();
+//    }
+//    else if( SLASH_FILE == Curr_FileNum() )
+//    {
+//      // In search buffer, search for pattern on current line:
+//      Line line = cv.m_fb.GetLine( cv.CrsLine() );
+//
+//      Handle_Slash_GotPattern( line.toString(), false );
+//    }
+//    else {
+//      // Normal case:
+//      cv.GoToBegOfNextLine();
+//    }
+//  }
+//}
+
   void Handle_Return()
   {
     View cv = CV();
 
-    if( cv.m_in_diff ) m_diff.GoToBegOfNextLine();
+    if( cv.m_in_diff ) m_diff.GoToEndOfNextLine();
     else {
-      if( BE_FILE == Curr_FileNum() )
-      {
-        // In buffer editor, so go to end of next line:
-        cv.GoToEndOfNextLine();
-      }
-      else if( SLASH_FILE == Curr_FileNum() )
+    //if( BE_FILE == Curr_FileNum() )
+    //{
+    //  // In buffer editor, so go to end of next line:
+    //  cv.GoToEndOfNextLine();
+    //}
+      if( SLASH_FILE == Curr_FileNum() )
       {
         // In search buffer, search for pattern on current line:
         Line line = cv.m_fb.GetLine( cv.CrsLine() );
@@ -2646,7 +2671,7 @@ public class VisFx extends Application
       }
       else {
         // Normal case:
-        cv.GoToBegOfNextLine();
+        cv.GoToEndOfNextLine();
       }
     }
   }

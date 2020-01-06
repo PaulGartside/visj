@@ -48,28 +48,28 @@ abstract class Highlight_Base
                           , final int fn )
   {
     final int NUM_LINES = m_fb.NumLines();
- 
+
     for( int l=st_line; l<fn && l<NUM_LINES; l++ )
     {
       final Line lr = m_fb.GetLine( l );
       final Line sr = m_fb.GetStyle( l );
       final int LL = lr.length();
- 
+
       final int st_pos = st_line==l ? st_char : 0;
       final int fn_pos = 0<LL ? LL-1 : 0;
- 
+
       for( int p=st_pos; p<=fn_pos && p<LL; p++ )
       {
         boolean key_st = 0==sr.charAt(p)
                       && Utils.line_start_or_prev_C_non_ident( lr, p );
- 
+
         for( int h=0; key_st && h<HiPairs.length; h++ )
         {
           boolean matches = true;
           final String         key     = HiPairs[h].m_key;
           final Highlight_Type HI_TYPE = HiPairs[h].m_val;
           final int KEY_LEN = key.length();
- 
+
           for( int k=0; matches && (p+k)<LL && k<KEY_LEN; k++ )
           {
             if( 0!=sr.charAt(p+k) || key.charAt(k) != lr.charAt(p+k) ) matches = false;
@@ -101,28 +101,28 @@ abstract class Highlight_Base
                              , final int    fn )
   {
     final int NUM_LINES = m_fb.NumLines();
- 
+
     for( int l=st.crsLine; l<fn && l<NUM_LINES; l++ )
     {
       final Line lr = m_fb.GetLine( l );
       final Line sr = m_fb.GetStyle( l );
       final int LL = lr.length();
- 
+
       final int st_pos = st.crsLine==l ? st.crsChar : 0;
       final int fn_pos = 0<LL ? LL-1 : 0;
- 
+
       for( int p=st_pos; p<=fn_pos && p<LL; p++ )
       {
         boolean key_st = 0==sr.charAt(p)
                       && Utils.line_start_or_prev_C_non_ident( lr, p );
- 
+
         for( int h=0; key_st && h<HiPairs.length; h++ )
         {
           boolean matches = true;
           final String         key     = HiPairs[h].m_key;
           final Highlight_Type HI_TYPE = HiPairs[h].m_val;
           final int KEY_LEN = key.length();
- 
+
           for( int k=0; matches && (p+k)<LL && k<KEY_LEN; k++ )
           {
             final char  key_char = Character.toLowerCase( key.charAt(k) );

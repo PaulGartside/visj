@@ -214,8 +214,8 @@ public class VisSw implements VisIF
     // Command buffer, SHELL_FILE(4)
     FileBuf fb = new FileBuf( this, SHELL_BUF_NAME, false );
 
-    // Add ######################################
-    String divider = "######################################";
+    // Add ########################################
+    String divider = "########################################";
     fb.PushLine( divider );
 
     // Add an empty line

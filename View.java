@@ -347,12 +347,18 @@ class View
       final int G_ROW = Row_Win_2_GL( row );
 
       int col=0;
+      // In visual mode, empty line gets one highlighted space at beginning:
+      if( 0 == LL && 0 == m_leftChar && InVisualArea( k, 0 ) )
+      {
+        m_console.Set( G_ROW, Char_2_GL( 0 ), ' ', Style.RV_NORMAL );
+        col++;
+      }
       for( int i=m_leftChar; i<LL && col<WC; i++, col++ )
       {
-        final Style s = Get_Style( k, i );
+        final Style S = Get_Style( k, i );
         final char  C = m_fb.Get( k, i );
 
-        PrintWorkingView_Set( LL, G_ROW, col, i, C, s );
+        PrintWorkingView_Set( LL, G_ROW, col, i, C, S );
       }
       for( ; col<WC; col++ )
       {
@@ -377,7 +383,7 @@ class View
                            , final int   col
                            , final int   i
                            , final char  C
-                           , final Style s )
+                           , final Style S )
   {
     if( '\r' == C && i==(LL-1) )
     {
@@ -385,7 +391,7 @@ class View
       m_console.Set( G_ROW, Col_Win_2_GL( col ), ' ', Style.NORMAL );
     }
     else {
-      m_console.Set( G_ROW, Col_Win_2_GL( col ), C, s );
+      m_console.Set( G_ROW, Col_Win_2_GL( col ), C, S );
     }
   }
 
@@ -486,24 +492,30 @@ class View
   }
   void PrintCmdLine()
   {
-    final int CMD_LINE_ROW = Cmd__Line_Row();
+    final int G_ROW = Cmd__Line_Row();
+    final int G_COL = Col_Win_2_GL( 0 );
     final int WC = WorkingCols();
     int col=0;
     // Draw insert banner if needed
     if( m_inInsertMode )
     {
       col=10; // Strlen of "--INSERT--"
-      m_console.SetS( CMD_LINE_ROW, Col_Win_2_GL( 0 ), "--INSERT--", Style.BANNER );
+      m_console.SetS( G_ROW, G_COL, "--INSERT--", Style.BANNER );
     }
     else if( m_inReplaceMode )
     {
       col=11; // Strlen of "--REPLACE--"
-      m_console.SetS( CMD_LINE_ROW, Col_Win_2_GL( 0 ), "--REPLACE--", Style.BANNER );
+      m_console.SetS( G_ROW, G_COL, "--REPLACE--", Style.BANNER );
+    }
+    else if( m_inVisualMode )
+    {
+      col=10; // Strlen of "--VISUAL--"
+      m_console.SetS( G_ROW, G_COL, "--VISUAL--", Style.BANNER );
     }
     else if( m_vis.get_run_mode() && m_vis.CV() == this )
     {
       col=11; // Strlen of "--RUNNING--"
-      m_console.SetS( CMD_LINE_ROW, Col_Win_2_GL( 0 ), "--RUNNING--", Style.BANNER );
+      m_console.SetS( G_ROW, G_COL, "--RUNNING--", Style.BANNER );
     }
     else if( 0 < m_cmd_line_sb.length() )
     {
@@ -511,13 +523,13 @@ class View
       for( int k=0; k<col && k<WC; k++ )
       {
         final char C = m_cmd_line_sb.charAt(k);
-        m_console.Set( CMD_LINE_ROW, Col_Win_2_GL( k ), C, Style.NORMAL );
+        m_console.Set( G_ROW, Col_Win_2_GL( k ), C, Style.NORMAL );
       }
     }
 
     for( ; col<WC; col++ )
     {
-      m_console.Set( CMD_LINE_ROW, Col_Win_2_GL( col ), ' ', Style.NORMAL );
+      m_console.Set( G_ROW, Col_Win_2_GL( col ), ' ', Style.NORMAL );
     }
   }
   void PrintCursor()
@@ -976,12 +988,8 @@ class View
   {
     if( m_console.get_from_dot_buf() ) return;
 
-    // Command line row in window:
-    final int WIN_ROW = WorkingRows() + 2;
-    final int WIN_COL = 0;
-
-    final int G_ROW = Row_Win_2_GL( WIN_ROW );
-    final int G_COL = Col_Win_2_GL( WIN_COL );
+    final int G_ROW = Cmd__Line_Row();
+    final int G_COL = Col_Win_2_GL( 0 );
 
     if( m_inInsertMode )
     {
@@ -1196,34 +1204,61 @@ class View
       }
     }
     else { // Multiple lines
-      // Write out first line:
-      final int OCLL = m_fb.LineLen( OCL ); // Old cursor line length
-      final int END_FIRST_LINE = Math.min( RightChar()+1, OCLL );
-      for( int k=OCP; k<END_FIRST_LINE; k++ )
+      GoToCrsPos_WV_Forward_FirstLine( OCL, OCP );
+      GoToCrsPos_WV_Forward_MiddleLines( OCL, NCL );
+      GoToCrsPos_WV_Forward_LastLine( NCL, NCP );
+    }
+  }
+  void GoToCrsPos_WV_Forward_FirstLine( final int OCL, final int OCP )
+  {
+    // Write out first line:
+    final int OCLL = m_fb.LineLen( OCL ); // Old cursor line length
+    final int END_FIRST_LINE = Math.min( RightChar()+1, OCLL );
+
+    // Empty line gets one highlighted space at beginning:
+    if( OCLL == 0 && m_leftChar == 0 )
+    {
+      final Style S = InVisualArea( OCL, 0 ) ? Style.RV_NORMAL : Style.EMPTY;
+      m_console.Set( Line_2_GL( OCL ), Char_2_GL( 0 ), ' ', S );
+    }
+    for( int k=OCP; k<END_FIRST_LINE; k++ )
+    {
+      final char C = m_fb.Get( OCL, k );
+      m_console.Set( Line_2_GL( OCL ), Char_2_GL( k ), C, Get_Style(OCL,k) );
+    }
+  }
+  void GoToCrsPos_WV_Forward_MiddleLines( final int OCL, final int NCL )
+  {
+    // Write out intermediate lines:
+    for( int l=OCL+1; l<NCL; l++ )
+    {
+      final int LL = m_fb.LineLen( l ); // Line length
+      final int END_OF_LINE = Math.min( RightChar()+1, LL );
+
+      // Empty line gets one highlighted space at beginning:
+      if( LL == 0 && m_leftChar == 0 )
       {
-        char C = m_fb.Get( OCL, k );
-        m_console.Set( Line_2_GL( OCL ), Char_2_GL( k ), C, Get_Style(OCL,k) );
+        final Style S = InVisualArea( l, 0 ) ? Style.RV_NORMAL : Style.EMPTY;
+        m_console.Set( Line_2_GL( l ), Char_2_GL( 0 ), ' ', S );
       }
-      // Write out intermediate lines:
-      for( int l=OCL+1; l<NCL; l++ )
+      for( int k=m_leftChar; k<END_OF_LINE; k++ )
       {
-        final int LL = m_fb.LineLen( l ); // Line length
-        final int END_OF_LINE = Math.min( RightChar()+1, LL );
-        for( int k=m_leftChar; k<END_OF_LINE; k++ )
-        {
-          char C = m_fb.Get( l, k );
-          m_console.Set( Line_2_GL( l ), Char_2_GL( k ), C, Get_Style(l,k) );
-        }
+        final char C = m_fb.Get( l, k );
+        m_console.Set( Line_2_GL( l ), Char_2_GL( k ), C, Get_Style(l,k) );
       }
-      // Write out last line:
-      // Print from beginning of next line to new cursor position:
-      final int NCLL = m_fb.LineLen( NCL ); // Line length
-      final int END_LAST_LINE = Math.min( NCLL, NCP );
-      for( int k=m_leftChar; k<END_LAST_LINE; k++ )
-      {
-        char C = m_fb.Get( NCL, k );
-        m_console.Set( Line_2_GL( NCL ), Char_2_GL( k ), C, Get_Style(NCL,k)  );
-      }
+    }
+  }
+  void GoToCrsPos_WV_Forward_LastLine( final int NCL, final int NCP )
+  {
+    // Write out last line:
+    // Print from beginning of next line to new cursor position:
+    final int NCLL = m_fb.LineLen( NCL ); // Line length
+    final int END_LAST_LINE = Math.min( NCLL, NCP );
+
+    for( int k=m_leftChar; k<END_LAST_LINE; k++ )
+    {
+      final char C = m_fb.Get( NCL, k );
+      m_console.Set( Line_2_GL( NCL ), Char_2_GL( k ), C, Get_Style(NCL,k)  );
     }
   }
 
@@ -1237,48 +1272,76 @@ class View
       final int LL = m_fb.LineLen( OCL ); // Line length
       if( 0<LL ) {
         final int START = Math.min( OCP, LL-1 );
+
         for( int k=START; NCP<k; k-- )
         {
-          char C = m_fb.Get( OCL, k );
+          final char C = m_fb.Get( OCL, k );
           m_console.Set( Line_2_GL( OCL ), Char_2_GL( k ), C, Get_Style(OCL,k) );
         }
       }
     }
     else { // Multiple lines
-      // Write out first line:
-      final int OCLL = m_fb.LineLen( OCL ); // Old cursor line length
-      if( 0<OCLL ) {
-        for( int k=Math.min(OCP,OCLL-1); m_leftChar<=k; k-- )
-        {
-          char C = m_fb.Get( OCL, k );
-          m_console.Set( Line_2_GL( OCL ), Char_2_GL( k ), C, Get_Style(OCL,k) );
-        }
-      }
-      // Write out intermediate lines:
-      for( int l=OCL-1; NCL<l; l-- )
-      {
-        final int LL = m_fb.LineLen( l ); // Line length
-        if( 0<LL ) {
-          final int END_OF_LINE = Math.min( RightChar(), LL-1 );
-          for( int k=END_OF_LINE; m_leftChar<=k; k-- )
-          {
-            char C = m_fb.Get( l, k );
-            m_console.Set( Line_2_GL( l ), Char_2_GL( k ), C, Get_Style(l,k) );
-          }
-        }
-      }
-      // Write out last line:
-      // Go down to beginning of last line:
-      final int NCLL = m_fb.LineLen( NCL ); // New cursor line length
-      if( 0<NCLL ) {
-        final int END_LAST_LINE = Math.min( RightChar(), NCLL-1 );
+      GoToCrsPos_WV_Backward_FirstLine( OCL, OCP );
+      GoToCrsPos_WV_Backward_MiddleLines( OCL, NCL );
+      GoToCrsPos_WV_Backward_LastLine( NCL, NCP );
+    }
+  }
+  void GoToCrsPos_WV_Backward_FirstLine( final int OCL, final int OCP )
+  {
+    // Write out first line:
+    final int OCLL = m_fb.LineLen( OCL ); // Old cursor line length
 
-        // Print from beginning of next line to new cursor position:
-        for( int k=END_LAST_LINE; NCP<=k; k-- )
+    // Empty line gets one highlighted space at beginning:
+    if( OCLL == 0 && m_leftChar == 0 )
+    {
+      final Style S = InVisualArea( OCL, 0 ) ? Style.RV_NORMAL : Style.EMPTY;
+      m_console.Set( Line_2_GL( OCL ), Char_2_GL( 0 ), ' ', S );
+    }
+    if( 0<OCLL ) {
+      for( int k=Math.min(OCP,OCLL-1); m_leftChar<=k; k-- )
+      {
+        final char C = m_fb.Get( OCL, k );
+        m_console.Set( Line_2_GL( OCL ), Char_2_GL( k ), C, Get_Style(OCL,k) );
+      }
+    }
+  }
+  void GoToCrsPos_WV_Backward_MiddleLines( final int OCL, final int NCL )
+  {
+    // Write out intermediate lines:
+    for( int l=OCL-1; NCL<l; l-- )
+    {
+      final int LL = m_fb.LineLen( l ); // Line length
+
+      // Empty line gets one highlighted space at beginning:
+      if( LL == 0 && m_leftChar == 0 )
+      {
+        final Style S = InVisualArea( OCL, 0 ) ? Style.RV_NORMAL : Style.EMPTY;
+        m_console.Set( Line_2_GL( OCL ), Char_2_GL( 0 ), ' ', S );
+      }
+      if( 0<LL ) {
+        final int END_OF_LINE = Math.min( RightChar(), LL-1 );
+
+        for( int k=END_OF_LINE; m_leftChar<=k; k-- )
         {
-          char C = m_fb.Get( NCL, k );
-          m_console.Set( Line_2_GL( NCL ), Char_2_GL( k ), C, Get_Style(NCL,k) );
+          final char C = m_fb.Get( l, k );
+          m_console.Set( Line_2_GL( l ), Char_2_GL( k ), C, Get_Style(l,k) );
         }
+      }
+    }
+  }
+  void GoToCrsPos_WV_Backward_LastLine( final int NCL, final int NCP )
+  {
+    // Write out last line:
+    // Go down to beginning of last line:
+    final int NCLL = m_fb.LineLen( NCL ); // New cursor line length
+    if( 0<NCLL ) {
+      final int END_LAST_LINE = Math.min( RightChar(), NCLL-1 );
+
+      // Print from beginning of next line to new cursor position:
+      for( int k=END_LAST_LINE; NCP<=k; k-- )
+      {
+        final char C = m_fb.Get( NCL, k );
+        m_console.Set( Line_2_GL( NCL ), Char_2_GL( k ), C, Get_Style(NCL,k) );
       }
     }
   }
@@ -1367,42 +1430,87 @@ class View
     }
     return false;
   }
+//boolean InVisualBlock( final int line, final int pos )
+//{
+//  return ( v_st_line <= line && line <= v_fn_line && v_st_char <= pos  && pos  <= v_fn_char ) // bot rite
+//      || ( v_st_line <= line && line <= v_fn_line && v_fn_char <= pos  && pos  <= v_st_char ) // bot left
+//      || ( v_fn_line <= line && line <= v_st_line && v_st_char <= pos  && pos  <= v_fn_char ) // top rite
+//      || ( v_fn_line <= line && line <= v_st_line && v_fn_char <= pos  && pos  <= v_st_char );// top left
+//}
   boolean InVisualBlock( final int line, final int pos )
   {
-    return ( v_st_line <= line && line <= v_fn_line && v_st_char <= pos  && pos  <= v_fn_char ) // bot rite
-        || ( v_st_line <= line && line <= v_fn_line && v_fn_char <= pos  && pos  <= v_st_char ) // bot left
-        || ( v_fn_line <= line && line <= v_st_line && v_st_char <= pos  && pos  <= v_fn_char ) // top rite
-        || ( v_fn_line <= line && line <= v_st_line && v_fn_char <= pos  && pos  <= v_st_char );// top left
+    final boolean st_line_fn = v_st_line <= line && line <= v_fn_line;
+    final boolean fn_line_st = v_fn_line <= line && line <= v_st_line;
+    final boolean st_pos_fn  = v_st_char <= pos  && pos  <= v_fn_char;
+    final boolean fn_pos_st  = v_fn_char <= pos  && pos  <= v_st_char;
+
+    return ( st_line_fn && st_pos_fn ) // cursor at bot rite
+        || ( st_line_fn && fn_pos_st ) // cursor at bot left
+        || ( fn_line_st && st_pos_fn ) // cursor at top rite
+        || ( fn_line_st && fn_pos_st );// cursor at top left
   }
+//boolean InVisualStFn( final int line, final int pos )
+//{
+//  if( v_st_line == line && line == v_fn_line )
+//  {
+//    return (v_st_char <= pos && pos <= v_fn_char)
+//        || (v_fn_char <= pos && pos <= v_st_char);
+//  }
+//  else if( (v_st_line < line && line < v_fn_line)
+//        || (v_fn_line < line && line < v_st_line) )
+//  {
+//    return true;
+//  }
+//  else if( v_st_line == line && line < v_fn_line )
+//  {
+//    return v_st_char <= pos;
+//  }
+//  else if( v_fn_line == line && line < v_st_line )
+//  {
+//    return v_fn_char <= pos;
+//  }
+//  else if( v_st_line < line && line == v_fn_line )
+//  {
+//    return pos <= v_fn_char;
+//  }
+//  else if( v_fn_line < line && line == v_st_line )
+//  {
+//    return pos <= v_st_char;
+//  }
+//  return false;
+//}
   boolean InVisualStFn( final int line, final int pos )
   {
-    if( v_st_line == line && line == v_fn_line )
+    boolean in = false;
+
+    // Check for most common case first:
+    if( (v_st_line < line && line < v_fn_line)
+     || (v_fn_line < line && line < v_st_line) )
     {
-      return (v_st_char <= pos && pos <= v_fn_char)
-          || (v_fn_char <= pos && pos <= v_st_char);
+      in = true;
     }
-    else if( (v_st_line < line && line < v_fn_line)
-          || (v_fn_line < line && line < v_st_line) )
+    else if( v_st_line == line && line == v_fn_line )
     {
-      return true;
+      in = (v_st_char <= pos && pos <= v_fn_char)
+        || (v_fn_char <= pos && pos <= v_st_char);
     }
     else if( v_st_line == line && line < v_fn_line )
     {
-      return v_st_char <= pos;
+      in = v_st_char <= pos;
     }
     else if( v_fn_line == line && line < v_st_line )
     {
-      return v_fn_char <= pos;
+      in = v_fn_char <= pos;
     }
     else if( v_st_line < line && line == v_fn_line )
     {
-      return pos <= v_fn_char;
+      in = pos <= v_fn_char;
     }
     else if( v_fn_line < line && line == v_st_line )
     {
-      return pos <= v_st_char;
+      in = pos <= v_st_char;
     }
-    return false;
+    return in;
   }
   void SetTilePos( final Tile_Pos tp )
   {

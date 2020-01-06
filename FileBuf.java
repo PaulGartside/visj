@@ -367,7 +367,13 @@ class FileBuf
      || m_pname.endsWith(".xml.old")
      || m_pname.endsWith(".xml.in"    )
      || m_pname.endsWith(".xml.in.new")
-     || m_pname.endsWith(".xml.in.old") )
+     || m_pname.endsWith(".xml.in.old")
+     || m_pname.endsWith(".xs"    )
+     || m_pname.endsWith(".xs.new")
+     || m_pname.endsWith(".xs.old")
+     || m_pname.endsWith(".xsd"    )
+     || m_pname.endsWith(".xsd.new")
+     || m_pname.endsWith(".xsd.old") )
     {
       m_file_type = File_Type.XML;
       m_Hi = new Highlight_XML( this );

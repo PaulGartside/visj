@@ -632,19 +632,27 @@ class Diff
   {
     final int vl = ViewLine( pV, dl ); //(vl=view line)
     final int LL = pV.m_fb.LineLen( vl );
+
     int col = 0;
+    // In visual mode, empty line gets one highlighted space at beginning:
+    if( 0 == LL && 0 == m_leftChar && InVisualArea( pV, dl, 0 ) )
+    {
+      m_console.Set( G_ROW, Char_2_GL( pV, 0 ), ' ', Style.RV_NORMAL );
+      col++;
+    }
     for( int i=m_leftChar; i<LL && col<WC; i++, col++ )
     {
-      char  c = pV.m_fb.Get( vl, i );
-      Style s = Get_Style( pV, dl, vl, i );
+      final char  C = pV.m_fb.Get( vl, i );
+            Style S = Get_Style( pV, dl, vl, i );
 
-      if( DT == Diff_Type.INSERTED ) s = DiffStyle( s );
-      pV.PrintWorkingView_Set( LL, G_ROW, col, i, c, s );
+      if( DT == Diff_Type.INSERTED ) S = DiffStyle( S );
+
+      pV.PrintWorkingView_Set( LL, G_ROW, col, i, C, S );
     }
     for( ; col<WC; col++ )
     {
-      m_console.Set( G_ROW, Col_Win_2_GL( pV, col ), ' '
-                   , DT==Diff_Type.SAME ? Style.EMPTY : Style.DIFF_NORMAL );
+      final Style S = DT==Diff_Type.SAME ? Style.EMPTY : Style.DIFF_NORMAL;
+      m_console.Set( G_ROW, Col_Win_2_GL( pV, col ), ' ', S );
     }
   }
 
@@ -1729,66 +1737,103 @@ class Diff
   void GoToCrsPos_WV_Forward( final int OCL, final int OCP
                             , final int NCL, final int NCP )
   {
-    View    pV  = m_vis.CV();
-    FileBuf pfb = pV.m_fb;
-    // Convert OCL and NCL, which are diff lines, to view lines:
-    final int OCLv = ViewLine( pV, OCL );
-    final int NCLv = ViewLine( pV, NCL );
-
     if( OCL == NCL ) // Only one line:
     {
+      View    pV  = m_vis.CV();
+      FileBuf pfb = pV.m_fb;
+      // Convert OCL and NCL, which are diff lines, to view lines:
+      final int OCLv = ViewLine( pV, OCL );
+
       for( int k=OCP; k<NCP; k++ )
       {
-        char C = pfb.Get( OCLv, k );
-        m_console.Set( Line_2_GL( pV, OCL ), Char_2_GL( pV, k ), C
-                     , Get_Style(pV,OCL,OCLv,k) );
+        final char C = pfb.Get( OCLv, k );
+        m_console.Set( Line_2_GL( pV, OCL ), Char_2_GL( pV, k )
+                     , C, Get_Style(pV,OCL,OCLv,k) );
       }
     }
     else { // Multiple lines
-      // Write out first line:
-      final Diff_Type FIRST_LINE_DIFF_TYPE = DiffType( pV, OCL );
-      if( FIRST_LINE_DIFF_TYPE != Diff_Type.DELETED )
+      GoToCrsPos_WV_Forward_FirstLine( OCL, OCP );
+      GoToCrsPos_WV_Forward_MiddleLines( OCL, NCL );
+      GoToCrsPos_WV_Forward_LastLine( NCL, NCP );
+    }
+  }
+  void GoToCrsPos_WV_Forward_FirstLine( final int OCL, final int OCP )
+  {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+    // Convert OCL, which is a diff line, to view line:
+    final int OCLv = ViewLine( pV, OCL );
+
+    final Diff_Type FIRST_LINE_DIFF_TYPE = DiffType( pV, OCL );
+
+    if( FIRST_LINE_DIFF_TYPE != Diff_Type.DELETED )
+    {
+      final int OCLL = pfb.LineLen( OCLv ); // Old cursor line length
+      final int END_FIRST_LINE = Math.min( RightChar( pV )+1, OCLL );
+
+      // Empty line gets one highlighted space at beginning:
+      if( OCLL == 0 && m_leftChar == 0 )
       {
-        final int OCLL = pfb.LineLen( OCLv ); // Old cursor line length
-        final int END_FIRST_LINE = Math.min( RightChar( pV )+1, OCLL );
-        for( int k=OCP; k<END_FIRST_LINE; k++ )
+        final Style S = InVisualArea( pV, OCL, 0 ) ? Style.RV_NORMAL : Style.EMPTY;
+        m_console.Set( Line_2_GL( pV, OCL ), Char_2_GL( pV, 0 ), ' ', S );
+      }
+      for( int k=OCP; k<END_FIRST_LINE; k++ )
+      {
+        final char C = pfb.Get( OCLv, k );
+        m_console.Set( Line_2_GL( pV, OCL ), Char_2_GL( pV, k )
+                     , C, Get_Style(pV,OCL,OCLv,k) );
+      }
+    }
+  }
+  void GoToCrsPos_WV_Forward_MiddleLines( final int OCL, final int NCL )
+  {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+
+    for( int l=OCL+1; l<NCL; l++ )
+    {
+      final Diff_Type LINE_DIFF_TYPE = DiffType( pV, l );
+      if( LINE_DIFF_TYPE != Diff_Type.DELETED )
+      {
+        final int Vl = ViewLine( pV, l );
+        final int LL = pfb.LineLen( Vl ); // Line length
+        final int END_OF_LINE = Math.min( RightChar( pV )+1, LL );
+
+        // Empty line gets one highlighted space at beginning:
+        if( LL == 0 && m_leftChar == 0 )
         {
-          char C = pfb.Get( OCLv, k );
-          m_console.Set( Line_2_GL( pV, OCL ), Char_2_GL( pV, k ), C
-                       , Get_Style(pV,OCL,OCLv,k) );
+          final Style S = InVisualArea( pV, l, 0 ) ? Style.RV_NORMAL : Style.EMPTY;
+          m_console.Set( Line_2_GL( pV, l ), Char_2_GL( pV, 0 ), ' ', S );
+        }
+        for( int k=m_leftChar; k<END_OF_LINE; k++ )
+        {
+          final char C = pfb.Get( Vl, k );
+          m_console.Set( Line_2_GL( pV, l ), Char_2_GL( pV, k )
+                       , C, Get_Style(pV,l,Vl,k) );
         }
       }
-      // Write out intermediate lines:
-      for( int l=OCL+1; l<NCL; l++ )
+    }
+  }
+  void GoToCrsPos_WV_Forward_LastLine( final int NCL, final int NCP )
+  {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+    // Convert NCL, which is a diff line, to view line:
+    final int NCLv = ViewLine( pV, NCL );
+
+    final Diff_Type LAST_LINE_DIFF_TYPE = DiffType( pV, NCL );
+
+    if( LAST_LINE_DIFF_TYPE != Diff_Type.DELETED )
+    {
+      // Print from beginning of next line to new cursor position:
+      final int NCLL = pfb.LineLen( NCLv ); // Line length
+      final int END_LAST_LINE = Math.min( NCLL, NCP );
+
+      for( int k=m_leftChar; k<END_LAST_LINE; k++ )
       {
-        final Diff_Type LINE_DIFF_TYPE = DiffType( pV, l );
-        if( LINE_DIFF_TYPE != Diff_Type.DELETED )
-        {
-          // Convert OCL, which is diff line, to view line
-          final int Vl = ViewLine( pV, l );
-          final int LL = pfb.LineLen( Vl ); // Line length
-          final int END_OF_LINE = Math.min( RightChar( pV )+1, LL );
-          for( int k=m_leftChar; k<END_OF_LINE; k++ )
-          {
-            char C = pfb.Get( Vl, k );
-            m_console.Set( Line_2_GL( pV, l ), Char_2_GL( pV, k ), C
-                         , Get_Style(pV,l,Vl,k) );
-          }
-        }
-      }
-      // Write out last line:
-      final Diff_Type LAST_LINE_DIFF_TYPE = DiffType( pV, NCL );
-      if( LAST_LINE_DIFF_TYPE != Diff_Type.DELETED )
-      {
-        // Print from beginning of next line to new cursor position:
-        final int NCLL = pfb.LineLen( NCLv ); // Line length
-        final int END_LAST_LINE = Math.min( NCLL, NCP );
-        for( int k=m_leftChar; k<END_LAST_LINE; k++ )
-        {
-          char C = pfb.Get( NCLv, k );
-          m_console.Set( Line_2_GL( pV, NCL ), Char_2_GL( pV, k ), C
-                       , Get_Style(pV,NCL,NCLv,k)  );
-        }
+        final char C = pfb.Get( NCLv, k );
+        m_console.Set( Line_2_GL( pV, NCL ), Char_2_GL( pV, k )
+                     , C, Get_Style(pV,NCL,NCLv,k)  );
       }
     }
   }
@@ -1798,71 +1843,115 @@ class Diff
   void GoToCrsPos_WV_Backward( final int OCL, final int OCP
                              , final int NCL, final int NCP )
   {
-    View    pV  = m_vis.CV();
-    FileBuf pfb = pV.m_fb;
-    // Convert OCL and NCL, which are diff lines, to view lines:
-    final int OCLv = ViewLine( pV, OCL );
-    final int NCLv = ViewLine( pV, NCL );
-
     if( OCL == NCL ) // Only one line:
     {
+      View    pV  = m_vis.CV();
+      FileBuf pfb = pV.m_fb;
+      // Convert OCL and NCL, which are diff lines, to view lines:
+      final int OCLv = ViewLine( pV, OCL );
+
       for( int k=OCP; NCP<k; k-- )
       {
-        char C = pfb.Get( OCLv, k );
-        m_console.Set( Line_2_GL( pV, OCL ), Char_2_GL( pV, k ), C
-                     , Get_Style(pV,OCL,OCLv,k) );
+        final char C = pfb.Get( OCLv, k );
+        m_console.Set( Line_2_GL( pV, OCL ), Char_2_GL( pV, k )
+                     , C, Get_Style(pV,OCL,OCLv,k) );
       }
     }
     else { // Multiple lines
-      // Write out first line:
-      final Diff_Type FIRST_LINE_DIFF_TYPE = DiffType( pV, OCL );
-      if( FIRST_LINE_DIFF_TYPE != Diff_Type.DELETED )
+      GoToCrsPos_WV_Backward_FirstLine( OCL, OCP );
+      GoToCrsPos_WV_Backward_MiddleLines( OCL, NCL );
+      GoToCrsPos_WV_Backward_LastLine( NCL, NCP );
+    }
+  }
+  void GoToCrsPos_WV_Backward_FirstLine( final int OCL, final int OCP )
+  {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+    // Convert OCL, which is a diff line, to view line:
+    final int OCLv = ViewLine( pV, OCL );
+
+    final Diff_Type FIRST_LINE_DIFF_TYPE = DiffType( pV, OCL );
+
+    if( FIRST_LINE_DIFF_TYPE != Diff_Type.DELETED )
+    {
+      final int OCLL = pfb.LineLen( OCLv ); // Old cursor line length
+      final int RIGHT_MOST_POS = Math.min( OCP, 0<OCLL ? OCLL-1 : 0 );
+
+      for( int k=RIGHT_MOST_POS; m_leftChar<k; k-- )
       {
-        final int OCLL = pfb.LineLen( OCLv ); // Old cursor line length
-        final int RIGHT_MOST_POS = Math.min( OCP, 0<OCLL ? OCLL-1 : 0 );
-        for( int k=RIGHT_MOST_POS; m_leftChar<k; k-- )
+        final char C = pfb.Get( OCLv, k );
+        m_console.Set( Line_2_GL( pV, OCL ), Char_2_GL( pV, k )
+                     , C, Get_Style(pV,OCL,OCLv,k) );
+      }
+      if( m_leftChar < OCLL ) {
+        final char C = pfb.Get( OCLv, m_leftChar );
+        m_console.Set( Line_2_GL( pV, OCL ), Char_2_GL( pV, m_leftChar )
+                     , C, Get_Style(pV,OCL,OCLv,m_leftChar) );
+      }
+      // Empty line gets one highlighted space at beginning:
+      if( OCLL == 0 && m_leftChar == 0 )
+      {
+        final Style S = InVisualArea( pV, OCL, 0 ) ? Style.RV_NORMAL : Style.EMPTY;
+        m_console.Set( Line_2_GL( pV, OCL ), Char_2_GL( pV, 0 ), ' ', S );
+      }
+    }
+  }
+  void GoToCrsPos_WV_Backward_MiddleLines( final int OCL, final int NCL )
+  {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+
+    // Write out intermediate lines:
+    for( int l=OCL-1; NCL<l; l-- )
+    {
+      final Diff_Type LINE_DIFF_TYPE = DiffType( pV, l );
+      if( LINE_DIFF_TYPE != Diff_Type.DELETED )
+      {
+        // Convert l, which is diff line, to view line:
+        final int Vl = ViewLine( pV, l );
+        final int LL = pfb.LineLen( Vl ); // Line length
+        final int END_OF_LINE = Math.min( RightChar( pV ), 0<LL ? LL-1 : 0 );
+
+        for( int k=END_OF_LINE; m_leftChar<k; k-- )
         {
-          char C = pfb.Get( OCLv, k );
-          m_console.Set( Line_2_GL( pV, OCL ), Char_2_GL( pV, k ), C
-                       , Get_Style(pV,OCL,OCLv,k) );
+          final char C = pfb.Get( Vl, k );
+          m_console.Set( Line_2_GL( pV, l ), Char_2_GL( pV, k )
+                       , C, Get_Style(pV,l,Vl,k) );
         }
-        if( m_leftChar < OCLL ) {
-          char C = pfb.Get( OCLv, m_leftChar );
-          m_console.Set( Line_2_GL( pV, OCL ), Char_2_GL( pV, m_leftChar ), C
-                       , Get_Style(pV,OCL,OCLv,m_leftChar) );
+        if( m_leftChar < LL ) {
+          final char C = pfb.Get( Vl, m_leftChar );
+          m_console.Set( Line_2_GL( pV, l ), Char_2_GL( pV, m_leftChar )
+                       , C, Get_Style(pV,l,Vl,m_leftChar) );
+        }
+        // Empty line gets one highlighted space at beginning:
+        if( LL == 0 && m_leftChar == 0 )
+        {
+          final Style S = InVisualArea( pV, l, 0 ) ? Style.RV_NORMAL : Style.EMPTY;
+          m_console.Set( Line_2_GL( pV, l ), Char_2_GL( pV, 0 ), ' ', S );
         }
       }
-      // Write out intermediate lines:
-      for( int l=OCL-1; NCL<l; l-- )
+    }
+  }
+  void GoToCrsPos_WV_Backward_LastLine( final int NCL, final int NCP )
+  {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+    // Convert NCL, which is a diff line, to view line:
+    final int NCLv = ViewLine( pV, NCL );
+
+    final Diff_Type LAST_LINE_DIFF_TYPE = DiffType( pV, NCL );
+
+    if( LAST_LINE_DIFF_TYPE != Diff_Type.DELETED )
+    {
+      // Print from end of last line to new cursor position:
+      final int NCLL = pfb.LineLen( NCLv ); // New cursor line length
+      final int END_LAST_LINE = Math.min( RightChar( pV ), 0<NCLL ? NCLL-1 : 0 );
+
+      for( int k=END_LAST_LINE; NCP<k; k-- )
       {
-        final Diff_Type LINE_DIFF_TYPE = DiffType( pV, l );
-        if( LINE_DIFF_TYPE != Diff_Type.DELETED )
-        {
-          // Convert l, which is diff line, to view line:
-          final int Vl = ViewLine( pV, l );
-          final int LL = pfb.LineLen( Vl ); // Line length
-          final int END_OF_LINE = Math.min( RightChar( pV ), 0<LL ? LL-1 : 0 );
-          for( int k=END_OF_LINE; m_leftChar<k; k-- )
-          {
-            char C = pfb.Get( Vl, k );
-            m_console.Set( Line_2_GL( pV, l ), Char_2_GL( pV, k ), C
-                         , Get_Style(pV,l,Vl,k) );
-          }
-        }
-      }
-      // Write out last line:
-      final Diff_Type LAST_LINE_DIFF_TYPE = DiffType( pV, NCL );
-      if( LAST_LINE_DIFF_TYPE != Diff_Type.DELETED )
-      {
-        // Print from end of last line to new cursor position:
-        final int NCLL = pfb.LineLen( NCLv ); // New cursor line length
-        final int END_LAST_LINE = Math.min( RightChar( pV ), 0<NCLL ? NCLL-1 : 0 );
-        for( int k=END_LAST_LINE; NCP<k; k-- )
-        {
-          char C = pfb.Get( NCLv, k );
-          m_console.Set( Line_2_GL( pV, NCL ), Char_2_GL( pV, k ), C
-                       , Get_Style(pV,NCL,NCLv,k) );
-        }
+        final char C = pfb.Get( NCLv, k );
+        m_console.Set( Line_2_GL( pV, NCL ), Char_2_GL( pV, k ), C
+                     , Get_Style(pV,NCL,NCLv,k) );
       }
     }
   }
@@ -2067,6 +2156,26 @@ class Diff
       {
         // Before last line, so can go down
         GoToCrsPos_Write( OCL+1, 0 );
+      }
+    }
+  }
+
+  void GoToEndOfNextLine()
+  {
+    final int NUM_LINES = NumLines();
+
+    if( 0<NUM_LINES )
+    {
+      final int OCL = CrsLine(); // Old cursor line
+
+      if( OCL < (NUM_LINES-1) )
+      {
+        // Before last line, so can go down
+        View    pV  = m_vis.CV();
+        FileBuf pfb = pV.m_fb;
+        final int LL = pfb.LineLen( OCL+1 );
+
+        GoToCrsPos_Write( OCL+1, Utils.LLM1( LL ) );
       }
     }
   }
