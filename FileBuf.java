@@ -1584,6 +1584,70 @@ class FileBuf
          : BufferEditor_SortName();
   }
 
+//private
+//boolean BufferEditor_SortName()
+//{
+//  boolean changed = false;
+//  final int NUM_BUILT_IN_FILES = m_vis.USER_FILE;
+//
+//  // Sort lines (file names), least to greatest:
+//  for( int i=NumLines()-1; NUM_BUILT_IN_FILES<i; i-- )
+//  {
+//    for( int k=NUM_BUILT_IN_FILES; k<i; k++ )
+//    {
+//      Line l_0 = m_lines.get( k   );
+//      Line l_1 = m_lines.get( k+1 );
+//
+//      // Move largest file name to bottom.
+//      // l_0 is greater than l_1, so move it down:
+//      if( 0<l_0.toString().compareTo( l_1.toString() ) )
+//      {
+//        SwapLines( k, k+1 );
+//        changed = true;
+//      }
+//    }
+//  }
+//  return changed;
+//}
+
+  // Return true if l_0 (dname,fname)
+  // is greater then l_1 (dname,fname)
+  private
+  boolean BufferEditor_SortName_Swap( Line l_0, Line l_1 )
+  {
+    boolean swap = false;
+
+    String l_0_s = l_0.toString();
+    String l_1_s = l_1.toString();
+
+    String l_0_dn = Utils.Pname_2_Dname( l_0_s );
+    String l_1_dn = Utils.Pname_2_Dname( l_1_s );
+
+    final int dn_compare = l_0_dn.compareTo( l_1_dn );
+
+    if( 0<dn_compare )
+    {
+      // l_0 dname is greater than l_1 dname
+      swap = true;
+    }
+    else if( 0==dn_compare )
+    {
+      // l_0 dname == l_1 dname
+      String l_0_fn = Utils.Pname_2_Fname( l_0_s );
+      String l_1_fn = Utils.Pname_2_Fname( l_1_s );
+
+      if( 0<l_0_fn.compareTo( l_1_fn ) )
+      {
+        // l_0 fname is greater than l_1 fname
+        swap = true;
+      }
+    }
+    return swap;
+  }
+
+  // Move largest file name to bottom.
+  // Files are grouped under directories.
+  // Returns true if any lines were swapped.
   private
   boolean BufferEditor_SortName()
   {
@@ -1598,9 +1662,7 @@ class FileBuf
         Line l_0 = m_lines.get( k   );
         Line l_1 = m_lines.get( k+1 );
 
-        // Move largest file name to bottom.
-        // l_0 is greater than l_1, so move it down:
-        if( 0<l_0.toString().compareTo( l_1.toString() ) )
+        if( BufferEditor_SortName_Swap( l_0, l_1 ) )
         {
           SwapLines( k, k+1 );
           changed = true;

@@ -1691,7 +1691,7 @@ public class VisFx extends Application
       m_diff.Set_Console_CrsCell( pV_old, pV_new );
     }
     else {
-      pV_new.Set_Console_CrsCell();
+      pV_new.PrintCursor();
     }
   }
   void GoToNextWindow_l()

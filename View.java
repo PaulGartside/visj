@@ -150,10 +150,10 @@ class View
     m_crsRow = row;
     m_crsCol = col;
   }
-  void Set_Console_CrsCell()
-  {
-    m_console.Set_Crs_Cell( this, m_crsRow, m_crsCol );
-  }
+//void Set_Console_CrsCell()
+//{
+//  m_console.Set_Crs_Cell( this, m_crsRow, m_crsCol );
+//}
 
   void Update()
   {
@@ -536,7 +536,7 @@ class View
   {
     if( m_vis.CV() == this )
     {
-      Set_Console_CrsCell();
+      m_console.Set_Crs_Cell( this, m_crsRow, m_crsCol );
     }
   }
 
@@ -943,7 +943,7 @@ class View
           // This line places the cursor at the top of the screen, which I prefer:
           m_crsRow = 0;
         }
-        Set_Console_CrsCell();
+      //Set_Console_CrsCell();
 
         Update();
       }
@@ -978,7 +978,7 @@ class View
       else {
         m_topLine -= WorkingRows() - 1;
       }
-      Set_Console_CrsCell();
+    //Set_Console_CrsCell();
 
       Update();
     }
@@ -1115,7 +1115,8 @@ class View
     else if( MOVE_LEFT  ) m_leftChar = ncp_crsChar;
     m_crsCol   = ncp_crsChar - m_leftChar;
 
-    Set_Console_CrsCell();
+  //Set_Console_CrsCell();
+  //PrintCursor();
   }
 
   Style Get_Style( final int line, final int pos )
@@ -2991,7 +2992,7 @@ class View
       // Make changes manually:
       m_topLine += m_crsRow;
       m_crsRow = 0;
-      Set_Console_CrsCell();
+    //Set_Console_CrsCell();
 
       Update();
     }
@@ -3008,7 +3009,7 @@ class View
       // CrsLine() does not change:
       m_crsRow += m_topLine;
       m_topLine = 0;
-      Set_Console_CrsCell();
+    //Set_Console_CrsCell();
 
       Update();
     }
@@ -3017,7 +3018,7 @@ class View
     {
       m_topLine += m_crsRow - center;
       m_crsRow = center;
-      Set_Console_CrsCell();
+    //Set_Console_CrsCell();
 
       Update();
     }
@@ -3033,7 +3034,7 @@ class View
       {
         m_topLine -= WR - m_crsRow - 1;
         m_crsRow = WR-1;
-        Set_Console_CrsCell();
+      //Set_Console_CrsCell();
 
         Update();
       }
@@ -3042,7 +3043,7 @@ class View
         // CrsLine() does not change:
         m_crsRow += m_topLine;
         m_topLine = 0;
-        Set_Console_CrsCell();
+      //Set_Console_CrsCell();
 
         Update();
       }

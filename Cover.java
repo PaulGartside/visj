@@ -26,9 +26,9 @@ import java.util.ArrayList;
 class Cover
 {
   static final int m_seq_len = 7;
-  static int  m_seq_inc[] = {  79, 101, 127, 139, 163, 181, 199 };
-  static int  m_seq_mod[] = { 131, 151, 173, 191, 211, 229, 251 };
-  static int  m_seq_val[] = new int[ m_seq_len ];
+  static int m_seq_inc[] = {  79, 101, 127, 139, 163, 181, 199 };
+  static int m_seq_mod[] = { 131, 151, 173, 191, 211, 229, 251 };
+  static int m_seq_val[] = new int[ m_seq_len ];
 
   static void Cover_Array( FileBuf         in
                          , ArrayList<Byte> out
@@ -64,7 +64,7 @@ class Cover
                           , final String key )
   {
     // Initialize m_seq_val:
-    final int   key_len = key.length();
+    final int key_len = key.length();
 
     for( int k=0; k<m_seq_len; k++ )
     {

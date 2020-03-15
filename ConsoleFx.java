@@ -593,10 +593,10 @@ class ConsoleFx extends Canvas
   public
   void Set_Crs_Cell( View V, final int V_ROW, final int V_COL )
   {
+    Remove_Cursor();
+
     if( !V.m_image_mode )
     {
-      Remove_Cursor();
-
       m_crs_v      = V;
       m_crs_lv     = null;
       m_crs_d      = null;
@@ -628,10 +628,10 @@ class ConsoleFx extends Canvas
   public void
   Set_Crs_Cell( Diff D, View V, final int V_ROW, final int V_COL )
   {
+    Remove_Cursor();
+
     if( !V.m_image_mode )
     {
-      Remove_Cursor();
-
       m_crs_v      = V;
       m_crs_lv     = null;
       m_crs_d      = D;
