@@ -2760,13 +2760,15 @@ class FileBuf
     }
     return uncommented;
   }
-  void Create_Image()
+  // Return okay:
+  boolean Create_Image()
   {
     if( null == m_image )
     {
       String url = "file:" + m_pname;
       m_image = new Image( url );
     }
+    return ! m_image.isError();
   }
   VisIF                 m_vis;   // Not sure if we need this or should use m_views
   final String          m_pname; // Full path      = m_dname + m_fname

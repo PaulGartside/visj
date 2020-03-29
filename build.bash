@@ -18,7 +18,7 @@ FILES='ChangeHist ChangeType ConsoleIF Cover CrsPos Diff
        Paste_Mode Paste_Pos Ptr_Boolean Ptr_InputStream
        Ptr_Int Ptr_Double Ptr_String Ptr_StringBuilder
        SameArea Shell Style Tile_Pos Update_Type Utils
-       View ViewList VisIF'
+       View ViewList VisIF VisFx'
 
 # Running without arguments will make without cleaning
 clean=false

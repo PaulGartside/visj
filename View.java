@@ -54,9 +54,9 @@ class View
        || m_fb.m_fname.endsWith(".BMP") )
       {
         m_image_mode = true;
+        m_image_file = Image_file.yes;
       }
     }
-    m_image_file = m_image_mode;
   }
   int X()           { return m_x; }
   int Y()           { return m_y; }
@@ -314,24 +314,34 @@ class View
     }
     return border_char;
   }
-
   private void PrintWorkingView()
   {
     if( m_image_mode )
     {
-      PrintWorkingView_Image();
+      // If PrintWorkingView_Image fails, m_image_mode is set back to false
+      m_image_mode = PrintWorkingView_Image();
     }
     else {
       PrintWorkingView_Text();
     }
   }
-  private void PrintWorkingView_Image()
+  // Return okay
+  private boolean PrintWorkingView_Image()
   {
-    m_fb.Create_Image();
+    boolean ok = false;
 
-    m_console.DrawImage( m_fb.m_image, this, m_img_d.sx, m_img_d.sy, m_img_d.zoom/100.0 );
-    m_console.Invalidate_Text( m_y, m_y+m_num_rows
-                             , m_x, m_x+m_num_cols );
+    // m_fb.Create_Image() only creates the image if it has not
+    // already been created:
+    m_image_file = m_fb.Create_Image() ? Image_file.yes : Image_file.no;
+
+    if( m_image_file == Image_file.yes )
+    {
+      m_console.DrawImage( m_fb.m_image, this, m_img_d.sx, m_img_d.sy, m_img_d.zoom/100.0 );
+      m_console.Invalidate_Text( m_y, m_y+m_num_rows
+                               , m_x, m_x+m_num_cols );
+      ok = true;
+    }
+    return ok;
   }
   private void PrintWorkingView_Text()
   {
@@ -4508,8 +4518,8 @@ class View
   private int m_num_rows; // number of columns in buffer view
   private int m_i_count;
 
-  final boolean m_image_file;
-  boolean  m_image_mode;
+  Image_file m_image_file;
+  boolean    m_image_mode;
   Image_data m_img_d = new Image_data();
 
   // Create threads using lambdas:
@@ -4528,6 +4538,13 @@ class View
   Thread m_run_g_v      = new Thread( ()->{ run_g_v     (); m_vis.Give(); } );
   Thread m_run_z        = new Thread( ()->{ run_z       (); m_vis.Give(); } );
   Thread m_run_f        = new Thread( ()->{ run_f       (); m_vis.Give(); } );
+}
+
+enum Image_file
+{
+  unknown,
+  no,
+  yes
 }
 
 // Create threads without lambdas:

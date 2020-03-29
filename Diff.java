@@ -2162,18 +2162,19 @@ class Diff
 
   void GoToEndOfNextLine()
   {
-    final int NUM_LINES = NumLines();
+    final int NUM_LINES = NumLines(); // Diff
 
     if( 0<NUM_LINES )
     {
-      final int OCL = CrsLine(); // Old cursor line
+      final int OCL = CrsLine(); // Old cursor diff line
 
       if( OCL < (NUM_LINES-1) )
       {
         // Before last line, so can go down
         View    pV  = m_vis.CV();
         FileBuf pfb = pV.m_fb;
-        final int LL = pfb.LineLen( OCL+1 );
+        final int VL = ViewLine( pV, OCL+1 ); // View line
+        final int LL = pfb.LineLen( VL );
 
         GoToCrsPos_Write( OCL+1, Utils.LLM1( LL ) );
       }

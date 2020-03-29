@@ -3922,14 +3922,32 @@ public class VisFx extends Application
       cv.Update();
     }
   }
+
   void Exe_Colon_Image()
   {
     View cv = CV();
 
-    if( cv.m_image_file )
+    if( ! cv.m_image_mode && Image_file.no == cv.m_image_file )
     {
-      cv.m_image_mode = true;
+      // cv is not an image file but trying to goto image mode:
+      CmdLineMessage( cv.m_fb.m_fname + ": not an image file");
+    }
+    else
+    {
+      // In image mode and trying to exit image mode,
+      // Or not in image mode but trying to goto image mode,
+      //   And have not determined if cv is an image file
+      //     Or cv is an image file
+      boolean was_in_image_mode = cv.m_image_mode;
+
+      cv.m_image_mode = ! cv.m_image_mode;
       cv.Update();
+
+      if( ! was_in_image_mode && ! cv.m_image_mode )
+      {
+        // Failed to goto image mode:
+        CmdLineMessage( cv.m_fb.m_fname + ": not an image file");
+      }
     }
   }
 
