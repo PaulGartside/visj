@@ -654,8 +654,8 @@ public class VisFx extends Application
     case '/': Handle_Slash();     break;
     case '.': Handle_Dot();       break;
     case '\n':Handle_Return();    break;
-    case '-': m_console.Prev_Font();break;
-    case '=': m_console.Next_Font();break;
+    case '-': Handle_dash();      break;
+    case '=': Handle_equal();     break;
     case '+': Handle_Plus();      break;
     case '_': Handle_Underscore();break;
     }
@@ -2618,50 +2618,12 @@ public class VisFx extends Application
     }
   }
 
-//void Handle_Return()
-//{
-//  View cv = CV();
-//
-//  if( cv.m_in_diff ) m_diff.GoToBegOfNextLine();
-//  else                   cv.GoToBegOfNextLine();
-//}
-
-//void Handle_Return()
-//{
-//  View cv = CV();
-//
-//  if( cv.m_in_diff ) m_diff.GoToBegOfNextLine();
-//  else {
-//    if( BE_FILE == Curr_FileNum() )
-//    {
-//      // In buffer editor, so go to end of next line:
-//      cv.GoToEndOfNextLine();
-//    }
-//    else if( SLASH_FILE == Curr_FileNum() )
-//    {
-//      // In search buffer, search for pattern on current line:
-//      Line line = cv.m_fb.GetLine( cv.CrsLine() );
-//
-//      Handle_Slash_GotPattern( line.toString(), false );
-//    }
-//    else {
-//      // Normal case:
-//      cv.GoToBegOfNextLine();
-//    }
-//  }
-//}
-
   void Handle_Return()
   {
     View cv = CV();
 
     if( cv.m_in_diff ) m_diff.GoToEndOfNextLine();
     else {
-    //if( BE_FILE == Curr_FileNum() )
-    //{
-    //  // In buffer editor, so go to end of next line:
-    //  cv.GoToEndOfNextLine();
-    //}
       if( SLASH_FILE == Curr_FileNum() )
       {
         // In search buffer, search for pattern on current line:
@@ -2673,6 +2635,29 @@ public class VisFx extends Application
         // Normal case:
         cv.GoToEndOfNextLine();
       }
+    }
+  }
+
+  void Handle_dash()
+  {
+    if( m_font_locked )
+    {
+      CmdLineMessage("Font locked. Type :font=unlocked to change");
+    }
+    else
+    {
+      m_console.Prev_Font();
+    }
+  }
+  void Handle_equal()
+  {
+    if( m_font_locked )
+    {
+      CmdLineMessage("Font locked. Type :font=unlocked to change");
+    }
+    else
+    {
+      m_console.Next_Font();
     }
   }
 
@@ -2804,8 +2789,6 @@ public class VisFx extends Application
     else if( m_sb.charAt(0)=='b' )            Exe_Colon_b();
     else if( m_sb.charAt(0)=='n' )            Exe_Colon_n();
     else if( m_sb.charAt(0)=='e' )            Exe_Colon_e();
-  //else if( m_sb.charAt(0)=='+' )            Exe_Colon_Font_Size();
-  //else if( m_sb.charAt(0)=='_' )            Exe_Colon_Font_Size();
     else if( '0' <= m_sb.charAt(0)
                  && m_sb.charAt(0) <= '9' ) Exe_Colon_GoToLine();
     else {
@@ -4063,6 +4046,20 @@ public class VisFx extends Application
         || 0==S.compareToIgnoreCase("1252");
   }
 
+//void Exe_Colon_Font()
+//{
+//  String[] toks = m_sb2.toString().split("=");
+//
+//  if( toks.length!=2 )
+//  {
+//    CmdLineMessage("Font is: "+ m_console.m_font_name
+//                          +","+ m_console.m_font_size);
+//  }
+//  else {
+//    m_console.Set_Font( toks[1] );
+//  }
+//}
+
   void Exe_Colon_Font()
   {
     String[] toks = m_sb2.toString().split("=");
@@ -4070,10 +4067,30 @@ public class VisFx extends Application
     if( toks.length!=2 )
     {
       CmdLineMessage("Font is: "+ m_console.m_font_name
-                            +","+ m_console.m_font_size);
+                            +","+ m_console.m_font_size
+                            +" - "+ (m_font_locked
+                                  ? "locked"
+                                  : "unlocked"));
     }
     else {
-      m_console.Set_Font( toks[1] );
+      String cmd = toks[1];
+
+      if( 0==cmd.compareToIgnoreCase("locked") )
+      {
+        m_font_locked = true;
+
+        CmdLineMessage("Font is locked");
+      }
+      else if( 0==cmd.compareToIgnoreCase("unlocked") )
+      {
+        m_font_locked = false;
+
+        CmdLineMessage("Font is unlocked");
+      }
+      else {
+        // Set font:
+        m_console.Set_Font( cmd );
+      }
     }
   }
 
@@ -4206,32 +4223,6 @@ public class VisFx extends Application
       m_stage.setHeight( m_old_H );
     }
   }
-
-//void Exe_Colon_Border()
-//{
-//  m_frame.dispose();
-//  m_frame.setUndecorated( false );
-//  m_frame.setVisible( true );
-//}
-//void Exe_Colon_NoBorder()
-//{
-//  m_frame.dispose();
-//  m_frame.setUndecorated( true );
-//  m_frame.setVisible( true );
-//}
-//void Exe_Colon_Font_Size()
-//{
-//  int size_change = 0;
-//
-//  boolean done = false;
-//  for( int k=0; !done && k<m_sb.length(); k++ )
-//  {
-//    if     ( m_sb.charAt(k)=='+' ) size_change++;
-//    else if( m_sb.charAt(k)=='_' ) size_change--;
-//    else                           done = true;
-//  }
-//  m_console.Change_Font_Size( size_change );
-//}
 
   void Exe_Colon_w()
   {
@@ -5305,9 +5296,12 @@ public class VisFx extends Application
   int                m_win;
   int                m_num_wins = 1; // Number of window panes currently on screen
   boolean            m_initialized;
-  char               m_fast_char;
+  boolean            m_colon_mode;
+  boolean            m_slash_mode;
   boolean            m_run_mode; // True if running shell command
   boolean            m_sort_by_time;
+  boolean            m_font_locked = true;
+  char               m_fast_char;
   private
   Semaphore          m_run_sem   = new Semaphore( 1 );
   Diff               m_diff;
@@ -5322,8 +5316,6 @@ public class VisFx extends Application
   FileBuf            m_slash_file;  // Buffer for slash commands
   LineView           m_slash_view;  // View   of  slash commands
   String             m_regex     = new String();
-  boolean            m_colon_mode;
-  boolean            m_slash_mode;
   ArrayList<Line>    m_reg = new ArrayList<>();
   Paste_Mode         m_paste_mode;
   String             m_cwd = Utils.GetCWD();
