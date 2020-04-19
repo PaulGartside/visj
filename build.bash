@@ -36,6 +36,7 @@ function run_cmd
 {
   echo "$*"
   $*
+  es=$?
 }
 
 function do_clean
@@ -48,6 +49,9 @@ function do_make
 {
   if [ ! -d $CLASS_DIR ]; then
     run_cmd mkdir -p $CLASS_DIR
+    if [ $es -ne 0 ]; then
+      return
+    fi
   fi
 
   recompiled_file=false
@@ -56,12 +60,18 @@ function do_make
     if [ ! -e $CLASS_DIR/$file.class ] || [ $file.java -nt $CLASS_DIR/$file.class ]
     then
       run_cmd javac -cp . -d $CLASS_DIR $file.java
+      if [ $es -ne 0 ]; then
+        return
+      fi
       recompiled_file=true
     fi
   done
 
   if [ ! -e vis_fx.jar ] || [ $recompiled_file = true ]; then
     run_cmd jar -cvfe vis_fx.jar VisFx -C $CLASS_DIR .
+    if [ $es -ne 0 ]; then
+      return
+    fi
   fi
 
   echo "Done making vis_fx.jar"

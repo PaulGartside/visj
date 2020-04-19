@@ -5194,6 +5194,10 @@ class Diff
     if( !ReDiff() ) Update();
   }
 
+  void Do_r()
+  {
+  }
+
   void Do_v()
   {
     m_inVisualBlock = false;

@@ -97,6 +97,7 @@ class Help
 + "  Y    - When in VISUAL     block mode yank highlighed block\n"
 + "  p    - Paste buffer to line below (in front of cursor)\n"
 + "  P    - Paste buffer to line above (behind cursor)\n"
++ "  r    - Paste buffer in front of cursor replacing white space\n"
 + "  J    - Join next line with current line\n"
 + "  R    - Replace following characters with those typed\n"
 + "  u    - Undo previous change\n"
@@ -202,6 +203,7 @@ class Help
 + "  p    - Paste paste buffer to line below or in front of cursor\n"
 + "  P    - Paste paste buffer to line above or behind cursor\n"
 + "  Q    - Built in map for: '.j0'\n"
++ "  r    - Paste paste buffer in front of cursor replacing white space\n"
 + "  R    - Replace following characters with those typed (Leaves you in INSERT mode)\n"
 + "  s    - Delete char under cursor or visually highlighted area and enter insert mode\n"
 + "  u    - Undo previous change\n"
@@ -241,7 +243,7 @@ class Help
 + "  -    - Change to prev font\n"
 + "\n"
 + "Alphabetic list of letters not mapped to commands:\n"
-+ "  E, I, K, q, r, S, t, T, X, Z\n"
++ "  E, I, K, q, S, t, T, X, Z\n"
 + "\n";
 }
 

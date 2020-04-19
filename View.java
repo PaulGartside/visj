@@ -2835,18 +2835,20 @@ class View
     final int OCL = CrsLine();           // Old cursor line
     final int OCP = CrsChar();           // Old cursor position
     final int OLL = m_fb.LineLen( OCL ); // Old line length
-    final int ISP = 0<OCP ? OCP+1        // Insert position
-                  : ( 0<OLL ? 1:0 );     // If at beginning of line,
-                                         // and LL is zero insert at 0,
+    final int ISP = 0<OCP                // Insert position
+                  ? OCP+1                // If at beginning of line,
+                  : ( 0<OLL ? 1:0 );     // and LL is zero insert at 0,
                                          // else insert at 1
     final int N_REG_LINES = m_vis.get_reg().size();
 
     for( int k=0; k<N_REG_LINES; k++ )
     {
+      // Make sure file has a line where register line will be inserted:
       if( m_fb.NumLines()<=OCL+k ) m_fb.InsertLine( OCL+k );
 
       final int LL = m_fb.LineLen( OCL+k );
 
+      // Make sure file line is as long as ISP before inserting register line;
       if( LL < ISP )
       {
         // Fill in line with white space up to ISP:
@@ -2857,6 +2859,7 @@ class View
           m_fb.InsertChar( OCL+k, NLL, ' ' );
         }
       }
+      // Insert register line:
       Line reg_line = m_vis.get_reg().get(k);
       final int RLL = reg_line.length();
 
@@ -2927,6 +2930,74 @@ class View
     }
     m_fb.Update();
   }
+
+  void Do_r()
+  {
+    final int OCL = CrsLine();           // Old cursor line
+    final int OCP = CrsChar();           // Old cursor position
+    final int OLL = m_fb.LineLen( OCL ); // Old line length
+    final int ISP = 0<OCP                // Insert position
+                  ? OCP+1                // If at beginning of line,
+                  : ( 0<OLL ? 1:0 );     // and LL is zero insert at 0,
+                                         // else insert at 1
+    final int N_REG_LINES = m_vis.get_reg().size();
+
+    for( int k=0; k<N_REG_LINES; k++ )
+    {
+      // Make sure file has a line where register line will be inserted:
+      if( m_fb.NumLines()<=OCL+k ) m_fb.InsertLine( OCL+k );
+
+      final int LL = m_fb.LineLen( OCL+k );
+
+      // Make sure file line is as long as ISP before inserting register line:
+      if( LL < ISP )
+      {
+        // Fill in line with white space up to ISP:
+        for( int i=0; i<(ISP-LL); i++ )
+        {
+          // Insert at end of line so undo will be atomic:
+          final int NLL = m_fb.LineLen( OCL+k ); // New line length
+          m_fb.InsertChar( OCL+k, NLL, ' ' );
+        }
+      }
+      Do_r_replace_white_space_with_register_line( k, OCL, ISP );
+    }
+    m_fb.Update();
+  }
+  void Do_r_replace_white_space_with_register_line( final int k
+                                                  , final int OCL
+                                                  , final int ISP )
+  {
+    // Replace white space with register line, insert after white space used:
+    Line reg_line = m_vis.get_reg().get(k);
+    final int RLL = reg_line.length();
+
+    boolean continue_last_update = false;
+
+    for( int i=0; i<RLL; i++ )
+    {
+      final int NLL = m_fb.LineLen( OCL+k );
+
+      char C_new = reg_line.charAt(i);
+
+      boolean set = false;
+      if( ISP+i < NLL )
+      {
+        char C_old = m_fb.Get( OCL+k, ISP+i );
+
+        if( C_old == ' ' )
+        {
+          // Replace ' ' with C_new:
+          m_fb.Set( OCL+k, ISP+i, C_new, continue_last_update );
+          set = true;
+          continue_last_update = true;
+        }
+      }
+      // No more spaces or end of line, so insert:
+      if( !set ) m_fb.InsertChar( OCL+k, ISP+i, C_new );
+    }
+  }
+
   void Do_s()
   {
     final int CL  = CrsLine();

@@ -1777,7 +1777,7 @@ class FileBuf
     return m_mutable && m_save_history;
   }
 
-  // Set byte on line l_num at position c_num
+  // Set byte on line l_num at position c_num, ReplaceChar
   //
   void Set( final int  l_num
           , final int  c_num

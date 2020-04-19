@@ -631,6 +631,7 @@ public class VisFx extends Application
     case 'p': Handle_p();         break;
     case 'P': Handle_P();         break;
     case 'Q': Handle_Q();         break;
+    case 'r': Handle_r();         break;
     case 'R': Handle_R();         break;
     case 's': Handle_s();         break;
     case 'u': Handle_u();         break;
@@ -1051,6 +1052,19 @@ public class VisFx extends Application
     Handle_0();
 
     m_states.removeFirst();
+  }
+
+  void Handle_r()
+  {
+    if( !m_console.m_get_from_dot_buf_n )
+    {
+      m_console.m_dot_buf_n.setLength( 0 );
+      m_console.m_dot_buf_n.append( 'r' );
+    }
+    View cv = CV();
+
+    if( cv.m_in_diff ) m_diff.Do_r();
+    else                   cv.Do_r();
   }
 
   void Handle_R()
@@ -5315,8 +5329,8 @@ public class VisFx extends Application
   LineView           m_colon_view;  // View   of  colon commands
   FileBuf            m_slash_file;  // Buffer for slash commands
   LineView           m_slash_view;  // View   of  slash commands
-  String             m_regex     = new String();
-  ArrayList<Line>    m_reg = new ArrayList<>();
+  String             m_regex = new String();
+  ArrayList<Line>    m_reg   = new ArrayList<>();
   Paste_Mode         m_paste_mode;
   String             m_cwd = Utils.GetCWD();
   Shell              m_shell;
