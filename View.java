@@ -54,7 +54,7 @@ class View
        || m_fb.m_fname.endsWith(".BMP") )
       {
         m_image_mode = true;
-        m_image_file = Image_file.yes;
+        m_image_file = Is.yes;
       }
     }
   }
@@ -321,6 +321,11 @@ class View
       // If PrintWorkingView_Image fails, m_image_mode is set back to false
       m_image_mode = PrintWorkingView_Image();
     }
+    else if( m_graph_mode )
+    {
+      // If PrintWorkingView_Graph fails, m_graph_mode is set back to false
+      m_graph_mode = PrintWorkingView_Graph();
+    }
     else {
       PrintWorkingView_Text();
     }
@@ -332,11 +337,29 @@ class View
 
     // m_fb.Create_Image() only creates the image if it has not
     // already been created:
-    m_image_file = m_fb.Create_Image() ? Image_file.yes : Image_file.no;
+    m_image_file = m_fb.Create_Image() ? Is.yes : Is.no;
 
-    if( m_image_file == Image_file.yes )
+    if( m_image_file == Is.yes )
     {
-      m_console.DrawImage( m_fb.m_image, this, m_img_d.sx, m_img_d.sy, m_img_d.zoom/100.0 );
+      m_console.DrawImage( m_fb.m_image, this, m_img_c.sx, m_img_c.sy, m_img_c.zoom/100.0 );
+      m_console.Invalidate_Text( m_y, m_y+m_num_rows
+                               , m_x, m_x+m_num_cols );
+      ok = true;
+    }
+    return ok;
+  }
+  // Return okay
+  private boolean PrintWorkingView_Graph()
+  {
+    boolean ok = false;
+
+    // m_fb.Create_Graph() only creates the graph if it has not
+    // already been created:
+    m_graph_file = m_fb.Create_Graph() ? Is.yes : Is.no;
+
+    if( m_graph_file == Is.yes )
+    {
+      m_console.DrawGraph( m_fb.m_graph, this );
       m_console.Invalidate_Text( m_y, m_y+m_num_rows
                                , m_x, m_x+m_num_cols );
       ok = true;
@@ -421,12 +444,12 @@ class View
     {
       Image I = m_fb.m_image;
 
-      final double zoom = m_img_d.zoom/100.0;
+      final double zoom = m_img_c.zoom/100.0;
       final int WR   = WorkingRows();
       final int I_W  = (int)(I.getWidth () + 0.5);
       final int I_H  = (int)(I.getHeight() + 0.5);
-      final int i_sx = m_img_d.sx;
-      final int i_sy = m_img_d.sy;
+      final int i_sx = m_img_c.sx;
+      final int i_sy = m_img_c.sy;
       final int P_w  = WC*m_console.m_text_W; // Pane width
       final int P_h  = WR*m_console.m_text_H; // Pane height
       final int i_fx = Math.min( (int)(i_sx + P_w/zoom + 0.5), I_W );
@@ -437,7 +460,7 @@ class View
       m_sb.append( "Bytes="+m_fb.GetSize()
                  + ", Pos=("+i_sx+"->"+i_fx+"/"+I_W
                  + ", "+     i_sy+"->"+i_fy+"/"+I_H
-                 + ") zoom="+m_img_d.zoom );
+                 + ") zoom="+m_img_c.zoom );
 
       PrintStsLine_Display( m_sb );
     }
@@ -552,26 +575,33 @@ class View
 
   void GoDown( final int num )
   {
-    if( m_image_mode ) GoDown_Image( num );
-    else               GoDown_Text( num );
+    if     ( m_image_mode ) GoDown_Image( num );
+    else if( m_graph_mode ) GoDown_Graph( num );
+    else                    GoDown_Text( num );
   }
   void GoDown_Image( final int num )
   {
     Image I = m_fb.m_image;
 
-    final double zoom = m_img_d.zoom/100.0;
+    final double zoom = m_img_c.zoom/100.0;
     final int I_h = (int)(I.getHeight()*zoom + 0.5);  // Image height
     final int P_h = WorkingRows()*m_console.m_text_H; // Pane height
 
     if( P_h < I_h )
     {
-      m_img_d.sy += m_console.m_text_H*num;
+      m_img_c.sy += m_console.m_text_H*num;
       // m.image_sy <= I_h - P_h
-    //m_img_d.sy = Math.min( m_img_d.sy, I_h - P_h );
-      m_img_d.sy = (int)(Math.min( m_img_d.sy*zoom, I_h - P_h )/zoom);
-      m_console.DrawImage( I, this, m_img_d.sx, m_img_d.sy, zoom );
+    //m_img_c.sy = Math.min( m_img_c.sy, I_h - P_h );
+      m_img_c.sy = (int)(Math.min( m_img_c.sy*zoom, I_h - P_h )/zoom);
+      m_console.DrawImage( I, this, m_img_c.sx, m_img_c.sy, zoom );
       PrintStsLine_Image();
     }
+  }
+  void GoDown_Graph( final int num )
+  {
+    m_fb.m_graph.GoDown();
+
+    m_console.DrawGraph( m_fb.m_graph, this );
   }
   void GoDown_Text( final int num )
   {
@@ -589,24 +619,31 @@ class View
 
   void GoUp( final int num )
   {
-    if( m_image_mode ) GoUp_Image( num );
-    else               GoUp_Text( num );
+    if     ( m_image_mode ) GoUp_Image( num );
+    else if( m_graph_mode ) GoUp_Graph( num );
+    else                    GoUp_Text( num );
+  }
+  void GoUp_Graph( final int num )
+  {
+    m_fb.m_graph.GoUp();
+
+    m_console.DrawGraph( m_fb.m_graph, this );
   }
   void GoUp_Image( final int num )
   {
     Image I = m_fb.m_image;
 
-    final double zoom = m_img_d.zoom/100.0;
+    final double zoom = m_img_c.zoom/100.0;
     final int I_h = (int)(I.getHeight()*zoom + 0.5);  // Image height
     final int P_h = WorkingRows()*m_console.m_text_H; // Pane height
 
     if( P_h < I_h )
     {
-      m_img_d.sy -= m_console.m_text_H*num;
+      m_img_c.sy -= m_console.m_text_H*num;
       // 0 <= m.image_sy
-    //m_img_d.sy = Math.max( m_img_d.sy, 0 );
-      m_img_d.sy = (int)(Math.max( m_img_d.sy*zoom, 0 )/zoom);
-      m_console.DrawImage( I, this, m_img_d.sx, m_img_d.sy, zoom );
+    //m_img_c.sy = Math.max( m_img_c.sy, 0 );
+      m_img_c.sy = (int)(Math.max( m_img_c.sy*zoom, 0 )/zoom);
+      m_console.DrawImage( I, this, m_img_c.sx, m_img_c.sy, zoom );
       PrintStsLine_Image();
     }
   }
@@ -626,24 +663,31 @@ class View
 
   void GoLeft( final int num )
   {
-    if( m_image_mode ) GoLeft_Image( num );
-    else               GoLeft_Text( num );
+    if     ( m_image_mode ) GoLeft_Image( num );
+    else if( m_graph_mode ) GoLeft_Graph( num );
+    else                    GoLeft_Text( num );
+  }
+  void GoLeft_Graph( final int num )
+  {
+    m_fb.m_graph.GoLeft();
+
+    m_console.DrawGraph( m_fb.m_graph, this );
   }
   void GoLeft_Image( final int num )
   {
     Image I = m_fb.m_image;
 
-    final double zoom = m_img_d.zoom/100.0;
+    final double zoom = m_img_c.zoom/100.0;
     final int I_w = (int)(I.getWidth()*zoom + 0.5);   // Image width
     final int P_w = WorkingCols()*m_console.m_text_W; // Pane width
 
     if( P_w < I_w )
     {
-      m_img_d.sx -= m_console.m_text_W*num;
-      // 0 <= m_img_d.sx
-    //m_img_d.sx = Math.max( m_img_d.sx, 0 );
-      m_img_d.sx = (int)(Math.max( m_img_d.sx*zoom, 0 )/zoom);
-      m_console.DrawImage( I, this, m_img_d.sx, m_img_d.sy, zoom );
+      m_img_c.sx -= m_console.m_text_W*num;
+      // 0 <= m_img_c.sx
+    //m_img_c.sx = Math.max( m_img_c.sx, 0 );
+      m_img_c.sx = (int)(Math.max( m_img_c.sx*zoom, 0 )/zoom);
+      m_console.DrawImage( I, this, m_img_c.sx, m_img_c.sy, zoom );
       PrintStsLine_Image();
     }
   }
@@ -662,26 +706,33 @@ class View
 
   void GoRight( final int num )
   {
-    if( m_image_mode ) GoRight_Image( num );
-    else               GoRight_Text( num );
+    if     ( m_image_mode ) GoRight_Image( num );
+    else if( m_graph_mode ) GoRight_Graph( num );
+    else                    GoRight_Text( num );
   }
   void GoRight_Image( final int num )
   {
     Image I = m_fb.m_image;
 
-    final double zoom = m_img_d.zoom/100.0;
+    final double zoom = m_img_c.zoom/100.0;
     final int I_w = (int)(I.getWidth()*zoom + 0.5);   // Image width
     final int P_w = WorkingCols()*m_console.m_text_W; // Pane width
 
     if( P_w < I_w )
     {
-      m_img_d.sx += m_console.m_text_W*num;
-      // m_img_d.sx <= I_w - P_w
-    //m_img_d.sx = Math.min( m_img_d.sx, I_w - P_w );
-      m_img_d.sx = (int)(Math.min( m_img_d.sx*zoom, I_w - P_w )/zoom+0.5);
-      m_console.DrawImage( I, this, m_img_d.sx, m_img_d.sy, zoom );
+      m_img_c.sx += m_console.m_text_W*num;
+      // m_img_c.sx <= I_w - P_w
+    //m_img_c.sx = Math.min( m_img_c.sx, I_w - P_w );
+      m_img_c.sx = (int)(Math.min( m_img_c.sx*zoom, I_w - P_w )/zoom+0.5);
+      m_console.DrawImage( I, this, m_img_c.sx, m_img_c.sy, zoom );
       PrintStsLine_Image();
     }
+  }
+  void GoRight_Graph( final int num )
+  {
+    m_fb.m_graph.GoRight();
+
+    m_console.DrawGraph( m_fb.m_graph, this );
   }
   void GoRight_Text( final int num )
   {
@@ -702,8 +753,9 @@ class View
 
   void GoToBegOfLine()
   {
-    if( m_image_mode ) GoToBegOfLine_Image();
-    else               GoToBegOfLine_Text();
+    if     ( m_image_mode ) GoToBegOfLine_Image();
+    else if( m_graph_mode ) GoToBegOfLine_Graph();
+    else                    GoToBegOfLine_Text();
   }
   void GoToBegOfLine_Image()
   {
@@ -713,6 +765,12 @@ class View
     final int I_w_c = (int)(I.getWidth()/m_console.m_text_W + 0.5);
 
     GoLeft_Image( I_w_c );
+  }
+  void GoToBegOfLine_Graph()
+  {
+    m_fb.m_graph.GoToMin_X();
+
+    m_console.DrawGraph( m_fb.m_graph, this );
   }
   void GoToBegOfLine_Text()
   {
@@ -725,8 +783,9 @@ class View
 
   void GoToEndOfLine()
   {
-    if( m_image_mode ) GoToEndOfLine_Image();
-    else               GoToEndOfLine_Text();
+    if     ( m_image_mode ) GoToEndOfLine_Image();
+    else if( m_graph_mode ) GoToEndOfLine_Graph();
+    else                    GoToEndOfLine_Text();
   }
   void GoToEndOfLine_Image()
   {
@@ -736,6 +795,12 @@ class View
     final int I_w_c = (int)(I.getWidth()/m_console.m_text_W + 0.5);
 
     GoRight_Image( I_w_c );
+  }
+  void GoToEndOfLine_Graph()
+  {
+    m_fb.m_graph.GoToMax_X();
+
+    m_console.DrawGraph( m_fb.m_graph, this );
   }
   void GoToEndOfLine_Text()
   {
@@ -827,24 +892,31 @@ class View
 
   void GoToMidLineInView()
   {
-    if( m_image_mode ) GoToMiddle_Image();
-    else               GoToMidLineInView_Text();
+    if     ( m_image_mode ) GoToMiddle_Image();
+    else if( m_graph_mode ) GoToMiddle_Graph();
+    else                    GoToMidLineInView_Text();
   }
   void GoToMiddle_Image()
   {
     Image I = m_fb.m_image;
 
-    final double zoom = m_img_d.zoom/100.0;
+    final double zoom = m_img_c.zoom/100.0;
     final int I_w = (int)(I.getWidth ()*zoom + 0.5);  // Image width
     final int I_h = (int)(I.getHeight()*zoom + 0.5);  // Image height
     final int P_w = WorkingCols()*m_console.m_text_W; // Pane width
     final int P_h = WorkingRows()*m_console.m_text_H; // Pane height
 
-    m_img_d.sx = ( P_w < I_w ) ? (int)(0.5*(I_w - P_w)/zoom) : 0;
-    m_img_d.sy = ( P_h < I_h ) ? (int)(0.5*(I_h - P_h)/zoom) : 0;
+    m_img_c.sx = ( P_w < I_w ) ? (int)(0.5*(I_w - P_w)/zoom) : 0;
+    m_img_c.sy = ( P_h < I_h ) ? (int)(0.5*(I_h - P_h)/zoom) : 0;
 
-    m_console.DrawImage( I, this, m_img_d.sx, m_img_d.sy, zoom );
+    m_console.DrawImage( I, this, m_img_c.sx, m_img_c.sy, zoom );
     PrintStsLine_Image();
+  }
+  void GoToMiddle_Graph()
+  {
+    m_fb.m_graph.GoToMiddle_X();
+
+    m_console.DrawGraph( m_fb.m_graph, this );
   }
   void GoToMidLineInView_Text()
   {
@@ -863,8 +935,9 @@ class View
 
   void GoToTopOfFile()
   {
-    if( m_image_mode ) GoToTopOfFile_Image();
-    else               GoToTopOfFile_Text();
+    if     ( m_image_mode ) GoToTopOfFile_Image();
+    else if( m_graph_mode ) GoToTopOfFile_Graph();
+    else                    GoToTopOfFile_Text();
   }
   void GoToTopOfFile_Image()
   {
@@ -875,6 +948,12 @@ class View
 
     GoUp_Image( I_h_r );
   }
+  void GoToTopOfFile_Graph()
+  {
+    m_fb.m_graph.GoToMax_Y();
+
+    m_console.DrawGraph( m_fb.m_graph, this );
+  }
   void GoToTopOfFile_Text()
   {
     GoToCrsPos_Write( 0, 0 );
@@ -882,8 +961,9 @@ class View
 
   void GoToEndOfFile()
   {
-    if( m_image_mode ) GoToEndOfFile_Image();
-    else               GoToEndOfFile_Text();
+    if     ( m_image_mode ) GoToEndOfFile_Image();
+    else if( m_graph_mode ) GoToEndOfFile_Graph();
+    else                    GoToEndOfFile_Text();
   }
   void GoToEndOfFile_Image()
   {
@@ -893,6 +973,12 @@ class View
     final int I_h_r = (int)(I.getHeight()/m_console.m_text_H + 0.5);
 
     GoDown_Image( I_h_r );
+  }
+  void GoToEndOfFile_Graph()
+  {
+    m_fb.m_graph.GoToMin_Y();
+
+    m_console.DrawGraph( m_fb.m_graph, this );
   }
   void GoToEndOfFile_Text()
   {
@@ -928,12 +1014,16 @@ class View
 
   void PageDown()
   {
-    if( m_image_mode ) PageDown_Image();
-    else               PageDown_Text();
+    if     ( m_image_mode ) PageDown_Image();
+    else if( m_graph_mode ) PageDown_Graph();
+    else                    PageDown_Text();
   }
   void PageDown_Image()
   {
     GoDown_Image( WorkingRows()-1 );
+  }
+  void PageDown_Graph()
+  {
   }
   void PageDown_Text()
   {
@@ -962,12 +1052,16 @@ class View
 
   void PageUp()
   {
-    if( m_image_mode ) PageUp_Image();
-    else               PageUp_Text();
+    if     ( m_image_mode ) PageUp_Image();
+    else if( m_graph_mode ) PageUp_Graph();
+    else                    PageUp_Text();
   }
   void PageUp_Image()
   {
     GoUp_Image( WorkingRows()-1 );
+  }
+  void PageUp_Graph()
+  {
   }
   void PageUp_Text()
   {
@@ -4497,62 +4591,68 @@ class View
 
   void Handle_Plus()
   {
-    if( m_image_mode )
-    {
-      Handle_Plus_Image();
-    }
-    else {
-      m_console.Inc_Font();
-    }
+    if     ( m_image_mode ) Handle_Plus_Image();
+    else if( m_graph_mode ) Handle_Plus_Graph();
+    else                    m_console.Inc_Font();
   }
+  // Zoom In
   void Handle_Plus_Image()
   {
     Image I = m_fb.m_image;
 
-  //m_img_d.zoom = (int)(m_img_d.zoom*1.1 + 0.5);
-    m_img_d.inc_zoom();
+    m_img_c.inc_zoom();
 
-    m_console.DrawImage( I, this, m_img_d.sx, m_img_d.sy, m_img_d.zoom/100.0 );
+    m_console.DrawImage( I, this, m_img_c.sx, m_img_c.sy, m_img_c.zoom/100.0 );
     PrintStsLine_Image();
+  }
+  // Zoom In
+  void Handle_Plus_Graph()
+  {
+    m_fb.m_graph.ZoomIn();
+
+    m_console.DrawGraph( m_fb.m_graph, this );
   }
 
   void Handle_Underscore()
   {
-    if( m_image_mode )
-    {
-      Handle_Underscore_Image();
-    }
-    else {
-      m_console.Dec_Font();
-    }
+    if     ( m_image_mode ) Handle_Underscore_Image();
+    else if( m_graph_mode ) Handle_Underscore_Graph();
+    else                    m_console.Dec_Font();
   }
+  // Zoom Out
   void Handle_Underscore_Image()
   {
     Image I = m_fb.m_image;
 
-  //m_img_d.zoom = (int)(m_img_d.zoom/1.1 + 0.5);
-    m_img_d.dec_zoom();
+    m_img_c.dec_zoom();
 
-    final double zoom = m_img_d.zoom/100.0;
+    final double zoom = m_img_c.zoom/100.0;
     final double I_w = I.getWidth ();  // Image width
     final double I_h = I.getHeight();  // Image height
     final int P_w = WorkingCols()*m_console.m_text_W; // Pane width
     final int P_h = WorkingRows()*m_console.m_text_H; // Pane height
-    final int I_w_s = (int)((I_w - m_img_d.sx)*zoom + 0.5); // Image width on screen
-    final int I_h_s = (int)((I_h - m_img_d.sy)*zoom + 0.5); // Image height on screen
+    final int I_w_s = (int)((I_w - m_img_c.sx)*zoom + 0.5); // Image width on screen
+    final int I_h_s = (int)((I_h - m_img_c.sy)*zoom + 0.5); // Image height on screen
 
-    if( 0 < m_img_d.sx && I_w_s < P_w )
+    if( 0 < m_img_c.sx && I_w_s < P_w )
     {
       // Reduce sx so that image width on screen equals pane width
-      m_img_d.sx = Math.max( 0, (int)(I_w - P_w/zoom + 0.5) );
+      m_img_c.sx = Math.max( 0, (int)(I_w - P_w/zoom + 0.5) );
     }
-    if( 0 < m_img_d.sy && I_h_s < P_h )
+    if( 0 < m_img_c.sy && I_h_s < P_h )
     {
       // Reduce sy so that image height on screen equals pane height
-      m_img_d.sy = Math.max( 0, (int)(I_h - P_h/zoom + 0.5) );
+      m_img_c.sy = Math.max( 0, (int)(I_h - P_h/zoom + 0.5) );
     }
-    m_console.DrawImage( I, this, m_img_d.sx, m_img_d.sy, zoom );
+    m_console.DrawImage( I, this, m_img_c.sx, m_img_c.sy, zoom );
     PrintStsLine_Image();
+  }
+  // Zoom Out
+  void Handle_Underscore_Graph()
+  {
+    m_fb.m_graph.ZoomOut();
+
+    m_console.DrawGraph( m_fb.m_graph, this );
   }
 
   static final char BS  =   8; // Backspace
@@ -4562,8 +4662,8 @@ class View
   VisIF     m_vis;
   FileBuf   m_fb;
   ConsoleFx m_console;
-  private int m_x;        // Top left x-position of buffer view in parent window
-  private int m_y;        // Top left y-position of buffer view in parent window
+  private int m_x;        // Top left text column of buffer view in parent window
+  private int m_y;        // Top left text row    of buffer view in parent window
   private int m_topLine;  // top  of buffer view line number.
   private int m_leftChar; // left of buffer view character number.
   private int m_crsRow;// cursor row    in buffer view. 0 <= m_crsRow < WorkingRows().
@@ -4589,9 +4689,13 @@ class View
   private int m_num_rows; // number of columns in buffer view
   private int m_i_count;
 
-  Image_file m_image_file;
-  boolean    m_image_mode;
-  Image_data m_img_d = new Image_data();
+  Is            m_image_file;
+  boolean       m_image_mode;
+  Image_context m_img_c = new Image_context();
+
+  Is            m_graph_file;
+  boolean       m_graph_mode;
+  boolean       m_graph_bar;
 
   // Create threads using lambdas:
   Thread m_run_i_beg    = new Thread( ()->{ run_i_beg   (); m_vis.Give(); } );
@@ -4611,7 +4715,7 @@ class View
   Thread m_run_f        = new Thread( ()->{ run_f       (); m_vis.Give(); } );
 }
 
-enum Image_file
+enum Is
 {
   unknown,
   no,

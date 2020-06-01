@@ -2793,6 +2793,9 @@ public class VisFx extends Application
     else if( m_sb.toString().equals("uncomment")) Exe_Colon_UnComment();
     else if( m_sb.toString().equals("bytes"))  Exe_Colon_Bytes();
     else if( m_sb.toString().equals("image"))  Exe_Colon_Image();
+    else if( m_sb.toString().equals("graph"))  Exe_Colon_Graph();
+    else if( m_sb.toString().equals("bar"))    Exe_Colon_Bar();
+    else if( m_sb.toString().equals("line"))   Exe_Colon_Line();
     else if( m_sb.toString().startsWith("cd"))   Exe_Colon_cd();
     else if( m_sb.toString().startsWith("syn="))  Exe_Colon_Syntax();
     else if( m_sb.toString().startsWith("detab="))Exe_Colon_Detab();
@@ -3924,7 +3927,7 @@ public class VisFx extends Application
   {
     View cv = CV();
 
-    if( ! cv.m_image_mode && Image_file.no == cv.m_image_file )
+    if( ! cv.m_image_mode && Is.no == cv.m_image_file )
     {
       // cv is not an image file but trying to goto image mode:
       CmdLineMessage( cv.m_fb.m_fname + ": not an image file");
@@ -3945,6 +3948,54 @@ public class VisFx extends Application
         // Failed to goto image mode:
         CmdLineMessage( cv.m_fb.m_fname + ": not an image file");
       }
+    }
+  }
+
+  void Exe_Colon_Graph()
+  {
+    View cv = CV();
+
+    if( ! cv.m_graph_mode && Is.no == cv.m_graph_file )
+    {
+      // cv is not a graph file but trying to goto graph mode:
+      CmdLineMessage( cv.m_fb.m_fname + ": not a graph file");
+    }
+    else
+    {
+      // In graph mode and trying to exit graph mode,
+      // Or not in graph mode but trying to goto graph mode,
+      //   And have not determined if cv is an graph file
+      //     Or cv is an graph file
+      boolean was_in_graph = cv.m_graph_mode;
+
+      cv.m_graph_mode = ! cv.m_graph_mode;
+      cv.Update();
+
+      if( ! was_in_graph && ! cv.m_graph_mode )
+      {
+        // Failed to goto graph mode:
+        CmdLineMessage( cv.m_fb.m_fname + ": not a graph file");
+      }
+    }
+  }
+  void Exe_Colon_Bar()
+  {
+    View cv = CV();
+
+    if( cv.m_graph_mode )
+    {
+      cv.m_graph_bar = true;
+      cv.Update();
+    }
+  }
+  void Exe_Colon_Line()
+  {
+    View cv = CV();
+
+    if( cv.m_graph_mode )
+    {
+      cv.m_graph_bar = false;
+      cv.Update();
     }
   }
 

@@ -23,12 +23,12 @@
 
 import java.lang.Math;
 
-class Image_data
+class Image_context
 {
-  int sx;
-  int sy;
+  int sx;         // source x
+  int sy;         // source y
   int zoom = 100; // Percent zoom
-  int zoom_index = 13;
+  int zoom_index = 12;
 
   void inc_zoom()
   {
@@ -50,11 +50,6 @@ class Image_data
   }
   int[] m_zoom_percents =
   {
-  //  0,   1,   2,   3,   4,   5,   6,   7,   8,   9
-  //  5,  10,  15,  20,  25,  33,  40,  50,  58,  65,
-  // 75,  83,  91, 100, 110, 121, 135, 150, 165, 182,
-  //200, 220, 250, 275, 300, 330, 363, 400, 440, 500,
-  //550, 600, 660, 725, 800, 880, 1000
       5,  10,  15,  20,  25,  33,  40,  50,  60,  70,
      80,  90, 100, 110, 125, 150, 175, 200, 225, 250,
     275, 300, 350, 400, 450, 500, 550, 600, 650, 700,

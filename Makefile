@@ -32,6 +32,7 @@ run:
 GENERIC_SOURCES = ChangeHist \
                   ChangeType \
                   ConsoleIF \
+                  ConsoleFx \
                   Cover \
                   CrsPos \
                   Diff \
@@ -39,6 +40,7 @@ GENERIC_SOURCES = ChangeHist \
                   Encoding \
                   FileBuf \
                   File_Type \
+                  Graph \
                   Help \
                   HiKeyVal \
                   Highlight_Base \
@@ -61,7 +63,7 @@ GENERIC_SOURCES = ChangeHist \
                   Highlight_Text \
                   Highlight_Type \
                   Highlight_XML \
-                  Image_data \
+                  Image_context \
                   IntList \
                   Line \
                   LineView \

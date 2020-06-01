@@ -2770,6 +2770,15 @@ class FileBuf
     }
     return ! m_image.isError();
   }
+  // Return okay:
+  boolean Create_Graph()
+  {
+    if( null == m_graph )
+    {
+      m_graph = new Graph( this );
+    }
+    return ! m_graph.isError();
+  }
   VisIF                 m_vis;   // Not sure if we need this or should use m_views
   final String          m_pname; // Full path      = m_dname + m_fname
   final String          m_dname; // Full directory = m_pname - m_fname, (for directories this is the same a m_pname)
@@ -2803,5 +2812,6 @@ class FileBuf
   ArrayList<Boolean>    m_lineRegexsValid = new ArrayList<>();
   Line                  m_line_buf = new Line();
   Image                 m_image;
+  Graph                 m_graph;
 }
 

@@ -794,6 +794,13 @@ class ConsoleFx extends Canvas
 
     m_gc.drawImage( I, sx, sy, sw, sh, dx, dy, dw, dh );
   }
+  void DrawGraph( Graph G, View V )
+  {
+    G.Draw( m_gc, V, m_font_name, m_text_W, m_text_H );
+
+    // Restore previous font settings:
+    m_gc.setFont( m_font_plain );
+  }
 
   void Set_Color_Scheme_1()
   {

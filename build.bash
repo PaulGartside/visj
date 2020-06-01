@@ -5,15 +5,15 @@
 
 CLASS_DIR=classes_fx
 
-FILES='ChangeHist ChangeType ConsoleIF Cover CrsPos Diff
-       Diff_Type Encoding FileBuf File_Type Help HiKeyVal
-       Highlight_Base Highlight_Bash Highlight_BufferEditor
-       Highlight_CMAKE Highlight_Code Highlight_CPP
-       Highlight_CS Highlight_Dir Highlight_HTML
+FILES='ChangeHist ChangeType ConsoleIF ConsoleFX Cover CrsPos
+       Diff Diff_Type Encoding FileBuf File_Type Graph Help
+       HiKeyVal Highlight_Base Highlight_Bash
+       Highlight_BufferEditor Highlight_CMAKE Highlight_Code
+       Highlight_CPP Highlight_CS Highlight_Dir Highlight_HTML
        Highlight_IDL Highlight_Java Highlight_JS
        Highlight_Make Highlight_MIB Highlight_Python
        Highlight_SQL Highlight_STL Highlight_Text
-       Highlight_Type Highlight_XML Image_data IntList
+       Highlight_Type Highlight_XML Image_context IntList
        Line LineView LineChange LineInfo LineUpdate OS_Type
        Paste_Mode Paste_Pos Ptr_Boolean Ptr_InputStream
        Ptr_Int Ptr_Double Ptr_String Ptr_StringBuilder
