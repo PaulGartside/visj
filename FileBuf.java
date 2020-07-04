@@ -1261,10 +1261,8 @@ class FileBuf
     else if( !m_regex.equals( m_vis.get_regex() ) )
     {
       // Invalidate all regexes
-      for( int k=0; k<m_lineRegexsValid.size(); k++ )
-      {
-        m_lineRegexsValid.set(k, false);
-      }
+      Invalidate_Regexs();
+
       have_new_regex = true;
     }
 
@@ -1280,6 +1278,14 @@ class FileBuf
         m_pattern = null;
         m_vis.Window_Message( e.getMessage() );
       }
+    }
+  }
+  void Invalidate_Regexs()
+  {
+    // Invalidate all regexes
+    for( int k=0; k<m_lineRegexsValid.size(); k++ )
+    {
+      m_lineRegexsValid.set(k, false);
     }
   }
 
@@ -1406,6 +1412,9 @@ class FileBuf
         || fname.endsWith(".idl"    )
         || fname.endsWith(".idl.new")
         || fname.endsWith(".idl.old")
+        || fname.endsWith(".idl.in"    )
+        || fname.endsWith(".idl.in.new")
+        || fname.endsWith(".idl.in.old")
         || fname.endsWith(".html"    )
         || fname.endsWith(".html.new")
         || fname.endsWith(".html.old")

@@ -187,8 +187,6 @@ class View
       PrintStsLine();
       PrintFileLine();
       PrintCmdLine();
-
-    //m_console.Update();
     }
   }
   void RepositionView()
@@ -1043,8 +1041,6 @@ class View
           // This line places the cursor at the top of the screen, which I prefer:
           m_crsRow = 0;
         }
-      //Set_Console_CrsCell();
-
         Update();
       }
     }
@@ -1082,8 +1078,6 @@ class View
       else {
         m_topLine -= WorkingRows() - 1;
       }
-    //Set_Console_CrsCell();
-
       Update();
     }
   }

@@ -4378,7 +4378,7 @@ public class VisFx extends Application
   {
     final int FILE_HIST_LEN = m_file_hist[ m_win ].size();
 
-    if( FILE_HIST_LEN <= 1 )
+    if( FILE_HIST_LEN < 2 )
     {
       // Nothing to do, so just put cursor back
       CV().PrintCursor();
@@ -4683,6 +4683,13 @@ public class VisFx extends Application
             }
           }
         }
+        // For DIR and BUFFER_EDITOR, invalidate regex's so that files that
+        // no longer contain the current regex are no longer highlighted
+        if( nv.m_fb.m_file_type == File_Type.DIR
+         || nv.m_fb.m_file_type == File_Type.BUFFER_EDITOR )
+        {
+          nv.m_fb.Invalidate_Regexs();
+        }
         nv.SetTilePos( PV().m_tile_pos );
         nv.Update();
       }
@@ -4777,7 +4784,7 @@ public class VisFx extends Application
   {
     final int FILE_HIST_LEN = m_file_hist[ m_win ].size();
 
-    if( FILE_HIST_LEN <= 1 )
+    if( FILE_HIST_LEN < 2 )
     {
       // Nothing to do, so just put cursor back
       CV().PrintCursor();
@@ -4800,6 +4807,13 @@ public class VisFx extends Application
         int view_index_old = m_file_hist[ m_win ].remove( 0 );
         m_file_hist[ m_win ].add( view_index_old );
 
+        // For DIR and BUFFER_EDITOR, invalidate regex's so that files that
+        // no longer contain the current regex are no longer highlighted
+        if( CV().m_fb.m_file_type == File_Type.DIR
+         || CV().m_fb.m_file_type == File_Type.BUFFER_EDITOR )
+        {
+          CV().m_fb.Invalidate_Regexs();
+        }
         // Redisplay current window with new view:
         CV().SetTilePos( tp_old );
         CV().Update();
