@@ -3059,17 +3059,17 @@ class View
     // Replace white space with register line, insert after white space used:
     Line reg_line = m_vis.get_reg().get(k);
     final int RLL = reg_line.length();
+    final int OLL = m_fb.LineLen( OCL+k );
 
     boolean continue_last_update = false;
 
     for( int i=0; i<RLL; i++ )
     {
-      final int NLL = m_fb.LineLen( OCL+k );
-
       char C_new = reg_line.charAt(i);
 
-      boolean set = false;
-      if( ISP+i < NLL )
+      boolean replaced_space = false;
+
+      if( ISP+i < OLL )
       {
         char C_old = m_fb.Get( OCL+k, ISP+i );
 
@@ -3077,12 +3077,12 @@ class View
         {
           // Replace ' ' with C_new:
           m_fb.Set( OCL+k, ISP+i, C_new, continue_last_update );
-          set = true;
+          replaced_space = true;
           continue_last_update = true;
         }
       }
       // No more spaces or end of line, so insert:
-      if( !set ) m_fb.InsertChar( OCL+k, ISP+i, C_new );
+      if( !replaced_space ) m_fb.InsertChar( OCL+k, ISP+i, C_new );
     }
   }
 

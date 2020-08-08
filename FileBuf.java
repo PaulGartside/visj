@@ -526,6 +526,128 @@ class FileBuf
     }
   }
 
+//// BOM = Byte Order Mark
+//void Find_Decoding_From_BOM()
+//{
+//  final int NUM_LINES = NumLines();
+//
+//  if( 0 < NUM_LINES )
+//  {
+//    Encoding BOM = Encoding.BYTE;
+//
+//    Line lp0 = GetLine( 0 );
+//
+//    if( 1 < lp0.length() )
+//    {
+//      final char C0 = lp0.charAt( 0 );
+//      final char C1 = lp0.charAt( 1 );
+//
+//      if     ( C0 == 254 && C1 == 255 ) BOM = Encoding.UTF_16BE;
+//      else if( C0 == 255 && C1 == 254 ) BOM = Encoding.UTF_16LE;
+//      else
+//      {
+//        if( 2 < lp0.length() )
+//        {
+//          final char C2 = lp0.charAt( 2 );
+//
+//          if( C0 == 239 && C1 == 187 && C2 == 191 ) BOM = Encoding.UTF_8;
+//        }
+//      }
+//    }
+//    // If m_decoding is the same as BOM, Set_decoding does nothing
+//    Set_decoding( BOM );
+//  }
+//}
+
+//// BOM = Byte Order Mark
+//void Find_Decoding_From_BOM()
+//{
+//  final int NUM_LINES = NumLines();
+//
+//  if( 0 < NUM_LINES )
+//  {
+//    Encoding BOM = Encoding.BYTE;
+//
+//    Line lp0 = GetLine( 0 );
+//
+//    if( 0 < lp0.length() )
+//    {
+//      final char C0 = lp0.charAt( 0 );
+//
+//      if( c0 == 252 ) BOM = Encoding.WIN_1252;
+//      else
+//      {
+//        if( 1 < lp0.length() )
+//        {
+//          final char C1 = lp0.charAt( 1 );
+//
+//          if     ( C0 == 254 && C1 == 255 ) BOM = Encoding.UTF_16BE;
+//          else if( C0 == 255 && C1 == 254 ) BOM = Encoding.UTF_16LE;
+//          else
+//          {
+//            if( 2 < lp0.length() )
+//            {
+//              final char C2 = lp0.charAt( 2 );
+//
+//              if( C0 == 239 && C1 == 187 && C2 == 191 ) BOM = Encoding.UTF_8;
+//            }
+//          }
+//        }
+//      }
+//    }
+//    // If m_decoding is the same as BOM, Set_decoding does nothing
+//    Set_decoding( BOM );
+//  }
+//}
+
+  // BOM = Byte Order Mark
+  void Find_Decoding_From_BOM()
+  {
+    final int NUM_LINES = NumLines();
+
+    if( 0 < NUM_LINES )
+    {
+      Encoding BOM = Encoding.BYTE;
+
+      Line lp0 = GetLine( 0 );
+
+      if( 0 < lp0.length() )
+      {
+        final char C0 = lp0.charAt( 0 );
+
+        if( C0 == 252 )
+        {
+          // 252 as BOM for win-1252 is unique to this editor
+          BOM = Encoding.WIN_1252;
+        }
+        else if( 1 < lp0.length() )
+        {
+          final char C1 = lp0.charAt( 1 );
+
+          if( C0 == 254 && C1 == 255 )
+          {
+            BOM = Encoding.UTF_16BE;
+          }
+          else if( C0 == 255 && C1 == 254 )
+          {
+            BOM = Encoding.UTF_16LE;
+          }
+          else if( 2 < lp0.length() )
+          {
+            final char C2 = lp0.charAt( 2 );
+
+            if( C0 == 239 && C1 == 187 && C2 == 191 )
+            {
+              BOM = Encoding.UTF_8;
+            }
+          }
+        }
+      }
+      // If m_decoding is the same as BOM, Set_decoding does nothing
+      Set_decoding( BOM );
+    }
+  }
+
   void CheckFileModTime()
   {
     if( m_isRegular || m_isDir )
@@ -735,6 +857,10 @@ class FileBuf
     if( File_Type.UNKNOWN == m_file_type )
     {
       Find_File_Type_FirstLine();
+    }
+    if( Encoding.BYTE == m_decoding )
+    {
+      Find_Decoding_From_BOM();
     }
   }
 
@@ -2176,9 +2302,16 @@ class FileBuf
     }
   }
 
+  // byte -> HEX      -> byte
+  // byte -> UTF_8    -> byte
+  // byte -> UTF_16BE -> byte
+  // byte -> UTF_16LE -> byte
+  // byte -> WIN_1252 -> byte
+  //
   boolean Set_decoding( final Encoding dec )
   {
     boolean ok = true;
+
     if( dec != m_decoding )
     {
       final long file_size = GetSize();

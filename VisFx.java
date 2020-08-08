@@ -2801,6 +2801,7 @@ public class VisFx extends Application
     else if( m_sb.toString().startsWith("detab="))Exe_Colon_Detab();
     else if( m_sb.toString().startsWith("dec="))  Exe_Colon_Decoding();
     else if( m_sb.toString().startsWith("enc="))  Exe_Colon_Encoding();
+    else if( m_sb.toString().startsWith("addbom")) Exe_Colon_Add_BOM();
     else if( m_sb.toString().startsWith("font=")) Exe_Colon_Font();
     else if( m_sb.charAt(0)=='w' )            Exe_Colon_w();
     else if( m_sb.charAt(0)=='b' )            Exe_Colon_b();
@@ -2816,14 +2817,18 @@ public class VisFx extends Application
   void Exe_Colon_Begin()
   {
     if( 1<m_states.size() ) m_states.removeFirst(); //< Drop out of m_run_colon
+
     // Copy m_sb into m_sb2
     m_sb2.ensureCapacity( m_sb.length() );
     m_sb2.setLength( 0 );
+
     for( int k=0; k<m_sb.length(); k++ ) m_sb2.append( m_sb.charAt( k ) );
+
     Utils.Trim( m_sb2 ); //< Remove leading and trailing white space
     Utils.RemoveSpaces( m_sb );
     // m_sb2 has spaces between tokens, but no leading or trailing spaces
     // m_sb  has no spaces
+
     Exe_Colon_MapEnd();
   }
   void Exe_Colon_PrintCursor()
@@ -4092,23 +4097,79 @@ public class VisFx extends Application
   }
   boolean Matches_UTF_8( String S )
   {
-    return 0==S.compareToIgnoreCase("utf-8")
-        || 0==S.compareToIgnoreCase("utf8" );
+    return 0==S.compareToIgnoreCase("utf8" )
+        || 0==S.compareToIgnoreCase("utf-8")
+        || 0==S.compareToIgnoreCase("utf_8");
   }
   boolean Matches_UTF_16BE( String S )
   {
-    return 0==S.compareToIgnoreCase("utf-16be")
-        || 0==S.compareToIgnoreCase("utf16be" );
+    return 0==S.compareToIgnoreCase("utf16be" )
+        || 0==S.compareToIgnoreCase("utf-16be")
+        || 0==S.compareToIgnoreCase("utf_16be")
+        || 0==S.compareToIgnoreCase("utf16-be")
+        || 0==S.compareToIgnoreCase("utf16_be");
   }
   boolean Matches_UTF_16LE( String S )
   {
-    return 0==S.compareToIgnoreCase("utf-16le")
-        || 0==S.compareToIgnoreCase("utf16le" );
+    return 0==S.compareToIgnoreCase("utf16le" )
+        || 0==S.compareToIgnoreCase("utf-16le")
+        || 0==S.compareToIgnoreCase("utf_16le")
+        || 0==S.compareToIgnoreCase("utf16-le")
+        || 0==S.compareToIgnoreCase("utf16_le");
   }
   boolean Matches_WIN_1252( String S )
   {
     return 0==S.compareToIgnoreCase("win")
         || 0==S.compareToIgnoreCase("1252");
+  }
+
+  void Exe_Colon_Add_BOM()
+  {
+    FileBuf fb = CV().m_fb;
+    Encoding dec = fb.m_decoding;
+
+    if( dec == Encoding.UTF_8
+     || dec == Encoding.UTF_16BE
+     || dec == Encoding.UTF_16LE
+     || dec == Encoding.WIN_1252 )
+    {
+      if( fb.NumLines() < 1 ) fb.PushLine();
+
+      boolean has_BOM = false;
+
+      Line lp0 = fb.GetLine( 0 );
+
+      final char C0 = (0 < lp0.length()) ? lp0.charAt( 0 ) : 0;
+
+      if( dec == Encoding.WIN_1252 )
+      {
+        // win-1252 BOM of 252 is unique to this editor
+        if( C0 == 252 ) has_BOM = true;
+      }
+      else // UTF_8, UTF_16BE, UTF_16LE
+      {
+        if( C0 == '\uFEFF' ) has_BOM = true;
+      }
+
+      if( has_BOM ) CmdLineMessage("Already has BOM");
+      else {
+        // Insert BOM onto empty line at top of file
+        if( 0 < lp0.length() )
+        {
+          fb.InsertLine( 0 );
+          lp0 = fb.GetLine( 0 );
+        }
+        if( dec == Encoding.WIN_1252 )
+        {
+          fb.InsertChar( 0, 0, (char)252 );
+        }
+        else // UTF_8, UTF_16BE, UTF_16LE
+        {
+          fb.InsertChar( 0, 0, '\uFEFF' );
+        }
+        CV().m_fb.Update();
+      }
+    }
   }
 
 //void Exe_Colon_Font()

@@ -37,10 +37,10 @@ enum Style
   VISUAL      ( (char)12 ),
   NONASCII    ( (char)13 ),
   RV_NORMAL   ( (char)14 ),
-  RV_STATUS   ( (char)15 ),
-  RV_BORDER   ( (char)16 ),
-  RV_BORDER_HI( (char)17 ),
-  RV_BANNER   ( (char)18 ),
+  RV_STATUS   ( (char)15 ), // Not used
+  RV_BORDER   ( (char)16 ), // Not used
+  RV_BORDER_HI( (char)17 ), // Not used
+  RV_BANNER   ( (char)18 ), // Not used
   RV_STAR     ( (char)19 ),
   RV_COMMENT  ( (char)20 ),
   RV_DEFINE   ( (char)21 ),

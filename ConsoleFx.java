@@ -869,45 +869,9 @@ class ConsoleFx extends Canvas
   }
   void Init_Color_Scheme_2()
   {
-    NORMAL_FG       = Color.WHITE  ;  NORMAL_BG       = Color.BLACK  ;
-    STATUS_FG       = Color.WHITE  ;  STATUS_BG       = Color.BLUE   ;
-    BORDER_FG       = Color.WHITE  ;  BORDER_BG       = Color.BLUE   ;
-    BORDER_HI_FG    = Color.BLUE   ;  BORDER_HI_BG    = Color.LIME   ; // FX calls green LIME
-    BANNER_FG       = Color.WHITE  ;  BANNER_BG       = Color.RED    ;
-    STAR_FG         = Color.WHITE  ;  STAR_BG         = Color.RED    ;
-    COMMENT_FG      = m_comment_fg ;  COMMENT_BG      = Color.BLACK  ;
-    DEFINE_FG       = Color.MAGENTA;  DEFINE_BG       = Color.BLACK  ;
-    CONST_FG        = Color.CYAN   ;  CONST_BG        = Color.BLACK  ;
-    CONTROL_FG      = Color.YELLOW ;  CONTROL_BG      = Color.BLACK  ;
-    VARTYPE_FG      = Color.LIME   ;  VARTYPE_BG      = Color.BLACK  ;
-    VISUAL_FG       = Color.WHITE  ;  VISUAL_BG       = Color.RED    ;
-    NONASCII_FG     = Color.RED    ;  NONASCII_BG     = Color.BLUE   ;
-    RV_NORMAL_FG    = Color.BLACK  ;  RV_NORMAL_BG    = Color.WHITE  ;
-    RV_STATUS_FG    = Color.BLUE   ;  RV_STATUS_BG    = Color.BLUE   ;
-    RV_BORDER_FG    = Color.BLUE   ;  RV_BORDER_BG    = Color.WHITE  ;
-    RV_BORDER_HI_FG = Color.LIME   ;  RV_BORDER_HI_BG = Color.WHITE  ;
-    RV_BANNER_FG    = Color.RED    ;  RV_BANNER_BG    = Color.WHITE  ;
-    RV_STAR_FG      = Color.RED    ;  RV_STAR_BG      = Color.WHITE  ;
-    RV_COMMENT_FG   = Color.WHITE  ;  RV_COMMENT_BG   = Color.BLUE   ;
-    RV_DEFINE_FG    = Color.WHITE  ;  RV_DEFINE_BG    = Color.MAGENTA;
-    RV_CONST_FG     = Color.BLACK  ;  RV_CONST_BG     = Color.CYAN   ;
-    RV_CONTROL_FG   = Color.BLACK  ;  RV_CONTROL_BG   = Color.YELLOW ;
-    RV_VARTYPE_FG   = Color.WHITE  ;  RV_VARTYPE_BG   = Color.LIME   ;
-    RV_VISUAL_FG    = Color.RED    ;  RV_VISUAL_BG    = Color.WHITE  ;
-    RV_NONASCII_FG  = Color.BLUE   ;  RV_NONASCII_BG  = Color.RED    ;
-    EMPTY_FG        = Color.RED    ;  EMPTY_BG        = m_d_gray     ;
-    EOF_FG          = Color.RED    ;  EOF_BG          = m_d_gray     ;
-    DIFF_DEL_FG     = Color.WHITE  ;  DIFF_DEL_BG     = Color.RED    ;
-    DIFF_NORMAL_FG  = Color.WHITE  ;  DIFF_NORMAL_BG  = Color.BLUE   ;
-    DIFF_STAR_FG    = Color.BLUE   ;  DIFF_STAR_BG    = Color.RED    ;
-    DIFF_COMMENT_FG = Color.WHITE  ;  DIFF_COMMENT_BG = Color.BLUE   ;
-    DIFF_DEFINE_FG  = Color.MAGENTA;  DIFF_DEFINE_BG  = Color.BLUE   ;
-    DIFF_CONST_FG   = Color.CYAN   ;  DIFF_CONST_BG   = Color.BLUE   ;
-    DIFF_CONTROL_FG = Color.YELLOW ;  DIFF_CONTROL_BG = Color.BLUE   ;
-    DIFF_VARTYPE_FG = Color.LIME   ;  DIFF_VARTYPE_BG = Color.BLUE   ;
-    DIFF_VISUAL_FG  = Color.BLUE   ;  DIFF_VISUAL_BG  = Color.RED    ;
-    CURSOR_FG       = Color.BLACK  ;  CURSOR_BG       = Color.PINK   ;
-                                      CURSOR_EMPTY_BG = Color.BLACK  ;
+    Init_Color_Scheme_1();
+
+    EMPTY_BG = m_d_gray;
   }
 
   void Set_Color_Scheme_3()
@@ -923,45 +887,43 @@ class ConsoleFx extends Canvas
   }
   void Init_Color_Scheme_3()
   {
-    NORMAL_FG       = Color.BLACK    ;  NORMAL_BG       = Color.WHITE  ;
-    STATUS_FG       = Color.WHITE    ;  STATUS_BG       = Color.BLUE   ;
-    BORDER_FG       = Color.WHITE    ;  BORDER_BG       = Color.BLUE   ;
-    BORDER_HI_FG    = Color.BLUE     ;  BORDER_HI_BG    = Color.LIME   ; // FX calls green LIME
-    BANNER_FG       = Color.WHITE    ;  BANNER_BG       = Color.RED    ;
-    STAR_FG         = Color.WHITE    ;  STAR_BG         = Color.RED    ;
-    COMMENT_FG      = m_d_blue       ;  COMMENT_BG      = Color.WHITE  ;
-    DEFINE_FG       = m_d_magenta    ;  DEFINE_BG       = Color.WHITE  ;
-    CONST_FG        = m_d_cyan       ;  CONST_BG        = Color.WHITE  ;
-    CONTROL_FG      = m_d_yellow     ;  CONTROL_BG      = Color.WHITE  ;
-    VARTYPE_FG      = m_d_green      ;  VARTYPE_BG      = Color.WHITE  ;
-    VISUAL_FG       = Color.RED      ;  VISUAL_BG       = Color.WHITE  ;
-    NONASCII_FG     = Color.YELLOW   ;  NONASCII_BG     = Color.CYAN   ;
-    RV_NORMAL_FG    = Color.WHITE    ;  RV_NORMAL_BG    = Color.BLACK  ;
-    RV_STATUS_FG    = Color.BLUE     ;  RV_STATUS_BG    = Color.WHITE  ;
-    RV_BORDER_FG    = Color.BLUE     ;  RV_BORDER_BG    = Color.WHITE  ;
-    RV_BORDER_HI_FG = Color.LIME     ;  RV_BORDER_HI_BG = Color.WHITE  ;
-    RV_BANNER_FG    = Color.WHITE    ;  RV_BANNER_BG    = Color.RED    ;
-    RV_STAR_FG      = Color.RED      ;  RV_STAR_BG      = Color.WHITE  ;
-    RV_COMMENT_FG   = Color.WHITE    ;  RV_COMMENT_BG   = Color.BLUE   ;
-    RV_DEFINE_FG    = Color.MAGENTA  ;  RV_DEFINE_BG    = Color.WHITE  ;
-    RV_CONST_FG     = Color.CYAN     ;  RV_CONST_BG     = Color.BLACK  ;
-    RV_CONTROL_FG   = Color.BLACK    ;  RV_CONTROL_BG   = Color.YELLOW ;
-    RV_VARTYPE_FG   = Color.LIME     ;  RV_VARTYPE_BG   = Color.WHITE  ;
-    RV_VISUAL_FG    = Color.WHITE    ;  RV_VISUAL_BG    = Color.RED    ;
-    RV_NONASCII_FG  = Color.CYAN     ;  RV_NONASCII_BG  = Color.YELLOW ;
-    EMPTY_FG        = Color.RED      ;  EMPTY_BG        = Color.WHITE  ;
-    EOF_FG          = Color.RED      ;  EOF_BG          = m_d_gray     ;
-    DIFF_DEL_FG     = Color.WHITE    ;  DIFF_DEL_BG     = Color.RED    ;
-    DIFF_NORMAL_FG  = Color.WHITE    ;  DIFF_NORMAL_BG  = Color.BLUE   ;
-    DIFF_STAR_FG    = Color.BLUE     ;  DIFF_STAR_BG    = Color.RED    ;
-    DIFF_COMMENT_FG = Color.WHITE    ;  DIFF_COMMENT_BG = Color.BLUE   ;
-    DIFF_DEFINE_FG  = Color.MAGENTA  ;  DIFF_DEFINE_BG  = Color.BLUE   ;
-    DIFF_CONST_FG   = Color.CYAN     ;  DIFF_CONST_BG   = Color.BLUE   ;
-    DIFF_CONTROL_FG = Color.YELLOW   ;  DIFF_CONTROL_BG = Color.BLUE   ;
-    DIFF_VARTYPE_FG = Color.LIME     ;  DIFF_VARTYPE_BG = Color.BLUE   ;
-    DIFF_VISUAL_FG  = Color.BLUE     ;  DIFF_VISUAL_BG  = Color.RED    ;
-    CURSOR_FG       = Color.BLACK    ;  CURSOR_BG       = m_d_pink     ;
-                                        CURSOR_EMPTY_BG = Color.BLACK  ;
+    NORMAL_FG       = Color.BLACK     ; NORMAL_BG       = Color.WHITE       ;
+    STATUS_FG       = Color.BLACK     ; STATUS_BG       = Color.LIGHTSKYBLUE;
+    BORDER_FG       = Color.WHITE     ; BORDER_BG       = Color.DODGERBLUE  ;
+    BORDER_HI_FG    = Color.BLACK     ; BORDER_HI_BG    = Color.PALEGREEN   ;
+    BANNER_FG       = Color.BLACK     ; BANNER_BG       = Color.PINK        ;
+    STAR_FG         = Color.BLACK     ; STAR_BG         = Color.PINK        ;
+    COMMENT_FG      = Color.DODGERBLUE; COMMENT_BG      = Color.WHITE       ;
+    DEFINE_FG       = Color.MAGENTA   ; DEFINE_BG       = Color.WHITE       ;
+    CONST_FG        = Color.BLUE      ; CONST_BG        = Color.WHITE       ;
+    CONTROL_FG      = Color.DARKORANGE; CONTROL_BG      = Color.WHITE       ;
+    VARTYPE_FG      = Color.GREEN     ; VARTYPE_BG      = Color.WHITE       ;
+    VISUAL_FG       = Color.BLACK     ; VISUAL_BG       = Color.PINK        ;
+    NONASCII_FG     = Color.PINK      ; NONASCII_BG     = Color.DODGERBLUE  ;
+                                   
+    RV_NORMAL_FG    = Color.BLACK     ; RV_NORMAL_BG    = Color.WHEAT;
+    RV_STAR_FG      = Color.RED       ; RV_STAR_BG      = Color.PINK ;
+    RV_COMMENT_FG   = Color.DODGERBLUE; RV_COMMENT_BG   = Color.WHEAT;
+    RV_DEFINE_FG    = Color.MAGENTA   ; RV_DEFINE_BG    = Color.WHEAT;
+    RV_CONST_FG     = Color.BLUE      ; RV_CONST_BG     = Color.WHEAT;
+    RV_CONTROL_FG   = Color.DARKORANGE; RV_CONTROL_BG   = Color.WHEAT;
+    RV_VARTYPE_FG   = Color.GREEN     ; RV_VARTYPE_BG   = Color.WHEAT;
+    RV_VISUAL_FG    = Color.BLACK     ; RV_VISUAL_BG    = Color.WHEAT;
+    RV_NONASCII_FG  = Color.DODGERBLUE; RV_NONASCII_BG  = Color.PINK ;
+
+    EMPTY_FG        = Color.PINK      ; EMPTY_BG        = Color.WHITE    ;
+    EOF_FG          = Color.RED       ; EOF_BG          = Color.SILVER   ;
+    DIFF_DEL_FG     = Color.BLACK     ; DIFF_DEL_BG     = Color.PINK     ;
+    DIFF_NORMAL_FG  = Color.BLACK     ; DIFF_NORMAL_BG  = Color.PALEGREEN;
+    DIFF_STAR_FG    = Color.DODGERBLUE; DIFF_STAR_BG    = Color.PINK     ;
+    DIFF_COMMENT_FG = Color.BLACK     ; DIFF_COMMENT_BG = Color.PALEGREEN;
+    DIFF_DEFINE_FG  = Color.MAGENTA   ; DIFF_DEFINE_BG  = Color.PALEGREEN;
+    DIFF_CONST_FG   = Color.BLUE      ; DIFF_CONST_BG   = Color.PALEGREEN;
+    DIFF_CONTROL_FG = Color.DARKORANGE; DIFF_CONTROL_BG = Color.PALEGREEN;
+    DIFF_VARTYPE_FG = Color.GREEN     ; DIFF_VARTYPE_BG = Color.PALEGREEN;
+    DIFF_VISUAL_FG  = Color.DODGERBLUE; DIFF_VISUAL_BG  = Color.PINK     ;
+    CURSOR_FG       = Color.WHITE     ; CURSOR_BG       = Color.RED      ;
+                                        CURSOR_EMPTY_BG = Color.WHITE    ;
   }
 
   void Set_Color_Scheme_4()
@@ -977,50 +939,14 @@ class ConsoleFx extends Canvas
   }
   void Init_Color_Scheme_4()
   {
-    NORMAL_FG       = Color.BLACK    ;  NORMAL_BG       = Color.WHITE  ;
-    STATUS_FG       = Color.WHITE    ;  STATUS_BG       = Color.BLUE   ;
-    BORDER_FG       = Color.WHITE    ;  BORDER_BG       = Color.BLUE   ;
-    BORDER_HI_FG    = Color.BLUE     ;  BORDER_HI_BG    = Color.LIME   ; // FX calls green LIME
-    BANNER_FG       = Color.WHITE    ;  BANNER_BG       = Color.RED    ;
-    STAR_FG         = Color.WHITE    ;  STAR_BG         = Color.RED    ;
-    COMMENT_FG      = m_d_blue       ;  COMMENT_BG      = Color.WHITE  ;
-    DEFINE_FG       = m_d_magenta    ;  DEFINE_BG       = Color.WHITE  ;
-    CONST_FG        = m_d_cyan       ;  CONST_BG        = Color.WHITE  ;
-    CONTROL_FG      = m_d_yellow     ;  CONTROL_BG      = Color.WHITE  ;
-    VARTYPE_FG      = m_d_green      ;  VARTYPE_BG      = Color.WHITE  ;
-    VISUAL_FG       = Color.RED      ;  VISUAL_BG       = Color.WHITE  ;
-    NONASCII_FG     = Color.YELLOW   ;  NONASCII_BG     = Color.CYAN   ;
-    RV_NORMAL_FG    = Color.WHITE    ;  RV_NORMAL_BG    = Color.BLACK  ;
-    RV_STATUS_FG    = Color.BLUE     ;  RV_STATUS_BG    = Color.WHITE  ;
-    RV_BORDER_FG    = Color.BLUE     ;  RV_BORDER_BG    = Color.WHITE  ;
-    RV_BORDER_HI_FG = Color.LIME     ;  RV_BORDER_HI_BG = Color.WHITE  ;
-    RV_BANNER_FG    = Color.WHITE    ;  RV_BANNER_BG    = Color.RED    ;
-    RV_STAR_FG      = Color.RED      ;  RV_STAR_BG      = Color.WHITE  ;
-    RV_COMMENT_FG   = Color.WHITE    ;  RV_COMMENT_BG   = Color.BLUE   ;
-    RV_DEFINE_FG    = Color.MAGENTA  ;  RV_DEFINE_BG    = Color.WHITE  ;
-    RV_CONST_FG     = Color.CYAN     ;  RV_CONST_BG     = Color.BLACK  ;
-    RV_CONTROL_FG   = Color.BLACK    ;  RV_CONTROL_BG   = Color.YELLOW ;
-    RV_VARTYPE_FG   = Color.LIME     ;  RV_VARTYPE_BG   = Color.WHITE  ;
-    RV_VISUAL_FG    = Color.WHITE    ;  RV_VISUAL_BG    = Color.RED    ;
-    RV_NONASCII_FG  = Color.CYAN     ;  RV_NONASCII_BG  = Color.YELLOW ;
-    EMPTY_FG        = Color.RED      ;  EMPTY_BG        = m_d_gray     ;
-    EOF_FG          = Color.RED      ;  EOF_BG          = m_d_gray     ;
-    DIFF_DEL_FG     = Color.WHITE    ;  DIFF_DEL_BG     = Color.RED    ;
-    DIFF_NORMAL_FG  = Color.WHITE    ;  DIFF_NORMAL_BG  = Color.BLUE   ;
-    DIFF_STAR_FG    = Color.BLUE     ;  DIFF_STAR_BG    = Color.RED    ;
-    DIFF_COMMENT_FG = Color.WHITE    ;  DIFF_COMMENT_BG = Color.BLUE   ;
-    DIFF_DEFINE_FG  = Color.MAGENTA  ;  DIFF_DEFINE_BG  = Color.BLUE   ;
-    DIFF_CONST_FG   = Color.CYAN     ;  DIFF_CONST_BG   = Color.BLUE   ;
-    DIFF_CONTROL_FG = Color.YELLOW   ;  DIFF_CONTROL_BG = Color.BLUE   ;
-    DIFF_VARTYPE_FG = Color.LIME     ;  DIFF_VARTYPE_BG = Color.BLUE   ;
-    DIFF_VISUAL_FG  = Color.BLUE     ;  DIFF_VISUAL_BG  = Color.RED    ;
-    CURSOR_FG       = Color.BLACK    ;  CURSOR_BG       = m_d_pink     ;
-                                        CURSOR_EMPTY_BG = Color.BLACK  ;
+    Init_Color_Scheme_3();
+
+    EMPTY_BG = Color.SILVER;
   }
 
   private Color Style_2_BG( final Style S )
   {
-    Color C =  Color.BLACK; // Default
+    Color C = Color.BLACK; // Default
     switch( S )
     {
     case NORMAL      : C = NORMAL_BG      ; break;
@@ -1122,7 +1048,7 @@ class ConsoleFx extends Canvas
 
       Collections.sort( m_all_fonts );
 
-      just_initialized_fonts = true;;
+      just_initialized_fonts = true;
     }
     return just_initialized_fonts;
   }
