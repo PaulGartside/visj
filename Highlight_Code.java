@@ -353,10 +353,13 @@ abstract class Highlight_Code extends Highlight_Base
     m_state = Hi_State.NumberIn;
 
     final int LL = m_fb.LineLen( m_l );
+
     if( '0' == c1 && (m_p+1)<LL )
     {
       final char c0 = m_fb.Get( m_l, m_p );
-      if( 'x' == c0 ) {
+
+      if( 'x' == c0 || 'X' == c0 )
+      {
         m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
         m_state = Hi_State.NumberHex;
         m_p++;

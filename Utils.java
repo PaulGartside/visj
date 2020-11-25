@@ -145,7 +145,7 @@ class Utils
     return Character.isDigit( C )
         || C == 'A' || C == 'a'
         || C == 'B' || C == 'b'
-        || C == 'C' || C == 'C'
+        || C == 'C' || C == 'c'
         || C == 'D' || C == 'd'
         || C == 'E' || C == 'e'
         || C == 'F' || C == 'f';
@@ -158,6 +158,15 @@ class Utils
         || C == '-'
         || C == '.'
         || C == ':';
+  }
+  public static
+  boolean IsJavaRegexMetaChar( final char C )
+  {
+    return C == '<' || C == '(' || C == '[' || C == '{'
+        || C == '\\'|| C == '^' || C == '-' || C == '='
+        || C == '$' || C == '!' || C == '|' || C == ']'
+        || C == '}' || C == ')' || C == '?' || C == '*'
+        || C == '+' || C == '.' || C == '>';
   }
   public static
   boolean IsEndOfLineDelim( final int C )

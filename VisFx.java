@@ -51,6 +51,11 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javafx.scene.image.Image;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
+
 public class VisFx extends Application
                 implements VisIF
 {
@@ -2678,7 +2683,6 @@ public class VisFx extends Application
   void Handle_Plus()
   {
     CV().Handle_Plus();
-
   }
   void Handle_Underscore()
   {
@@ -2793,6 +2797,8 @@ public class VisFx extends Application
     else if( m_sb.toString().equals("uncomment")) Exe_Colon_UnComment();
     else if( m_sb.toString().equals("bytes"))  Exe_Colon_Bytes();
     else if( m_sb.toString().equals("image"))  Exe_Colon_Image();
+    else if( m_sb.toString().equals("rotate")) Exe_Colon_Rotate();
+    else if( m_sb.toString().equals("flip"))   Exe_Colon_Flip();
     else if( m_sb.toString().equals("graph"))  Exe_Colon_Graph();
     else if( m_sb.toString().equals("bar"))    Exe_Colon_Bar();
     else if( m_sb.toString().equals("line"))   Exe_Colon_Line();
@@ -3932,26 +3938,91 @@ public class VisFx extends Application
   {
     View cv = CV();
 
-    if( ! cv.m_image_mode && Is.no == cv.m_image_file )
-    {
-      // cv is not an image file but trying to goto image mode:
-      CmdLineMessage( cv.m_fb.m_fname + ": not an image file");
-    }
-    else
+    if( null       == cv.m_image_file
+     || Is.unknown == cv.m_image_file
+     || Is.yes     == cv.m_image_file )
     {
       // In image mode and trying to exit image mode,
       // Or not in image mode but trying to goto image mode,
       //   And have not determined if cv is an image file
       //     Or cv is an image file
-      boolean was_in_image_mode = cv.m_image_mode;
-
       cv.m_image_mode = ! cv.m_image_mode;
       cv.Update();
+    }
+    if( Is.no == cv.m_image_file )
+    {
+      // cv was already determined to not be an image for or
+      // was just determined to not be an image file
+      CmdLineMessage( cv.m_fb.m_fname + ": not an image file");
+    }
+  }
 
-      if( ! was_in_image_mode && ! cv.m_image_mode )
+  // Rotates the image clockwise
+  void Exe_Colon_Rotate()
+  {
+    View cv = CV();
+
+    if( Is.yes == cv.m_image_file && cv.m_image_mode )
+    {
+      Image ci = cv.m_fb.m_image;
+
+      PixelReader pr = ci.getPixelReader();
+
+      if( null != pr )
       {
-        // Failed to goto image mode:
-        CmdLineMessage( cv.m_fb.m_fname + ": not an image file");
+        final int ci_w = (int)(ci.getWidth () + 0.5);
+        final int ci_h = (int)(ci.getHeight() + 0.5);
+
+        WritableImage wi = new WritableImage( ci_h, ci_w );
+
+        PixelWriter pw = wi.getPixelWriter();
+
+        for( int i_w=0; i_w<ci_w; i_w++ )
+        {
+          for( int i_h=0; i_h<ci_h; i_h++ )
+          {
+            final int argb = pr.getArgb( i_w, ci_h-i_h-1 );
+
+            pw.setArgb( i_h, i_w, argb );
+          }
+        }
+        cv.m_fb.m_image = wi;
+        cv.Update();
+      }
+    }
+  }
+
+  // Flips the image horizontally
+  void Exe_Colon_Flip()
+  {
+    View cv = CV();
+
+    if( Is.yes == cv.m_image_file && cv.m_image_mode )
+    {
+      Image ci = cv.m_fb.m_image;
+
+      PixelReader pr = ci.getPixelReader();
+
+      if( null != pr )
+      {
+        final int ci_w = (int)(ci.getWidth () + 0.5);
+        final int ci_h = (int)(ci.getHeight() + 0.5);
+
+        WritableImage wi = new WritableImage( ci_w, ci_h );
+
+        PixelWriter pw = wi.getPixelWriter();
+
+        for( int i_w=0; i_w<ci_w; i_w++ )
+        {
+          for( int i_h=0; i_h<ci_h; i_h++ )
+          {
+            final int argb = pr.getArgb( ci_w-i_w-1, i_h );
+
+            pw.setArgb( i_w, i_h, argb );
+          }
+        }
+        cv.m_fb.m_image = wi;
+        cv.Update();
       }
     }
   }
@@ -3960,29 +4031,25 @@ public class VisFx extends Application
   {
     View cv = CV();
 
-    if( ! cv.m_graph_mode && Is.no == cv.m_graph_file )
-    {
-      // cv is not a graph file but trying to goto graph mode:
-      CmdLineMessage( cv.m_fb.m_fname + ": not a graph file");
-    }
-    else
+    if( null       == cv.m_graph_file
+     || Is.unknown == cv.m_graph_file
+     || Is.yes     == cv.m_graph_file )
     {
       // In graph mode and trying to exit graph mode,
       // Or not in graph mode but trying to goto graph mode,
       //   And have not determined if cv is an graph file
       //     Or cv is an graph file
-      boolean was_in_graph = cv.m_graph_mode;
-
       cv.m_graph_mode = ! cv.m_graph_mode;
       cv.Update();
-
-      if( ! was_in_graph && ! cv.m_graph_mode )
-      {
-        // Failed to goto graph mode:
-        CmdLineMessage( cv.m_fb.m_fname + ": not a graph file");
-      }
+    }
+    if( Is.no == cv.m_graph_file )
+    {
+      // cv was already determined to not be an graph for or
+      // was just determined to not be an graph file
+      CmdLineMessage( cv.m_fb.m_fname + ": not an graph file");
     }
   }
+
   void Exe_Colon_Bar()
   {
     View cv = CV();

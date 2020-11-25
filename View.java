@@ -3892,6 +3892,8 @@ class View
       else if( C == ';' ) m_vis.Handle_SemiColon();
       else if( C == 'y' ) { Do_y_v(); }
       else if( C == 'Y' ) { Do_Y_v(); }
+      else if( C == 'r' ) { Do_r_v(); }
+      else if( C == 'R' ) { Do_R_v(); }
       else if( C == 'x'
             || C == 'd' ) { Do_x_v();     m_copy_vis_buf_2_dot_buf = true; }
       else if( C == 'D' ) { Do_D_v();     m_copy_vis_buf_2_dot_buf = true; }
@@ -3970,6 +3972,26 @@ class View
       }
     }
   }
+
+//void Do_v_Handle_gp()
+//{
+//  if( v_st_line == v_fn_line )
+//  {
+//    final int m_v_st_char = v_st_char < v_fn_char ? v_st_char : v_fn_char;
+//    final int m_v_fn_char = v_st_char < v_fn_char ? v_fn_char : v_st_char;
+//
+//    StringBuilder pattern = new StringBuilder();
+//
+//    for( int P = m_v_st_char; P<=m_v_fn_char; P++ )
+//    {
+//      pattern.append( m_fb.Get( v_st_line, P  ) );
+//    }
+//    m_vis.Handle_Slash_GotPattern( pattern.toString(), false );
+//
+//    m_inVisualMode = false;
+//  }
+//}
+
   void Do_v_Handle_gp()
   {
     if( v_st_line == v_fn_line )
@@ -3981,7 +4003,15 @@ class View
 
       for( int P = m_v_st_char; P<=m_v_fn_char; P++ )
       {
-        pattern.append( m_fb.Get( v_st_line, P  ) );
+        final char C = m_fb.Get( v_st_line, P );
+
+        // Escape Java regex metacharacters:
+        if( Utils.IsJavaRegexMetaChar( C ) )
+        {
+          pattern.append( '\\' );
+        }
+        // Add char C to pattern:
+        pattern.append( C );
       }
       m_vis.Handle_Slash_GotPattern( pattern.toString(), false );
 
@@ -4032,6 +4062,15 @@ class View
 
     m_inVisualMode = false;
   }
+  void Do_r_v()
+  {
+    m_vis.get_reg().clear();
+
+    if( m_inVisualBlock ) Do_r_v_block();
+    else                  Do_r_v_st_fn();
+
+    m_inVisualMode = false;
+  }
   void Do_y_v_block()
   {
     final int old_v_st_line = v_st_line;
@@ -4039,6 +4078,7 @@ class View
 
     Swap_Visual_Block_If_Needed();
 
+    // Add visual block area to m_vis.m_reg:
     for( int L=v_st_line; L<=v_fn_line; L++ )
     {
       Line nlr = new Line();
@@ -4064,12 +4104,60 @@ class View
 
     GoToCrsPos_NoWrite( ncl, ncc );
   }
+  void Do_r_v_block()
+  {
+    Swap_Visual_Block_If_Needed();
+
+    final int old_v_st_line = v_st_line;
+    final int old_v_st_char = v_st_char;
+
+    // Add visual block area to m_vis.m_reg:
+    for( int L=v_st_line; L<=v_fn_line; L++ )
+    {
+      Line nlr = new Line();
+
+      final int LL = m_fb.LineLen( L );
+
+      boolean continue_last_update = false;
+
+      for( int P = v_st_char; P<LL && P <= v_fn_char; P++ )
+      {
+        nlr.append_c( m_fb.Get( L, P ) );
+                      m_fb.Set( L, P, ' ', continue_last_update );
+
+        continue_last_update = true;
+      }
+      m_vis.get_reg().add( nlr );
+    }
+    m_vis.set_paste_mode( Paste_Mode.BLOCK );
+
+    // Try to put cursor at (old_v_st_line, old_v_st_char), but
+    // make sure the cursor is in bounds after the deletion:
+    final int NUM_LINES = m_fb.NumLines();
+    final int ncl = NUM_LINES <= old_v_st_line ? NUM_LINES-1
+                                               : old_v_st_line;
+    final int NLL = m_fb.LineLen( ncl );
+    final int ncc = NLL <= 0               ? 0
+                  : old_v_st_char <= 0     ? 0
+                  : NLL <= old_v_st_char-1 ? NLL-1
+                                           : old_v_st_char-1;
+    GoToCrsPos_NoWrite( ncl, ncc );
+  }
   void Do_Y_v()
   {
     m_vis.get_reg().clear();
 
     if( m_inVisualBlock ) Do_y_v_block();
     else                  Do_Y_v_st_fn();
+
+    m_inVisualMode = false;
+  }
+  void Do_R_v()
+  {
+    m_vis.get_reg().clear();
+
+    if( m_inVisualBlock ) Do_r_v_block();
+    else                  Do_R_v_st_fn();
 
     m_inVisualMode = false;
   }
@@ -4124,6 +4212,7 @@ class View
   {
     Swap_Visual_St_Fn_If_Needed();
 
+    // Add visual start-finish area to m_vis.m_reg:
     for( int L=v_st_line; L<=v_fn_line; L++ )
     {
       Line nlr = new Line();
@@ -4142,15 +4231,57 @@ class View
     }
     m_vis.set_paste_mode( Paste_Mode.ST_FN );
   }
+  void Do_r_v_st_fn()
+  {
+    Swap_Visual_St_Fn_If_Needed();
+
+    final int old_v_st_line = v_st_line;
+    final int old_v_st_char = v_st_char;
+
+    // Add visual start-finish area to m_vis.m_reg:
+    for( int L=v_st_line; L<=v_fn_line; L++ )
+    {
+      Line nlr = new Line();
+
+      boolean continue_last_update = false;
+
+      final int LL = m_fb.LineLen( L );
+      if( 0<LL ) {
+        final int P_st = (L==v_st_line) ? v_st_char : 0;
+        final int P_fn = (L==v_fn_line) ? Math.min(LL-1,v_fn_char) : LL-1;
+
+        for( int P = P_st; P <= P_fn; P++ )
+        {
+          nlr.append_c( m_fb.Get( L, P ) );
+                        m_fb.Set( L, P, ' ', continue_last_update );
+
+          continue_last_update = true;
+        }
+      }
+      m_vis.get_reg().add( nlr );
+    }
+    m_vis.set_paste_mode( Paste_Mode.ST_FN );
+
+    // Try to put cursor at (old_v_st_line, old_v_st_char-1), but
+    // make sure the cursor is in bounds after the deletion:
+    final int NUM_LINES = m_fb.NumLines();
+    final int ncl = NUM_LINES <= old_v_st_line ? NUM_LINES-1
+                                               : old_v_st_line;
+    final int NLL = m_fb.LineLen( ncl );
+    final int ncc = NLL <= 0               ? 0
+                  : old_v_st_char <= 0     ? 0
+                  : NLL <= old_v_st_char-1 ? NLL-1
+                                           : old_v_st_char-1;
+    GoToCrsPos_NoWrite( ncl, ncc );
+  }
   void Do_Y_v_st_fn()
   {
-    m_vis.get_reg().clear();
-
     if( v_fn_line < v_st_line )
     {
       // Visual mode went backwards over multiple lines
       int T = v_st_line; v_st_line = v_fn_line; v_fn_line = v_st_line;
     }
+    // Add visual start-finish lines to m_vis.m_reg:
     for( int L=v_st_line; L<=v_fn_line; L++ )
     {
       Line nlr = new Line();
@@ -4162,6 +4293,36 @@ class View
         for( int P = 0; P <= LL-1; P++ )
         {
           nlr.append_c( m_fb.Get( L, P ) );
+        }
+      }
+      m_vis.get_reg().add( nlr );
+    }
+    m_vis.set_paste_mode( Paste_Mode.LINE );
+  }
+  void Do_R_v_st_fn()
+  {
+    if( v_fn_line < v_st_line )
+    {
+      // Visual mode went backwards over multiple lines
+      int T = v_st_line; v_st_line = v_fn_line; v_fn_line = v_st_line;
+    }
+    // Add visual start-finish lines to m_vis.m_reg:
+    for( int L=v_st_line; L<=v_fn_line; L++ )
+    {
+      Line nlr = new Line();
+
+      final int LL = m_fb.LineLen(L);
+
+      boolean continue_last_update = false;
+
+      if( 0<LL )
+      {
+        for( int P = 0; P <= LL-1; P++ )
+        {
+          nlr.append_c( m_fb.Get( L, P ) );
+                        m_fb.Set( L, P, ' ', continue_last_update );
+
+          continue_last_update = true;
         }
       }
       m_vis.get_reg().add( nlr );

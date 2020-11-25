@@ -75,6 +75,7 @@ class Highlight_CPP extends Highlight_Code
     new HiKeyVal( "dynamic_cast"       , Highlight_Type.CONTROL ),
     new HiKeyVal( "reinterpret_cast"   , Highlight_Type.CONTROL ),
 
+    new HiKeyVal( "auto"               , Highlight_Type.VARTYPE ),
     new HiKeyVal( "int"                , Highlight_Type.VARTYPE ),
     new HiKeyVal( "long"               , Highlight_Type.VARTYPE ),
     new HiKeyVal( "void"               , Highlight_Type.VARTYPE ),
