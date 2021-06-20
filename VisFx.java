@@ -653,7 +653,8 @@ public class VisFx extends Application
     case '%': Handle_Percent();   break;
     case '{': Handle_LeftSquigglyBracket(); break;
     case '}': Handle_RightSquigglyBracket();break;
-    case '*': Handle_Star();      break;
+    case '*': Handle_Star(false); break;
+    case '&': Handle_Star(true);  break;
     case '~': Handle_Tilda();     break;
     case ';': Handle_SemiColon(); break;
     case ':': Handle_Colon();     break;
@@ -772,12 +773,21 @@ public class VisFx extends Application
     if( cv.m_in_diff ) m_diff.GoToRightSquigglyBracket();
     else                   cv.GoToRightSquigglyBracket();
   }
-  void Handle_Star()
+  void Handle_Star( final boolean case_insensitive )
   {
     View cv = CV();
 
     String pattern = cv.m_in_diff ? m_diff.Do_Star_GetNewPattern()
                                   :     cv.Do_Star_GetNewPattern();
+    if( case_insensitive
+     && 0 < pattern.length()
+     && !pattern.startsWith("(?i)") )
+    {
+      m_sb.setLength( 0 );
+      m_sb.append( "(?i)" );
+      m_sb.append( pattern );
+      pattern = m_sb.toString();
+    }
     if( ! pattern.equals( m_regex ) )
     {
       m_regex = pattern;
