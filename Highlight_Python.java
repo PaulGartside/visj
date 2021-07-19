@@ -29,6 +29,8 @@ class Highlight_Python extends Highlight_Base
     In_Comment    ,
     In_SingleQuote,
     In_DoubleQuote,
+    In_SingleQuoteDocStr,
+    In_DoubleQuoteDocStr,
     NumberBeg     ,
     NumberIn      ,
     NumberHex     ,
@@ -55,15 +57,17 @@ class Highlight_Python extends Highlight_Base
   {
     switch( m_state )
     {
-    case In_None       : Hi_In_None       (); break;
-    case In_Comment    : Hi_In_Comment    (); break;
-    case In_SingleQuote: Hi_In_SingleQuote(); break;
-    case In_DoubleQuote: Hi_In_DoubleQuote(); break;
-    case NumberBeg     : Hi_NumberBeg     (); break;
-    case NumberIn      : Hi_NumberIn      (); break;
-    case NumberHex     : Hi_NumberHex     (); break;
-    case NumberFraction: Hi_NumberFraction(); break;
-    case NumberExponent: Hi_NumberExponent(); break;
+    case In_None             : Hi_In_None       (); break;
+    case In_Comment          : Hi_In_Comment    (); break;
+    case In_SingleQuote      : Hi_In_SingleQuote(); break;
+    case In_DoubleQuote      : Hi_In_DoubleQuote(); break;
+    case In_SingleQuoteDocStr: Hi_In_SingleQuoteDocStr(); break;
+    case In_DoubleQuoteDocStr: Hi_In_DoubleQuoteDocStr(); break;
+    case NumberBeg           : Hi_NumberBeg     (); break;
+    case NumberIn            : Hi_NumberIn      (); break;
+    case NumberHex           : Hi_NumberHex     (); break;
+    case NumberFraction      : Hi_NumberFraction(); break;
+    case NumberExponent      : Hi_NumberExponent(); break;
     default:
       m_state = Hi_State.In_None;
     }
@@ -83,6 +87,13 @@ class Highlight_Python extends Highlight_Base
     }
     Find_Styles_Keys_In_Range( st, fn );
   }
+  boolean DocStr_Start( final char qt
+                      , final char c2
+                      , final char c1
+                      , final char c0 )
+  {
+    return c2==qt && c1==qt && c0==qt;
+  }
   boolean Quote_Start( final char qt
                      , final char c2
                      , final char c1
@@ -90,7 +101,7 @@ class Highlight_Python extends Highlight_Base
   {
     return (c1==0    && c0==qt ) //< Quote at beginning of line
         || (c1!='\\' && c0==qt ) //< Non-escaped quote
-        || (c2=='\\' && c1=='\\' && c0==qt ); //< Escapted escape before quote
+        || (c2=='\\' && c1=='\\' && c0==qt ); //< Escaped escape before quote
   }
   boolean OneVarType( final char c0 )
   {
@@ -139,8 +150,10 @@ class Highlight_Python extends Highlight_Base
         final char c0 =           m_fb.Get( m_l, m_p );
 
         if     ( c0=='#'                    ) { m_state = Hi_State.In_Comment; }
+        else if( DocStr_Start('\'',c2,c1,c0)) { m_state = Hi_State.In_SingleQuoteDocStr; }
+        else if( DocStr_Start('"',c2,c1,c0)) { m_state = Hi_State.In_DoubleQuoteDocStr; }
         else if( Quote_Start('\'',c2,c1,c0) ) { m_state = Hi_State.In_SingleQuote; }
-        else if( Quote_Start('\"',c2,c1,c0) ) { m_state = Hi_State.In_DoubleQuote; }
+        else if( Quote_Start('"',c2,c1,c0) ) { m_state = Hi_State.In_DoubleQuote; }
         else if( !Utils.IsIdent(c1)
                && Character.isDigit(c0) ) { m_state = Hi_State.NumberBeg; }
  
@@ -235,9 +248,9 @@ class Highlight_Python extends Highlight_Base
         final char c1 = (0<m_p) ? m_fb.Get( m_l, m_p-1 ) : 0;
         final char c0 =           m_fb.Get( m_l, m_p );
 
-        if( (c1==0    && c0=='\"')
-         || (c1!='\\' && c0=='\"')
-         || (c1=='\\' && c0=='\"' && slash_escaped) )
+        if( (c1==0    && c0=='"')
+         || (c1!='\\' && c0=='"')
+         || (c1=='\\' && c0=='"' && slash_escaped) )
         {
           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
           m_p++;
@@ -250,6 +263,64 @@ class Highlight_Python extends Highlight_Base
           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
         }
         if( Hi_State.In_DoubleQuote != m_state ) return;
+      }
+      m_p = 0;
+    }
+    m_state = Hi_State.Done;
+  }
+
+  void Hi_In_SingleQuoteDocStr()
+  {
+    m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+    m_p++;
+    for( ; m_l<m_fb.NumLines(); m_l++ )
+    {
+      final int LL = m_fb.LineLen( m_l );
+
+      for( ; m_p<LL; m_p++ )
+      {
+        m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+
+        // c0 is ahead of c1: (c1,c0)
+        final char c2 = (1<m_p) ? m_fb.Get( m_l, m_p-2 ) : 0;
+        final char c1 = (0<m_p) ? m_fb.Get( m_l, m_p-1 ) : 0;
+        final char c0 =           m_fb.Get( m_l, m_p );
+
+        if( (c2=='\'') && (c1=='\'') && (c0=='\'') )
+        {
+          m_p++;
+          m_state = Hi_State.In_None;
+        }
+        if( Hi_State.In_SingleQuoteDocStr != m_state ) return;
+      }
+      m_p = 0;
+    }
+    m_state = Hi_State.Done;
+  }
+
+  void Hi_In_DoubleQuoteDocStr()
+  {
+    m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+    m_p++;
+    for( ; m_l<m_fb.NumLines(); m_l++ )
+    {
+      final int LL = m_fb.LineLen( m_l );
+
+      for( ; m_p<LL; m_p++ )
+      {
+        m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.CONST.val );
+
+        // c0 is ahead of c1: (c1,c0)
+        final char c2 = (1<m_p) ? m_fb.Get( m_l, m_p-2 ) : 0;
+        final char c1 = (0<m_p) ? m_fb.Get( m_l, m_p-1 ) : 0;
+        final char c0 =           m_fb.Get( m_l, m_p );
+
+        if( (c2=='"') && (c1=='"') && (c0=='"') )
+        {
+          m_p++;
+          m_state = Hi_State.In_None;
+        }
+        if( Hi_State.In_DoubleQuoteDocStr != m_state ) return;
       }
       m_p = 0;
     }
