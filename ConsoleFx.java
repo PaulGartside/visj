@@ -900,7 +900,7 @@ class ConsoleFx extends Canvas
     VARTYPE_FG      = Color.GREEN     ; VARTYPE_BG      = Color.WHITE       ;
     VISUAL_FG       = Color.BLACK     ; VISUAL_BG       = Color.PINK        ;
     NONASCII_FG     = Color.PINK      ; NONASCII_BG     = Color.DODGERBLUE  ;
-                                   
+
     RV_NORMAL_FG    = Color.BLACK     ; RV_NORMAL_BG    = Color.WHEAT;
     RV_STAR_FG      = Color.RED       ; RV_STAR_BG      = Color.PINK ;
     RV_COMMENT_FG   = Color.DODGERBLUE; RV_COMMENT_BG   = Color.WHEAT;

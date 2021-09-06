@@ -357,6 +357,17 @@ public class VisFx extends Application
     }
     // 4. Add AddToBufferEditor( fname );
     AddToBufferEditor( fname );
+
+    if( !fname.equals(  EDIT_BUF_NAME )
+     && !fname.equals(  HELP_BUF_NAME )
+     && !fname.equals(  MSG__BUF_NAME )
+     && !fname.equals( SHELL_BUF_NAME )
+     && !fname.equals( COLON_BUF_NAME )
+     && !fname.equals( SLASH_BUF_NAME ) )
+    {
+      // Make sure the file's directory is added to the buffer editor
+      NotHaveFileAddFile( Utils.Append_Dir_Delim( fb.m_dname ) );
+    }
   }
   void AddToBufferEditor( String fname )
   {
