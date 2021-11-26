@@ -2710,15 +2710,84 @@ class FileBuf
     m_encoding = enc;
     m_LF_at_EOF = LF_at_EOF;
   }
-  void Comment()
+
+  boolean Comment()
   {
+    boolean commented_file = false;
+
     if( Comment_CPP()
      || Comment_Script()
      || Comment_MIB() )
     {
+      commented_file = true;
+
       Update();
     }
+    return commented_file;
   }
+
+  boolean all_lines_commented_CPP()
+  {
+    boolean all_lines_commented = true;
+
+    final int NUM_LINES = NumLines();
+
+    // Determine if all lines are commented:
+    for( int k=0; all_lines_commented && k<NUM_LINES; k++ )
+    {
+      Line l_k = GetLine( k );
+
+      if( (l_k.length() < 2)
+       || ('/' != l_k.charAt( 0 ))
+       || ('/' != l_k.charAt( 1 )) )
+      {
+        all_lines_commented = false;
+      }
+    }
+    return all_lines_commented;
+  }
+
+  boolean all_lines_commented_Script()
+  {
+    boolean all_lines_commented = true;
+
+    final int NUM_LINES = NumLines();
+
+    // Determine if all lines are commented:
+    for( int k=0; all_lines_commented && k<NUM_LINES; k++ )
+    {
+      Line l_k = GetLine( k );
+
+      if( (l_k.length() < 1)
+       || ('#' != l_k.charAt( 0 )) )
+      {
+        all_lines_commented = false;
+      }
+    }
+    return all_lines_commented;
+  }
+
+  boolean all_lines_commented_MIB()
+  {
+    boolean all_lines_commented = true;
+
+    final int NUM_LINES = NumLines();
+
+    // Determine if all lines are commented:
+    for( int k=0; all_lines_commented && k<NUM_LINES; k++ )
+    {
+      Line l_k = GetLine( k );
+
+      if( (l_k.length() < 2)
+       || ('-' != l_k.charAt( 0 ))
+       || ('-' != l_k.charAt( 1 )) )
+      {
+        all_lines_commented = false;
+      }
+    }
+    return all_lines_commented;
+  }
+
   boolean Comment_CPP()
   {
     boolean commented = false;
@@ -2730,18 +2799,22 @@ class FileBuf
      || File_Type.JS   == m_file_type
      || File_Type.STL  == m_file_type )
     {
-      final int NUM_LINES = NumLines();
-
-      // Comment all lines:
-      for( int k=0; k<NUM_LINES; k++ )
+      if( !all_lines_commented_CPP() )
       {
-        InsertChar( k, 0, '/' );
-        InsertChar( k, 0, '/' );
+        final int NUM_LINES = NumLines();
+
+        // Comment all lines:
+        for( int k=0; k<NUM_LINES; k++ )
+        {
+          InsertChar( k, 0, '/' );
+          InsertChar( k, 0, '/' );
+        }
+        commented = true;
       }
-      commented = true;
     }
     return commented;
   }
+
   boolean Comment_Script()
   {
     boolean commented = false;
@@ -2751,17 +2824,21 @@ class FileBuf
      || File_Type.MAKE  == m_file_type
      || File_Type.PY    == m_file_type )
     {
-      final int NUM_LINES = NumLines();
-
-      // Comment all lines:
-      for( int k=0; k<NUM_LINES; k++ )
+      if( !all_lines_commented_Script() )
       {
-        InsertChar( k, 0, '#' );
+        // Comment all lines:
+        final int NUM_LINES = NumLines();
+
+        for( int k=0; k<NUM_LINES; k++ )
+        {
+          InsertChar( k, 0, '#' );
+        }
+        commented = true;
       }
-      commented = true;
     }
     return commented;
   }
+
   boolean Comment_MIB()
   {
     boolean commented = false;
@@ -2769,27 +2846,37 @@ class FileBuf
     if( File_Type.MIB == m_file_type
      || File_Type.SQL == m_file_type )
     {
-      final int NUM_LINES = NumLines();
-
-      // Comment all lines:
-      for( int k=0; k<NUM_LINES; k++ )
+      if( !all_lines_commented_MIB() )
       {
-        InsertChar( k, 0, '-' );
-        InsertChar( k, 0, '-' );
+        // Comment all lines:
+        final int NUM_LINES = NumLines();
+
+        for( int k=0; k<NUM_LINES; k++ )
+        {
+          InsertChar( k, 0, '-' );
+          InsertChar( k, 0, '-' );
+        }
+        commented = true;
       }
-      commented = true;
     }
     return commented;
   }
-  void UnComment()
+
+  boolean UnComment()
   {
+    boolean uncommented_file = false;
+
     if( UnComment_CPP()
      || UnComment_Script()
      || UnComment_MIB() )
     {
+      uncommented_file = true;
+
       Update();
     }
+    return uncommented_file;
   }
+
   boolean UnComment_CPP()
   {
     boolean uncommented = false;
@@ -2801,25 +2888,11 @@ class FileBuf
      || File_Type.JS   == m_file_type
      || File_Type.STL  == m_file_type )
     {
-      boolean all_lines_commented = true;
-
-      final int NUM_LINES = NumLines();
-
-      // Determine if all lines are commented:
-      for( int k=0; all_lines_commented && k<NUM_LINES; k++ )
+      if( all_lines_commented_CPP() )
       {
-        Line l_k = GetLine( k );
+        // Un-Comment all lines:
+        final int NUM_LINES = NumLines();
 
-        if( (l_k.length() < 2)
-         || ('/' != l_k.charAt( 0 ))
-         || ('/' != l_k.charAt( 1 )) )
-        {
-          all_lines_commented = false;
-        }
-      }
-      // Un-Comment all lines:
-      if( all_lines_commented )
-      {
         for( int k=0; k<NUM_LINES; k++ )
         {
           RemoveChar( k, 0 );
@@ -2839,24 +2912,11 @@ class FileBuf
      || File_Type.MAKE  == m_file_type
      || File_Type.PY    == m_file_type )
     {
-      boolean all_lines_commented = true;
-
-      final int NUM_LINES = NumLines();
-
-      // Determine if all lines are commented:
-      for( int k=0; all_lines_commented && k<NUM_LINES; k++ )
+      if( all_lines_commented_Script() )
       {
-        Line l_k = GetLine( k );
+        // Un-Comment all lines:
+        final int NUM_LINES = NumLines();
 
-        if( (l_k.length() < 1)
-         || ('#' != l_k.charAt( 0 )) )
-        {
-          all_lines_commented = false;
-        }
-      }
-      // Un-Comment all lines:
-      if( all_lines_commented )
-      {
         for( int k=0; k<NUM_LINES; k++ )
         {
           RemoveChar( k, 0 );
@@ -2866,6 +2926,7 @@ class FileBuf
     }
     return uncommented;
   }
+
   boolean UnComment_MIB()
   {
     boolean uncommented = false;
@@ -2873,25 +2934,11 @@ class FileBuf
     if( File_Type.MIB == m_file_type
      || File_Type.SQL == m_file_type )
     {
-      boolean all_lines_commented = true;
-
-      final int NUM_LINES = NumLines();
-
-      // Determine if all lines are commented:
-      for( int k=0; all_lines_commented && k<NUM_LINES; k++ )
+      if( all_lines_commented_MIB() )
       {
-        Line l_k = GetLine( k );
+        // Un-Comment all lines:
+        final int NUM_LINES = NumLines();
 
-        if( (l_k.length() < 2)
-         || ('-' != l_k.charAt( 0 ))
-         || ('-' != l_k.charAt( 1 )) )
-        {
-          all_lines_commented = false;
-        }
-      }
-      // Un-Comment all lines:
-      if( all_lines_commented )
-      {
         for( int k=0; k<NUM_LINES; k++ )
         {
           RemoveChar( k, 0 );
@@ -2902,6 +2949,60 @@ class FileBuf
     }
     return uncommented;
   }
+
+  int Comment_All()
+  {
+    int num_files_commented = 0;
+
+    if( m_isDir )
+    {
+      for( Line fname : m_lines )
+      {
+        String pname = m_dname + fname;
+
+        Path path = FileSystems.getDefault().getPath( pname );
+
+        if( Files.isRegularFile( path ) )
+        {
+          m_vis.NotHaveFileAddFile( pname );
+          FileBuf fb = m_vis.get_FileBuf( pname );
+
+          if( fb != null && fb.Comment() && fb.Write() )
+          {
+            num_files_commented++;
+          }
+        }
+      }
+    }
+    return num_files_commented;
+  }
+  int UnComment_All()
+  {
+    int num_files_uncommented = 0;
+
+    if( m_isDir )
+    {
+      for( Line fname : m_lines )
+      {
+        String pname = m_dname + fname;
+
+        Path path = FileSystems.getDefault().getPath( pname );
+
+        if( Files.isRegularFile( path ) )
+        {
+          m_vis.NotHaveFileAddFile( pname );
+          FileBuf fb = m_vis.get_FileBuf( pname );
+
+          if( fb != null && fb.UnComment() && fb.Write() )
+          {
+            num_files_uncommented++;
+          }
+        }
+      }
+    }
+    return num_files_uncommented;
+  }
+
   // Return okay:
   boolean Create_Image()
   {

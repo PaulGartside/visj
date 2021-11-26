@@ -2784,56 +2784,60 @@ public class VisFx extends Application
   {
     Exe_Colon_Begin();
     boolean need_2_print_cursor = false;
-    if     ( m_sb.length()<1 )                need_2_print_cursor = true;
-    else if( m_sb.toString().equals("q") )    Exe_Colon_q();
-    else if( m_sb.toString().equals("qa") )   Exe_Colon_qa();
-    else if( m_sb.toString().equals("help") ) Exe_Colon_help();
-    else if( m_sb.toString().equals("diff") ) Exe_Colon_DoDiff();
-    else if( m_sb.toString().equals("nodiff"))Exe_Colon_NoDiff();
-    else if( m_sb.toString().equals("rediff"))Exe_Colon_ReDiff();
-    else if( m_sb.toString().equals("hi") )   Exe_Colon_hi();
-    else if( m_sb.toString().equals("vsp") )  Exe_Colon_vsp();
-    else if( m_sb.toString().equals("sp") )   Exe_Colon_hsp();
-    else if( m_sb.toString().equals("3sp") )  Exe_Colon_3sp();
-    else if( m_sb.toString().equals("se") )   Exe_Colon_se();
-    else if( m_sb.toString().equals("sh")
-          || m_sb.toString().equals("shell")) Exe_Colon_shell();
-    else if( m_sb.toString().equals("run") )  Exe_Colon_run();
-    else if( m_sb.toString().equals("pwd") )  Exe_Colon_pwd();
-    else if( m_sb.toString().equals("map") )  Exe_Colon_MapStart();
-    else if( m_sb.toString().equals("showmap") )Exe_Colon_MapShow();
-    else if( m_sb.toString().equals("coverkey"))Exe_Colon_CoverKey();
-    else if( m_sb.toString().equals("cover") ) Exe_Colon_Cover();
-    else if( m_sb.toString().equals("cs1") )   m_console.Set_Color_Scheme_1();
-    else if( m_sb.toString().equals("cs2") )   m_console.Set_Color_Scheme_2();
-    else if( m_sb.toString().equals("cs3") )   m_console.Set_Color_Scheme_3();
-    else if( m_sb.toString().equals("cs4") )   m_console.Set_Color_Scheme_4();
-    else if( m_sb.toString().equals(  "full")) Exe_Colon_Full();
-    else if( m_sb.toString().equals("nofull")) Exe_Colon_NoFull();
-    else if( m_sb.toString().equals("dos2unix")) Exe_dos2unix();
-    else if( m_sb.toString().equals("unix2dos")) Exe_unix2dos();
-    else if( m_sb.toString().equals("sort"))     Exe_Colon_Sort();
-    else if( m_sb.toString().equals("gc"))       Exe_Colon_gc();
-    else if( m_sb.toString().equals("comment"))  Exe_Colon_Comment();
-    else if( m_sb.toString().equals("uncomment")) Exe_Colon_UnComment();
-    else if( m_sb.toString().equals("bytes"))  Exe_Colon_Bytes();
-    else if( m_sb.toString().equals("image"))  Exe_Colon_Image();
-    else if( m_sb.toString().equals("rotate")) Exe_Colon_Rotate();
-    else if( m_sb.toString().equals("flip"))   Exe_Colon_Flip();
-    else if( m_sb.toString().equals("graph"))  Exe_Colon_Graph();
-    else if( m_sb.toString().equals("bar"))    Exe_Colon_Bar();
-    else if( m_sb.toString().equals("line"))   Exe_Colon_Line();
-    else if( m_sb.toString().startsWith("cd"))   Exe_Colon_cd();
-    else if( m_sb.toString().startsWith("syn="))  Exe_Colon_Syntax();
-    else if( m_sb.toString().startsWith("detab="))Exe_Colon_Detab();
-    else if( m_sb.toString().startsWith("dec="))  Exe_Colon_Decoding();
-    else if( m_sb.toString().startsWith("enc="))  Exe_Colon_Encoding();
-    else if( m_sb.toString().startsWith("addbom")) Exe_Colon_Add_BOM();
-    else if( m_sb.toString().startsWith("font=")) Exe_Colon_Font();
-    else if( m_sb.charAt(0)=='w' )            Exe_Colon_w();
-    else if( m_sb.charAt(0)=='b' )            Exe_Colon_b();
-    else if( m_sb.charAt(0)=='n' )            Exe_Colon_n();
-    else if( m_sb.charAt(0)=='e' )            Exe_Colon_e();
+    String cmd_s = m_sb.toString();
+    if     ( m_sb.length()<1 )            need_2_print_cursor = true;
+    else if( cmd_s.equals("q") )          Exe_Colon_q();
+    else if( cmd_s.equals("qa") )         Exe_Colon_qa();
+    else if( cmd_s.equals("help") )       Exe_Colon_help();
+    else if( cmd_s.equals("diff") )       Exe_Colon_DoDiff();
+    else if( cmd_s.equals("nodiff"))      Exe_Colon_NoDiff();
+    else if( cmd_s.equals("rediff"))      Exe_Colon_ReDiff();
+    else if( cmd_s.equals("hi") )         Exe_Colon_hi();
+    else if( cmd_s.equals("vsp") )        Exe_Colon_vsp();
+    else if( cmd_s.equals("sp") )         Exe_Colon_hsp();
+    else if( cmd_s.equals("3sp") )        Exe_Colon_3sp();
+    else if( cmd_s.equals("se") )         Exe_Colon_se();
+    else if( cmd_s.equals("sh")
+          || cmd_s.equals("shell"))       Exe_Colon_shell();
+    else if( cmd_s.equals("run") )        Exe_Colon_run();
+    else if( cmd_s.equals("pwd") )        Exe_Colon_pwd();
+    else if( cmd_s.equals("map") )        Exe_Colon_MapStart();
+    else if( cmd_s.equals("showmap") )    Exe_Colon_MapShow();
+    else if( cmd_s.equals("coverkey"))    Exe_Colon_CoverKey();
+    else if( cmd_s.equals("cover") )      Exe_Colon_Cover();
+    else if( cmd_s.equals("showcover") )  Exe_Colon_CoverShow();
+    else if( cmd_s.equals("cs1") )        m_console.Set_Color_Scheme_1();
+    else if( cmd_s.equals("cs2") )        m_console.Set_Color_Scheme_2();
+    else if( cmd_s.equals("cs3") )        m_console.Set_Color_Scheme_3();
+    else if( cmd_s.equals("cs4") )        m_console.Set_Color_Scheme_4();
+    else if( cmd_s.equals(  "full"))      Exe_Colon_Full();
+    else if( cmd_s.equals("nofull"))      Exe_Colon_NoFull();
+    else if( cmd_s.equals("dos2unix"))    Exe_dos2unix();
+    else if( cmd_s.equals("unix2dos"))    Exe_unix2dos();
+    else if( cmd_s.equals("sort"))        Exe_Colon_Sort();
+    else if( cmd_s.equals("gc"))          Exe_Colon_gc();
+    else if( cmd_s.equals("comment"))     Exe_Colon_Comment();
+    else if( cmd_s.equals("uncomment"))   Exe_Colon_UnComment();
+    else if( cmd_s.equals("commentall"))  Exe_Colon_CommentAll();
+    else if( cmd_s.equals("uncommentall"))Exe_Colon_UnCommentAll();
+    else if( cmd_s.equals("bytes"))       Exe_Colon_Bytes();
+    else if( cmd_s.equals("image"))       Exe_Colon_Image();
+    else if( cmd_s.equals("rotate"))      Exe_Colon_Rotate();
+    else if( cmd_s.equals("flip"))        Exe_Colon_Flip();
+    else if( cmd_s.equals("graph"))       Exe_Colon_Graph();
+    else if( cmd_s.equals("bar"))         Exe_Colon_Bar();
+    else if( cmd_s.equals("line"))        Exe_Colon_Line();
+    else if( cmd_s.startsWith("cd"))      Exe_Colon_cd();
+    else if( cmd_s.startsWith("syn="))    Exe_Colon_Syntax();
+    else if( cmd_s.startsWith("detab="))  Exe_Colon_Detab();
+    else if( cmd_s.startsWith("dec="))    Exe_Colon_Decoding();
+    else if( cmd_s.startsWith("enc="))    Exe_Colon_Encoding();
+    else if( cmd_s.startsWith("addbom"))  Exe_Colon_Add_BOM();
+    else if( cmd_s.startsWith("font="))   Exe_Colon_Font();
+    else if( m_sb.charAt(0)=='w' )        Exe_Colon_w();
+    else if( m_sb.charAt(0)=='b' )        Exe_Colon_b();
+    else if( m_sb.charAt(0)=='n' )        Exe_Colon_n();
+    else if( m_sb.charAt(0)=='e' )        Exe_Colon_e();
     else if( '0' <= m_sb.charAt(0)
                  && m_sb.charAt(0) <= '9' ) Exe_Colon_GoToLine();
     else {
@@ -3944,6 +3948,19 @@ public class VisFx extends Application
     CV().m_fb.UnComment();
   }
 
+  void Exe_Colon_CommentAll()
+  {
+    final int num_files_commented = CV().m_fb.Comment_All();
+
+    CmdLineMessage("Commented " + num_files_commented + " files");
+  }
+  void Exe_Colon_UnCommentAll()
+  {
+    final int num_files_uncommented = CV().m_fb.UnComment_All();
+
+    CmdLineMessage("Uncommented " + num_files_uncommented + " files");
+  }
+
   void Exe_Colon_Bytes()
   {
     View cv = CV();
@@ -4325,6 +4342,7 @@ public class VisFx extends Application
       m_console.m_save_2_map_buf = false;
       // Remove trailing ':' from m_console.map_buf:
       StringBuilder map_buf = m_console.m_map_buf;
+
       if( 0<map_buf.length() ) map_buf.deleteCharAt( map_buf.length()-1 ); // '\n'
       if( 0<map_buf.length() ) map_buf.deleteCharAt( map_buf.length()-1 ); // ':'
     }
@@ -4382,6 +4400,33 @@ public class VisFx extends Application
     NoDiff_CV();
 
     m_colon_view.Do_Cover();
+  }
+  void Exe_Colon_CoverShow()
+  {
+    final View cv = CV();
+    final int ROW = cv.Cmd__Line_Row();
+    final int ST  = cv.Col_Win_2_GL( 0 );
+    final int WC  = cv.WorkingCols();
+    final int COVER_LEN = m_colon_view.m_cover_key.length();
+
+    // Print :
+    m_console.Set( ROW, ST, ':', Style.NORMAL );
+
+    // Print map
+    int offset = 1;
+    for( int k=0; k<COVER_LEN && offset+k<WC; k++ )
+    {
+      final char C = m_colon_view.m_cover_key.charAt( k );
+
+      m_console.Set( ROW, ST+offset+k, C, Style.NORMAL );
+    }
+    // Print empty space after map
+    for( int k=COVER_LEN; offset+k<WC; k++ )
+    {
+      m_console.Set( ROW, ST+offset+k, ' ', Style.NORMAL );
+    }
+    if( cv.m_in_diff ) m_diff.PrintCursor();
+    else                   cv.PrintCursor();
   }
 
   void Exe_Colon_Full()
