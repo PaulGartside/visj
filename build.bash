@@ -9,8 +9,8 @@ FILES='ChangeHist ChangeType ConsoleIF ConsoleFX Cover CrsPos
        Diff Diff_Type Encoding FileBuf File_Type Graph Help
        HiKeyVal Highlight_Base Highlight_Bash
        Highlight_BufferEditor Highlight_CMAKE Highlight_Code
-       Highlight_CPP Highlight_CS Highlight_Dir Highlight_HTML
-       Highlight_IDL Highlight_Java Highlight_JS
+       Highlight_CPP Highlight_CS Highlight_Dir Highlight_Go
+       Highlight_HTML Highlight_IDL Highlight_Java Highlight_JS
        Highlight_Make Highlight_MIB Highlight_Python
        Highlight_SQL Highlight_STL Highlight_Text
        Highlight_Type Highlight_XML Image_context IntList

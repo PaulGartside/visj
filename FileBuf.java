@@ -151,8 +151,9 @@ class FileBuf
           || Find_File_Type_CMAKE()
           || Find_File_Type_CPP ()
           || Find_File_Type_CS  ()
-          || Find_File_Type_IDL ()
+          || Find_File_Type_Go  ()
           || Find_File_Type_HTML()
+          || Find_File_Type_IDL ()
           || Find_File_Type_Java()
           || Find_File_Type_JS()
           || Find_File_Type_Make()
@@ -231,17 +232,14 @@ class FileBuf
     }
     return false;
   }
-  boolean Find_File_Type_IDL()
+  boolean Find_File_Type_Go()
   {
-    if( m_pname.endsWith(".idl"    )
-     || m_pname.endsWith(".idl.new")
-     || m_pname.endsWith(".idl.old")
-     || m_pname.endsWith(".idl.in"    )
-     || m_pname.endsWith(".idl.in.new")
-     || m_pname.endsWith(".idl.in.old") )
+    if( m_pname.endsWith(".go"    )
+     || m_pname.endsWith(".go.new")
+     || m_pname.endsWith(".go.old") )
     {
-      m_file_type = File_Type.IDL;
-      m_Hi = new Highlight_IDL( this );
+      m_file_type = File_Type.GO;
+      m_Hi = new Highlight_Go( this );
       return true;
     }
     return false;
@@ -257,6 +255,21 @@ class FileBuf
     {
       m_file_type = File_Type.HTML;
       m_Hi = new Highlight_HTML( this );
+      return true;
+    }
+    return false;
+  }
+  boolean Find_File_Type_IDL()
+  {
+    if( m_pname.endsWith(".idl"    )
+     || m_pname.endsWith(".idl.new")
+     || m_pname.endsWith(".idl.old")
+     || m_pname.endsWith(".idl.in"    )
+     || m_pname.endsWith(".idl.in.new")
+     || m_pname.endsWith(".idl.in.old") )
+    {
+      m_file_type = File_Type.IDL;
+      m_Hi = new Highlight_IDL( this );
       return true;
     }
     return false;
@@ -458,15 +471,20 @@ class FileBuf
         m_file_type = File_Type.CS;
         m_Hi = new Highlight_CS( this );
       }
-      else if( syn.equals("idl") )
+      else if( syn.equals("go") )
       {
-        m_file_type = File_Type.IDL;
-        m_Hi = new Highlight_IDL( this );
+        m_file_type = File_Type.GO;
+        m_Hi = new Highlight_Go( this );
       }
       else if( syn.equals("html") )
       {
         m_file_type = File_Type.HTML;
         m_Hi = new Highlight_HTML( this );
+      }
+      else if( syn.equals("idl") )
+      {
+        m_file_type = File_Type.IDL;
+        m_Hi = new Highlight_IDL( this );
       }
       else if( syn.equals("java") )
       {

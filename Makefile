@@ -51,6 +51,7 @@ GENERIC_SOURCES = ChangeHist \
                   Highlight_CPP \
                   Highlight_CS \
                   Highlight_Dir \
+                  Highlight_Go \
                   Highlight_HTML \
                   Highlight_IDL \
                   Highlight_Java \

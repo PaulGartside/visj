@@ -402,6 +402,21 @@ abstract class Highlight_Code extends Highlight_Base
       {
         m_state = Hi_State.NumberTypeSpec;
       }
+      else if( c1=='\'' && (m_p+1)<LL )
+      {
+        // ' is followed by another digit on line
+        final char c0 = m_fb.Get( m_l, m_p+1 );
+
+        if( Character.isDigit( c0 ) )
+        {
+          m_fb.SetSyntaxStyle( m_l, m_p  , Highlight_Type.CONST.val );
+          m_fb.SetSyntaxStyle( m_l, m_p+1, Highlight_Type.CONST.val );
+          m_p += 2;
+        }
+        else {
+          m_state = Hi_State.In_None;
+        }
+      }
       else {
         m_state = Hi_State.In_None;
       }

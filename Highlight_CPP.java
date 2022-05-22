@@ -83,6 +83,7 @@ class Highlight_CPP extends Highlight_Code
     new HiKeyVal( "bool"               , Highlight_Type.VARTYPE ),
     new HiKeyVal( "char"               , Highlight_Type.VARTYPE ),
     new HiKeyVal( "const"              , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "constexpr"          , Highlight_Type.VARTYPE ),
     new HiKeyVal( "short"              , Highlight_Type.VARTYPE ),
     new HiKeyVal( "float"              , Highlight_Type.VARTYPE ),
     new HiKeyVal( "double"             , Highlight_Type.VARTYPE ),

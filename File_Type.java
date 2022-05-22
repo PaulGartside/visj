@@ -32,6 +32,7 @@ enum File_Type
   DIR,
   HTML,
   IDL,
+  GO,
   JAVA,
   JS,
   MAKE,
