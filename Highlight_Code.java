@@ -191,10 +191,12 @@ abstract class Highlight_Code extends Highlight_Base
   {
     final int LL = m_fb.LineLen( m_l );
 
+    char ce = 0; // character at end of line
     for( ; m_p<LL; m_p++ )
     {
-      final char c1 = 0<m_p ? m_fb.Get( m_l, m_p-1 ) : m_fb.Get( m_l, m_p );
-      final char c0 = 0<m_p ? m_fb.Get( m_l, m_p   ) : 0;
+      // c0 is ahead of c1: (c1,c0)
+      final char c1 = 0<m_p ? m_fb.Get( m_l, m_p-1 ) : 0;
+      final char c0 =         m_fb.Get( m_l, m_p );
 
       if( c1=='/' && c0=='/' )
       {
@@ -210,9 +212,14 @@ abstract class Highlight_Code extends Highlight_Base
         m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.DEFINE.val );
       }
       if( Hi_State.In_Define != m_state ) return;
+      ce = c0;
     }
     m_p=0; m_l++;
-    m_state = Hi_State.In_None;
+
+    if( ce != '\\' )
+    {
+      m_state = Hi_State.In_None;
+    }
   }
   void Hi_BegC_Comment()
   {
@@ -228,8 +235,9 @@ abstract class Highlight_Code extends Highlight_Base
 
       for( ; m_p<LL; m_p++ )
       {
-        final char c1 = 0<m_p ? m_fb.Get( m_l, m_p-1 ) : m_fb.Get( m_l, m_p );
-        final char c0 = 0<m_p ? m_fb.Get( m_l, m_p   ) : 0;
+        // c0 is ahead of c1: (c1,c0)
+        final char c1 = 0<m_p ? m_fb.Get( m_l, m_p-1 ) : 0;
+        final char c0 =         m_fb.Get( m_l, m_p );
 
         if( c1=='*' && c0=='/' )
         {

@@ -462,6 +462,7 @@ class LineView
         S = Style.RV_NORMAL;
 
         if     ( InStar    ( line, pos ) ) S = Style.RV_STAR;
+        else if( InStarInF ( line, pos ) ) S = Style.RV_STAR_IN_F;
         else if( InDefine  ( line, pos ) ) S = Style.RV_DEFINE;
         else if( InComment ( line, pos ) ) S = Style.RV_COMMENT;
         else if( InConst   ( line, pos ) ) S = Style.RV_CONST;
@@ -470,6 +471,7 @@ class LineView
         else if( InNonAscii( line, pos ) ) S = Style.RV_NONASCII;
       }
       else if( InStar    ( line, pos ) ) S = Style.STAR;
+      else if( InStarInF ( line, pos ) ) S = Style.STAR_IN_F;
       else if( InDefine  ( line, pos ) ) S = Style.DEFINE;
       else if( InComment ( line, pos ) ) S = Style.COMMENT;
       else if( InConst   ( line, pos ) ) S = Style.CONST;
@@ -558,6 +560,10 @@ class LineView
   boolean InStar( final int line, final int pos )
   {
     return m_fb.HasStyle( line, pos, Highlight_Type.STAR.val );
+  }
+  boolean InStarInF( final int line, final int pos )
+  {
+    return m_fb.HasStyle( line, pos, Highlight_Type.STAR_IN_F.val );
   }
   boolean InNonAscii( final int line, final int pos )
   {

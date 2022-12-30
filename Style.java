@@ -23,46 +23,49 @@
 
 enum Style
 {
-  NORMAL      ( (char)1 ),
-  STATUS      ( (char)2 ),
-  BORDER      ( (char)3 ),
-  BORDER_HI   ( (char)4 ),
-  BANNER      ( (char)5 ),
-  STAR        ( (char)6 ),
-  COMMENT     ( (char)7 ),
-  DEFINE      ( (char)8 ),
-  CONST       ( (char)9 ),
-  CONTROL     ( (char)10 ),
-  VARTYPE     ( (char)11 ),
-  VISUAL      ( (char)12 ),
-  NONASCII    ( (char)13 ),
-  RV_NORMAL   ( (char)14 ),
-  RV_STATUS   ( (char)15 ), // Not used
-  RV_BORDER   ( (char)16 ), // Not used
-  RV_BORDER_HI( (char)17 ), // Not used
-  RV_BANNER   ( (char)18 ), // Not used
-  RV_STAR     ( (char)19 ),
-  RV_COMMENT  ( (char)20 ),
-  RV_DEFINE   ( (char)21 ),
-  RV_CONST    ( (char)22 ),
-  RV_CONTROL  ( (char)23 ),
-  RV_VARTYPE  ( (char)24 ),
-  RV_VISUAL   ( (char)25 ),
-  RV_NONASCII ( (char)26 ),
-  EMPTY       ( (char)27 ),
-  EOF         ( (char)28 ),
-  DIFF_DEL    ( (char)29 ),
-  DIFF_NORMAL ( (char)30 ),
-  DIFF_STAR   ( (char)31 ),
-  DIFF_COMMENT( (char)32 ),
-  DIFF_DEFINE ( (char)33 ),
-  DIFF_CONST  ( (char)34 ),
-  DIFF_CONTROL( (char)35 ),
-  DIFF_VARTYPE( (char)36 ),
-  DIFF_VISUAL ( (char)37 ),
-  CURSOR      ( (char)38 ),
-  CURSOR_EMPTY( (char)39 ),
-  UNKNOWN     ( (char)40 );
+  NORMAL        ( (char) 1 ),
+  STATUS        ( (char) 2 ),
+  BORDER        ( (char) 3 ),
+  BORDER_HI     ( (char) 4 ),
+  BANNER        ( (char) 5 ),
+  STAR          ( (char) 6 ), // In search pattern
+  STAR_IN_F     ( (char) 7 ), // In Search pattern in file
+  COMMENT       ( (char) 8 ),
+  DEFINE        ( (char) 9 ),
+  CONST         ( (char)10 ),
+  CONTROL       ( (char)11 ),
+  VARTYPE       ( (char)12 ),
+  VISUAL        ( (char)13 ),
+  NONASCII      ( (char)14 ),
+  RV_NORMAL     ( (char)15 ), // Reverse video
+  RV_STATUS     ( (char)16 ), // Not used
+  RV_BORDER     ( (char)17 ), // Not used
+  RV_BORDER_HI  ( (char)18 ), // Not used
+  RV_BANNER     ( (char)19 ), // Not used
+  RV_STAR       ( (char)20 ),
+  RV_STAR_IN_F  ( (char)21 ),
+  RV_COMMENT    ( (char)22 ),
+  RV_DEFINE     ( (char)23 ),
+  RV_CONST      ( (char)24 ),
+  RV_CONTROL    ( (char)25 ),
+  RV_VARTYPE    ( (char)26 ),
+  RV_VISUAL     ( (char)27 ),
+  RV_NONASCII   ( (char)28 ),
+  EMPTY         ( (char)29 ),
+  EOF           ( (char)30 ),
+  DIFF_DEL      ( (char)31 ),
+  DIFF_NORMAL   ( (char)32 ),
+  DIFF_STAR     ( (char)33 ),
+  DIFF_STAR_IN_F( (char)34 ),
+  DIFF_COMMENT  ( (char)35 ),
+  DIFF_DEFINE   ( (char)36 ),
+  DIFF_CONST    ( (char)37 ),
+  DIFF_CONTROL  ( (char)38 ),
+  DIFF_VARTYPE  ( (char)39 ),
+  DIFF_VISUAL   ( (char)40 ),
+  CURSOR        ( (char)41 ),
+  CURSOR_EMPTY  ( (char)42 ),
+  UNKNOWN       ( (char)43 );
 
   final char val;
 

@@ -811,13 +811,13 @@ public class VisFx extends Application
       UpdateViews( true );
     }
   }
-  void Do_Star_PrintPatterns( final boolean HIGHLIGHT )
-  {
-    for( int w=0; w<m_num_wins; w++ )
-    {
-      GetView_Win( w ).PrintPatterns( HIGHLIGHT );
-    }
-  }
+//void Do_Star_PrintPatterns( final boolean HIGHLIGHT )
+//{
+//  for( int w=0; w<m_num_wins; w++ )
+//  {
+//    GetView_Win( w ).PrintPatterns( HIGHLIGHT );
+//  }
+//}
 
   // 1. Search for regex pattern in search editor.
   // 2. If regex pattern is found in search editor,
@@ -2834,6 +2834,7 @@ public class VisFx extends Application
     else if( cmd_s.startsWith("enc="))    Exe_Colon_Encoding();
     else if( cmd_s.startsWith("addbom"))  Exe_Colon_Add_BOM();
     else if( cmd_s.startsWith("font="))   Exe_Colon_Font();
+    else if( cmd_s.startsWith("ts="))     Exe_Colon_Tab_Size();
     else if( m_sb.charAt(0)=='w' )        Exe_Colon_w();
     else if( m_sb.charAt(0)=='b' )        Exe_Colon_b();
     else if( m_sb.charAt(0)=='n' )        Exe_Colon_n();
@@ -4322,6 +4323,23 @@ public class VisFx extends Application
         // Set font:
         m_console.Set_Font( cmd );
       }
+    }
+  }
+
+  void Exe_Colon_Tab_Size()
+  {
+    String[] toks = m_sb2.toString().split("=");
+
+    final View cv = CV();
+
+    if( toks.length!=2 )
+    {
+      CmdLineMessage("Tab size is: "+ cv.m_fb.Get_Tab_Size() );
+    }
+    else {
+      String cmd = toks[1];
+
+      cv.m_fb.Set_Tab_Size( Integer.valueOf( cmd ) );
     }
   }
 

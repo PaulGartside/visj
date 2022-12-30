@@ -1280,6 +1280,81 @@ class FileBuf
     return crsByte;
   }
 
+  int Get_Tab_Size()
+  {
+    return m_tab_size;
+  }
+
+  void Set_Tab_Size( final int ts_new )
+  {
+    if( 0 < ts_new && m_tab_size != ts_new )
+    {
+      final int ts_old = m_tab_size;
+
+      m_tab_size = ts_new;
+
+      if( 1 < ts_old ) set_tab_size_to_1( ts_old );
+      if( 1 < ts_new ) set_tab_size_to_X( ts_new );
+
+      Update();
+    }
+  }
+  // This method assumes changing from a tab_size ts,
+  // where 1 < ts, to a tab_size of 1
+  void set_tab_size_to_1( final int ts )
+  {
+    for( int l_num=0; l_num<m_lines.size(); l_num++ )
+    {
+      Line lr =  m_lines.get( l_num );
+      Line sr = m_styles.get( l_num );
+
+      for( int k=lr.length()-1; -1<k; k-- )
+      {
+        final char C = lr.charAt( k );
+
+        if( C == '\t' )
+        {
+          int spaces_to_rm = ts - (k%ts) - 1;
+
+          for( int i=0; i<spaces_to_rm; i++ )
+          {
+            if( k+1 < lr.length() && ' ' == lr.charAt( k+1 ) )
+            {
+              lr.deleteCharAt( k+1 );
+              sr.deleteCharAt( k+1 );
+            }
+          }
+        }
+      }
+    }
+  }
+  // This method assumes changing from a tab_size of 1 to ts,
+  // where 1 < ts
+  void set_tab_size_to_X( final int ts )
+  {
+    for( int l_num=0; l_num<m_lines.size(); l_num++ )
+    {
+      Line lr =  m_lines.get( l_num );
+      Line sr = m_styles.get( l_num );
+
+      for( int k=0; k<lr.length(); k++ )
+      {
+        final char C = lr.charAt( k );
+
+        if( C == '\t' )
+        {
+          int spaces_to_add = ts - (k%ts) - 1;
+
+          for( int i=0; i<spaces_to_add; i++ )
+          {
+            lr.insert( k+1, ' ' );
+            sr.insert( k+1, '\u0000' );
+          }
+        }
+      }
+    }
+  }
+
   // Find styles up to but not including up_to_line number
   void Find_Styles( final int up_to_line )
   {
@@ -1445,7 +1520,7 @@ class FileBuf
       // Clear the patterns for the line:
       for( int pos=0; pos<LL; pos++ )
       {
-        ClearStarStyle( line_num, pos );
+        ClearStarAndInFileStyles( line_num, pos );
       }
       if( null != m_pattern && 0<m_regex.length() )
       {
@@ -1454,7 +1529,7 @@ class FileBuf
         {
           if( File_Has_Regex( lr ) )
           {
-            for( int k=0; k<LL; k++ ) SetStarStyle( line_num, k );
+            for( int k=0; k<LL; k++ ) SetStarInFStyle( line_num, k );
           }
         }
         Matcher matcher = m_pattern.matcher( lr.toString() );
@@ -1606,7 +1681,10 @@ class FileBuf
         || fname.endsWith(".cmake.old" )
         || fname.endsWith("CMakeLists.txt")
         || fname.endsWith("CMakeLists.txt.old")
-        || fname.endsWith("CMakeLists.txt.new");
+        || fname.endsWith("CMakeLists.txt.new")
+        || fname.endsWith("go")
+        || fname.endsWith("go.old")
+        || fname.endsWith("go.new");
   }
   // Returns true if this FileBuf has pattern
   boolean Has_Pattern( Pattern pattern )
@@ -1647,8 +1725,9 @@ class FileBuf
   {
     char s = m_styles.get( l_num ).charAt( c_num );
 
-    // Clear everything except star
-    s &= Highlight_Type.STAR.val;
+    // Clear everything except star and in-file
+    s &= ( Highlight_Type.STAR.val
+         | Highlight_Type.STAR_IN_F.val );
 
     m_styles.get( l_num ).setCharAt( c_num, s );
   }
@@ -1660,13 +1739,26 @@ class FileBuf
 //}
 
   // Leave syntax styles unchanged, and clear star style
-  void ClearStarStyle( final int l_num
-                     , final int c_num )
+//void ClearStarStyle( final int l_num
+//                   , final int c_num )
+//{
+//  char s = m_styles.get( l_num ).charAt( c_num );
+//
+//  // Clear only star
+//  s &= ~Highlight_Type.STAR.val;
+//
+//  m_styles.get( l_num ).setCharAt( c_num, s );
+//}
+
+  // Leave syntax styles unchanged, and clear star style
+  void ClearStarAndInFileStyles( final int l_num
+                               , final int c_num )
   {
     char s = m_styles.get( l_num ).charAt( c_num );
 
     // Clear only star
     s &= ~Highlight_Type.STAR.val;
+    s &= ~Highlight_Type.STAR_IN_F.val;
 
     m_styles.get( l_num ).setCharAt( c_num, s );
   }
@@ -1678,7 +1770,10 @@ class FileBuf
   {
     char s = m_styles.get( l_num ).charAt( c_num );
 
-    s &= Highlight_Type.STAR.val; //< Clear everything except star
+    // Clear everything except star and in-file
+    s &= ( Highlight_Type.STAR.val
+         | Highlight_Type.STAR_IN_F.val );
+
     s |= style;                   //< Set style
 
     m_styles.get( l_num ).setCharAt( c_num, s );
@@ -1691,6 +1786,16 @@ class FileBuf
     char s = m_styles.get( l_num ).charAt( c_num );
 
     s |= Highlight_Type.STAR.val;
+
+    m_styles.get( l_num ).setCharAt( c_num, s );
+  }
+  // Leave syntax styles unchanged, and set star style
+  void SetStarInFStyle( final int l_num
+                      , final int c_num )
+  {
+    char s = m_styles.get( l_num ).charAt( c_num );
+
+    s |= Highlight_Type.STAR_IN_F.val;
 
     m_styles.get( l_num ).setCharAt( c_num, s );
   }
@@ -3074,5 +3179,6 @@ class FileBuf
   Line                  m_line_buf = new Line();
   Image                 m_image;
   Graph                 m_graph;
+  int                   m_tab_size = 1;
 }
 

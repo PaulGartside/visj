@@ -23,13 +23,14 @@
 
 enum Highlight_Type
 {
-  STAR    ( 0x01 ), // Search pattern
-  COMMENT ( 0x02 ), // Comment
-  DEFINE  ( 0x04 ), // #define
-  CONST   ( 0x08 ), // C constant, '...' or "...", true, false
-  CONTROL ( 0x10 ), // C flow control, if, else, etc.
-  VARTYPE ( 0x20 ), // C variable type, char, int, etc.
-  NONASCII( 0x40 ); // Non-ascii character
+  STAR     ( 0x01 ), // Search pattern
+  STAR_IN_F( 0x02 ), // Search pattern in file
+  COMMENT  ( 0x04 ), // Comment
+  DEFINE   ( 0x08 ), // #define
+  CONST    ( 0x10 ), // C constant, '...' or "...", true, false
+  CONTROL  ( 0x20 ), // C flow control, if, else, etc.
+  VARTYPE  ( 0x40 ), // C variable type, char, int, etc.
+  NONASCII ( 0x80 ); // Non-ascii character
 
   final int val;
 

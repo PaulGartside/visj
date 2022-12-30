@@ -164,6 +164,8 @@ class Help
 + "  :showmap - Show current map\n"
 + "  :syn=syntax_type - Highlight current file with syntax_type\n"
 + "  :sp  - Split window horizonally into 2 editing windows\n"
++ "  :ts=       - Show tabs size\n"
++ "  :ts=<size> - Set tabs to size for current file\n"
 + "  :vsp - Split window vertically into 2 editing windows\n"
 + "  :3sp - Split window vertically into 3 editing windows\n"
 + "  :w   - Write current file\n"

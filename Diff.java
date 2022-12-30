@@ -744,6 +744,7 @@ class Diff
 
       if    ( InVisualArea( pV, DL, pos ) ) S = Style.RV_VISUAL;
       else if( pV.InStar      ( VL, pos ) ) S = Style.STAR;
+      else if( pV.InStarInF   ( VL, pos ) ) S = Style.STAR_IN_F;
       else if( pV.InDefine    ( VL, pos ) ) S = Style.DEFINE;
       else if( pV.InComment   ( VL, pos ) ) S = Style.COMMENT;
       else if( pV.InConst     ( VL, pos ) ) S = Style.CONST;
@@ -766,6 +767,14 @@ class Diff
     {
       Style S = Get_Style( pV, DL, VL, pos );
       return DiffStyle( S );
+    }
+    else if( L_DT == Diff_Type.DIFF_FILES )
+    {
+      Style S = Get_Style( pV, DL, VL, pos );
+      Style DS = S;
+      if     ( S == Style.STAR     ) DS = Style.DIFF_STAR;
+      else if( S == Style.STAR_IN_F) DS = Style.DIFF_STAR_IN_F;
+      return DS;
     }
     else if( L_DT == Diff_Type.CHANGED )
     {
@@ -815,14 +824,15 @@ class Diff
     Style diff_s = s;
 
     if     ( s == Style.NORMAL
-          || s == Style.EMPTY  ) diff_s = Style.DIFF_NORMAL ;
-    else if( s == Style.STAR   ) diff_s = Style.DIFF_STAR   ;
-    else if( s == Style.COMMENT) diff_s = Style.DIFF_COMMENT;
-    else if( s == Style.DEFINE ) diff_s = Style.DIFF_DEFINE ;
-    else if( s == Style.CONST  ) diff_s = Style.DIFF_CONST  ;
-    else if( s == Style.CONTROL) diff_s = Style.DIFF_CONTROL;
-    else if( s == Style.VARTYPE) diff_s = Style.DIFF_VARTYPE;
-    else if( s == Style.VISUAL ) diff_s = Style.DIFF_VISUAL ;
+          || s == Style.EMPTY    ) diff_s = Style.DIFF_NORMAL   ;
+    else if( s == Style.STAR     ) diff_s = Style.DIFF_STAR     ;
+    else if( s == Style.STAR_IN_F) diff_s = Style.DIFF_STAR_IN_F;
+    else if( s == Style.COMMENT  ) diff_s = Style.DIFF_COMMENT  ;
+    else if( s == Style.DEFINE   ) diff_s = Style.DIFF_DEFINE   ;
+    else if( s == Style.CONST    ) diff_s = Style.DIFF_CONST    ;
+    else if( s == Style.CONTROL  ) diff_s = Style.DIFF_CONTROL  ;
+    else if( s == Style.VARTYPE  ) diff_s = Style.DIFF_VARTYPE  ;
+    else if( s == Style.VISUAL   ) diff_s = Style.DIFF_VISUAL   ;
 
     return diff_s;
   }
@@ -2827,12 +2837,14 @@ class Diff
 
     pfb.Check_4_New_Regex();
     pfb.Find_Regexs_4_Line( OCL );
-    for( ; st_c<LL && pV.InStar(OCLv,st_c); st_c++ ) ;
 
-    // Go down to next line
+    // Move past current pattern:
+    for( ; st_c<LL && pV.InStarOrStarInF(OCLv,st_c); st_c++ ) ;
+
+    // If at end of current line, go down to next line:
     if( LL <= st_c ) { st_c=0; st_l++; }
 
-    // Search for first star position past current position
+    // Search for first pattern position past current position
     for( int l=st_l; !found_next_star && l<NUM_LINES; l++ )
     {
       pfb.Find_Regexs_4_Line( l );
@@ -2841,7 +2853,7 @@ class Diff
 
       for( int p=st_c ; !found_next_star && p<LL2 ; p++ )
       {
-        if( pV.InStar(l,p) )
+        if( pV.InStarOrStarInF(l,p) )
         {
           found_next_star = true;
           // Convert from view line back to diff line:
@@ -2865,7 +2877,7 @@ class Diff
 
         for( int p=0; !found_next_star && p<END_C; p++ )
         {
-          if( pV.InStar(l,p) )
+          if( pV.InStarOrStarInF(l,p) )
           {
             found_next_star = true;
             // Convert from view line back to diff line:
@@ -3175,7 +3187,7 @@ class Diff
 
       for( ; 0<p && !found_prev_star; p-- )
       {
-        for( ; 0<=p && pV.InStar(l,p); p-- )
+        for( ; 0<=p && pV.InStarOrStarInF(l,p); p-- )
         {
           found_prev_star = true;
           // Convert from view line back to diff line:
@@ -3199,7 +3211,7 @@ class Diff
 
         for( ; 0<p && !found_prev_star; p-- )
         {
-          for( ; 0<=p && pV.InStar(l,p); p-- )
+          for( ; 0<=p && pV.InStarOrStarInF(l,p); p-- )
           {
             found_prev_star = true;
             // Convert from view line back to diff line:

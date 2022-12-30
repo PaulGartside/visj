@@ -1230,6 +1230,7 @@ class View
         S = Style.RV_NORMAL;
 
         if     ( InStar    ( line, pos ) ) S = Style.RV_STAR;
+        else if( InStarInF ( line, pos ) ) S = Style.RV_STAR_IN_F;
         else if( InDefine  ( line, pos ) ) S = Style.RV_DEFINE;
         else if( InComment ( line, pos ) ) S = Style.RV_COMMENT;
         else if( InConst   ( line, pos ) ) S = Style.RV_CONST;
@@ -1238,6 +1239,7 @@ class View
         else if( InNonAscii( line, pos ) ) S = Style.RV_NONASCII;
       }
       else if( InStar    ( line, pos ) ) S = Style.STAR;
+      else if( InStarInF ( line, pos ) ) S = Style.STAR_IN_F;
       else if( InDefine  ( line, pos ) ) S = Style.DEFINE;
       else if( InComment ( line, pos ) ) S = Style.COMMENT;
       else if( InConst   ( line, pos ) ) S = Style.CONST;
@@ -1251,6 +1253,7 @@ class View
   {
     return S == Style.RV_NORMAL
         || S == Style.RV_STAR
+        || S == Style.RV_STAR_IN_F
         || S == Style.RV_DEFINE
         || S == Style.RV_COMMENT
         || S == Style.RV_CONST
@@ -1261,12 +1264,13 @@ class View
   {
     Style S = Style.NORMAL;
 
-    if     ( RVS == Style.RV_STAR    ) S = Style.STAR   ;
-    else if( RVS == Style.RV_DEFINE  ) S = Style.DEFINE ;
-    else if( RVS == Style.RV_COMMENT ) S = Style.COMMENT;
-    else if( RVS == Style.RV_CONST   ) S = Style.CONST  ;
-    else if( RVS == Style.RV_CONTROL ) S = Style.CONTROL;
-    else if( RVS == Style.RV_VARTYPE ) S = Style.VARTYPE;
+    if     ( RVS == Style.RV_STAR     ) S = Style.STAR    ;
+    else if( RVS == Style.RV_STAR_IN_F) S = Style.STAR_IN_F;
+    else if( RVS == Style.RV_DEFINE   ) S = Style.DEFINE  ;
+    else if( RVS == Style.RV_COMMENT  ) S = Style.COMMENT ;
+    else if( RVS == Style.RV_CONST    ) S = Style.CONST   ;
+    else if( RVS == Style.RV_CONTROL  ) S = Style.CONTROL ;
+    else if( RVS == Style.RV_VARTYPE  ) S = Style.VARTYPE ;
 
     return S;
   }
@@ -1515,6 +1519,15 @@ class View
   boolean InStar( final int line, final int pos )
   {
     return m_fb.HasStyle( line, pos, Highlight_Type.STAR.val );
+  }
+  boolean InStarInF( final int line, final int pos )
+  {
+    return m_fb.HasStyle( line, pos, Highlight_Type.STAR_IN_F.val );
+  }
+  boolean InStarOrStarInF( final int line, final int pos )
+  {
+    return m_fb.HasStyle( line, pos, Highlight_Type.STAR.val
+                                   | Highlight_Type.STAR_IN_F.val );
   }
   boolean InNonAscii( final int line, final int pos )
   {
@@ -3416,39 +3429,39 @@ class View
     return null != pattern ? pattern.toString() : "";
   }
 
-  void PrintPatterns( final boolean HIGHLIGHT )
-  {
-    final int NUM_LINES = m_fb.NumLines();
-    final int END_LINE  = Math.min( m_topLine+WorkingRows(), NUM_LINES );
-
-    for( int l=m_topLine; l<END_LINE; l++ )
-    {
-      final int LL      = m_fb.LineLen( l );
-      final int END_POS = Math.min( m_leftChar+WorkingCols(), LL );
-
-      for( int p=m_leftChar; p<END_POS; p++ )
-      {
-        if( InStar( l, p ) )
-        {
-          Style s = Style.STAR;
-
-          if( !HIGHLIGHT )
-          {
-            s = Style.NORMAL;
-            if     ( InVisualArea(l,p) ) s = Style.VISUAL;
-            else if( InDefine    (l,p) ) s = Style.DEFINE;
-            else if( InConst     (l,p) ) s = Style.CONST;
-            else if( InControl   (l,p) ) s = Style.CONTROL;
-            else if( InVarType   (l,p) ) s = Style.VARTYPE;
-            else if( InComment   (l,p) ) s = Style.COMMENT;
-            else if( InNonAscii  (l,p) ) s = Style.NONASCII;
-          }
-          final char C = m_fb.Get( l, p );
-          m_console.Set( Line_2_GL( l ), Char_2_GL( p ), C, s );
-        }
-      }
-    }
-  }
+//void PrintPatterns( final boolean HIGHLIGHT )
+//{
+//  final int NUM_LINES = m_fb.NumLines();
+//  final int END_LINE  = Math.min( m_topLine+WorkingRows(), NUM_LINES );
+//
+//  for( int l=m_topLine; l<END_LINE; l++ )
+//  {
+//    final int LL      = m_fb.LineLen( l );
+//    final int END_POS = Math.min( m_leftChar+WorkingCols(), LL );
+//
+//    for( int p=m_leftChar; p<END_POS; p++ )
+//    {
+//      if( InStar( l, p ) )
+//      {
+//        Style s = Style.STAR;
+//
+//        if( !HIGHLIGHT )
+//        {
+//          s = Style.NORMAL;
+//          if     ( InVisualArea(l,p) ) s = Style.VISUAL;
+//          else if( InDefine    (l,p) ) s = Style.DEFINE;
+//          else if( InConst     (l,p) ) s = Style.CONST;
+//          else if( InControl   (l,p) ) s = Style.CONTROL;
+//          else if( InVarType   (l,p) ) s = Style.VARTYPE;
+//          else if( InComment   (l,p) ) s = Style.COMMENT;
+//          else if( InNonAscii  (l,p) ) s = Style.NONASCII;
+//        }
+//        final char C = m_fb.Get( l, p );
+//        m_console.Set( Line_2_GL( l ), Char_2_GL( p ), C, s );
+//      }
+//    }
+//  }
+//}
   // Go to next pattern
   void Do_n()
   {
@@ -3497,7 +3510,7 @@ class View
     m_fb.Find_Regexs_4_Line( OCL );
 
     // Move past current pattern:
-    for( ; st_c<LL && InStar(OCL,st_c); st_c++ ) ;
+    for( ; st_c<LL && InStarOrStarInF(OCL,st_c); st_c++ ) ;
 
     // If at end of current line, go down to next line:
     if( LL <= st_c ) { st_c=0; st_l++; }
@@ -3511,7 +3524,7 @@ class View
 
       for( int p=st_c; !found_next_star && p<LL2; p++ )
       {
-        if( InStar(l,p) )
+        if( InStarOrStarInF(l,p) )
         {
           found_next_star = true;
           ncp.crsLine = l;
@@ -3533,7 +3546,7 @@ class View
 
         for( int p=0; !found_next_star && p<END_C; p++ )
         {
-          if( InStar(l,p) )
+          if( InStarOrStarInF(l,p) )
           {
             found_next_star = true;
             ncp.crsLine = l;
@@ -3724,7 +3737,7 @@ class View
 
       for( ; 0<p && !found_prev_star; p-- )
       {
-        for( ; 0<=p && InStar(l,p); p-- )
+        for( ; 0<=p && InStarOrStarInF(l,p); p-- )
         {
           found_prev_star = true;
           ncp.crsLine = l;
@@ -3746,7 +3759,7 @@ class View
 
         for( ; 0<p && !found_prev_star; p-- )
         {
-          for( ; 0<=p && InStar(l,p); p-- )
+          for( ; 0<=p && InStarOrStarInF(l,p); p-- )
           {
             found_prev_star = true;
             ncp.crsLine = l;

@@ -756,13 +756,13 @@ public class VisSw implements VisIF
       }
     }
   }
-  void Do_Star_PrintPatterns( final boolean HIGHLIGHT )
-  {
-    for( int w=0; w<m_num_wins; w++ )
-    {
-      GetView_Win( w ).PrintPatterns( HIGHLIGHT );
-    }
-  }
+//void Do_Star_PrintPatterns( final boolean HIGHLIGHT )
+//{
+//  for( int w=0; w<m_num_wins; w++ )
+//  {
+//    GetView_Win( w ).PrintPatterns( HIGHLIGHT );
+//  }
+//}
 
   // 1. Search for regex pattern in search editor.
   // 2. If regex pattern is found in search editor,
