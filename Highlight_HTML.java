@@ -25,11 +25,6 @@ import java.util.ArrayList;
 
 class Highlight_HTML extends Highlight_Base
 {
-  Highlight_HTML( FileBuf fb )
-  {
-    super( fb );
-  }
-
   enum Hi_State
   {
     In_None       ,
@@ -66,6 +61,11 @@ class Highlight_HTML extends Highlight_Base
     CS_DoubleQuote,
 
     Done
+  }
+
+  Highlight_HTML( FileBuf fb )
+  {
+    super( fb );
   }
 
   void Run_Range( final CrsPos st

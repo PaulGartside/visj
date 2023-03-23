@@ -25,11 +25,6 @@ import java.util.ArrayList;
 
 class Highlight_JS extends Highlight_Base
 {
-  Highlight_JS( FileBuf fb )
-  {
-    super( fb );
-  }
-
   enum Hi_State
   {
     JS_None       ,
@@ -48,6 +43,11 @@ class Highlight_JS extends Highlight_Base
     Done
   }
 
+  Highlight_JS( FileBuf fb )
+  {
+    super( fb );
+  }
+
   void Run_Range( final CrsPos st
                 , final int    fn )
   {
@@ -64,14 +64,6 @@ class Highlight_JS extends Highlight_Base
 
       Find_Styles_Keys_In_Range( st_l, st_p, m_l+1 );
     }
-  }
-
-  // Find keys starting from st up to but not including fn line
-  void Find_Styles_Keys_In_Range( final int st_line
-                                , final int st_char
-                                , final int fn )
-  {
-    Hi_FindKey_In_Range( m_JS_HiPairs, st_line, st_char, fn );
   }
 
   // In_None ----------------------------------
@@ -110,6 +102,14 @@ class Highlight_JS extends Highlight_Base
     default:
       m_state = Hi_State.JS_None;
     }
+  }
+
+  // Find keys starting from st up to but not including fn line
+  void Find_Styles_Keys_In_Range( final int st_line
+                                , final int st_char
+                                , final int fn )
+  {
+    Hi_FindKey_In_Range( m_JS_HiPairs, st_line, st_char, fn );
   }
 
   void Hi_NumberBeg()

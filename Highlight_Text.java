@@ -29,19 +29,12 @@ class Highlight_Text extends Highlight_Base
     In_Define,
     Done
   }
+
   Highlight_Text( FileBuf fb )
   {
     super( fb );
   }
 
-  void Run()
-  {
-    m_state = Hi_State.In_None;
-    m_l = 0;
-    m_p = 0;
-
-    while( Hi_State.Done != m_state ) Run_State();
-  }
   // Find styles starting on st up to but not including fn line
   void Run_Range( final CrsPos st
                 , final int    fn )

@@ -38,9 +38,26 @@ class Highlight_SQL extends Highlight_Base
     NumberExponent,
     Done
   }
+
   Highlight_SQL( FileBuf fb )
   {
     super( fb );
+  }
+
+  void Run_Range( final CrsPos st
+                , final int    fn )
+  {
+    m_state = Hi_State.In_None;
+
+    m_l = st.crsLine;
+    m_p = st.crsChar;
+
+    while( Hi_State.Done != m_state
+        && m_l<fn )
+    {
+      Run_State();
+    }
+    Find_Styles_Keys_In_Range( st, fn );
   }
 
   void Run_State()
@@ -62,21 +79,7 @@ class Highlight_SQL extends Highlight_Base
       m_state = Hi_State.In_None;
     }
   }
-  void Run_Range( final CrsPos st
-                , final int    fn )
-  {
-    m_state = Hi_State.In_None;
 
-    m_l = st.crsLine;
-    m_p = st.crsChar;
-
-    while( Hi_State.Done != m_state
-        && m_l<fn )
-    {
-      Run_State();
-    }
-    Find_Styles_Keys_In_Range( st, fn );
-  }
   boolean OneVarType( final char c0 )
   {
     return c0=='&'

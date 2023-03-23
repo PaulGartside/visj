@@ -36,21 +36,28 @@ class Highlight_Bash extends Highlight_Base
     NumberExponent,
     Done
   }
+
   Highlight_Bash( FileBuf fb )
   {
     super( fb );
   }
 
-//void Run()
-//{
-//  m_state = Hi_State.In_None;
-//  m_l = 0;
-//  m_p = 0;
-//
-//  while( Hi_State.Done != m_state ) Run_State();
-//
-//  Find_Styles_Keys();
-//}
+  void Run_Range( final CrsPos st
+                , final int    fn )
+  {
+    m_state = Hi_State.In_None;
+
+    m_l = st.crsLine;
+    m_p = st.crsChar;
+
+    while( Hi_State.Done != m_state
+        && m_l<fn )
+    {
+      Run_State();
+    }
+    Find_Styles_Keys_In_Range( st, fn );
+  }
+
   void Run_State()
   {
     switch( m_state )
@@ -68,21 +75,7 @@ class Highlight_Bash extends Highlight_Base
       m_state = Hi_State.In_None;
     }
   }
-  void Run_Range( final CrsPos st
-                , final int    fn )
-  {
-    m_state = Hi_State.In_None;
 
-    m_l = st.crsLine;
-    m_p = st.crsChar;
-
-    while( Hi_State.Done != m_state
-        && m_l<fn )
-    {
-      Run_State();
-    }
-    Find_Styles_Keys_In_Range( st, fn );
-  }
   boolean Quote_Start( final char qt
                      , final char c2
                      , final char c1
@@ -122,6 +115,7 @@ class Highlight_Bash extends Highlight_Base
         || c1=='+' && c0=='='
         || c1=='-' && c0=='=';
   }
+
   void Hi_In_None()
   {
     for( ; m_l<m_fb.NumLines(); m_l++ )
@@ -136,6 +130,7 @@ class Highlight_Bash extends Highlight_Base
         final char c2 = (1<m_p) ? m_fb.Get( m_l, m_p-2 ) : 0;
         final char c1 = (0<m_p) ? m_fb.Get( m_l, m_p-1 ) : 0;
         final char c0 =           m_fb.Get( m_l, m_p );
+
         final boolean comment = c0=='#' && (0==m_p || c1!='$');
 
         if     ( comment )                    { m_state = Hi_State.In_Comment; }
@@ -146,16 +141,20 @@ class Highlight_Bash extends Highlight_Base
  
         else if( TwoControl( c1, c0 ) )
         {
-           m_fb.SetSyntaxStyle( m_l, m_p-1, Highlight_Type.CONTROL.val );
-           m_fb.SetSyntaxStyle( m_l, m_p  , Highlight_Type.CONTROL.val );
+          m_fb.SetSyntaxStyle( m_l, m_p-1, Highlight_Type.CONTROL.val );
+          m_fb.SetSyntaxStyle( m_l, m_p  , Highlight_Type.CONTROL.val );
         }
         else if( c0=='$' )
         {
           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.DEFINE.val );
         }
+        else if( c0=='\\' && m_p == LL-1 )
+        {
+          m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.DEFINE.val );
+        }
         else if( OneVarType( c0 ) )
         {
-           m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.VARTYPE.val );
+          m_fb.SetSyntaxStyle( m_l, m_p, Highlight_Type.VARTYPE.val );
         }
         else if( OneControl( c0 ) )
         {
@@ -505,6 +504,7 @@ class Highlight_Bash extends Highlight_Base
     new HiKeyVal( "export"  , Highlight_Type.CONTROL ),
     new HiKeyVal( "fc"      , Highlight_Type.CONTROL ),
     new HiKeyVal( "fg"      , Highlight_Type.CONTROL ),
+    new HiKeyVal( "function", Highlight_Type.CONTROL ),
     new HiKeyVal( "hash"    , Highlight_Type.CONTROL ),
     new HiKeyVal( "help"    , Highlight_Type.CONTROL ),
     new HiKeyVal( "history" , Highlight_Type.CONTROL ),

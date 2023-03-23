@@ -23,23 +23,6 @@
 
 class Highlight_XML extends Highlight_Base
 {
-  Highlight_XML( FileBuf fb )
-  {
-    super( fb );
-  }
-
-  void Find_Styles_Keys_In_Range( final CrsPos st
-                                , final int    fn )
-  {
-    Hi_FindKey_In_Range( m_HiPairs, st, fn );
-  }
-  HiKeyVal[] m_HiPairs =
-  {
-    // HTML tags:
-    new HiKeyVal( "xml"     , Highlight_Type.CONTROL ),
-    new HiKeyVal( "version" , Highlight_Type.CONTROL ),
-    new HiKeyVal( "encoding", Highlight_Type.CONTROL ),
-  };
   enum Hi_State
   {
     In_None       ,
@@ -56,6 +39,27 @@ class Highlight_XML extends Highlight_Base
     NumberFraction,
     NumberExponent,
     Done
+  }
+
+  Highlight_XML( FileBuf fb )
+  {
+    super( fb );
+  }
+
+  void Run_Range( final CrsPos st
+                , final int    fn )
+  {
+    m_state = Hi_State.In_None;
+
+    m_l = st.crsLine;
+    m_p = st.crsChar;
+
+    while( Hi_State.Done != m_state
+        && m_l<fn )
+    {
+      Run_State();
+    }
+    Find_Styles_Keys_In_Range( st, fn );
   }
 
   void Run_State()
@@ -80,21 +84,18 @@ class Highlight_XML extends Highlight_Base
     }
   }
 
-  void Run_Range( final CrsPos st
-                , final int    fn )
+  void Find_Styles_Keys_In_Range( final CrsPos st
+                                , final int    fn )
   {
-    m_state = Hi_State.In_None;
-
-    m_l = st.crsLine;
-    m_p = st.crsChar;
-
-    while( Hi_State.Done != m_state
-        && m_l<fn )
-    {
-      Run_State();
-    }
-    Find_Styles_Keys_In_Range( st, fn );
+    Hi_FindKey_In_Range( m_HiPairs, st, fn );
   }
+  HiKeyVal[] m_HiPairs =
+  {
+    // HTML tags:
+    new HiKeyVal( "xml"     , Highlight_Type.CONTROL ),
+    new HiKeyVal( "version" , Highlight_Type.CONTROL ),
+    new HiKeyVal( "encoding", Highlight_Type.CONTROL ),
+  };
 
   void Hi_In_None()
   {

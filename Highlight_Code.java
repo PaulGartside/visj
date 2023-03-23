@@ -43,21 +43,28 @@ abstract class Highlight_Code extends Highlight_Base
     NumberTypeSpec,
     Done
   }
+
   Highlight_Code( FileBuf fb )
   {
     super( fb );
   }
 
-//void Run()
-//{
-//  m_state = Hi_State.In_None;
-//  m_l = 0;
-//  m_p = 0;
-//
-//  while( Hi_State.Done != m_state ) Run_State();
-//
-//  Find_Styles_Keys();
-//}
+  void Run_Range( final CrsPos st
+                , final int    fn )
+  {
+    m_state = Hi_State.In_None;
+
+    m_l = st.crsLine;
+    m_p = st.crsChar;
+
+    while( Hi_State.Done != m_state
+        && m_l<fn )
+    {
+      Run_State();
+    }
+    Find_Styles_Keys_In_Range( st, fn );
+  }
+
   void Run_State()
   {
     switch( m_state )
@@ -82,21 +89,7 @@ abstract class Highlight_Code extends Highlight_Base
       m_state = Hi_State.In_None;
     }
   }
-  void Run_Range( final CrsPos st
-                , final int    fn )
-  {
-    m_state = Hi_State.In_None;
 
-    m_l = st.crsLine;
-    m_p = st.crsChar;
-
-    while( Hi_State.Done != m_state
-        && m_l<fn )
-    {
-      Run_State();
-    }
-    Find_Styles_Keys_In_Range( st, fn );
-  }
   boolean Quote_Start( final char qt
                      , final char c2
                      , final char c1
