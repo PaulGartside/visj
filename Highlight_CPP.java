@@ -74,6 +74,7 @@ class Highlight_CPP extends Highlight_Code
     new HiKeyVal( "static_cast"        , Highlight_Type.CONTROL ),
     new HiKeyVal( "dynamic_cast"       , Highlight_Type.CONTROL ),
     new HiKeyVal( "reinterpret_cast"   , Highlight_Type.CONTROL ),
+    new HiKeyVal( "override"           , Highlight_Type.CONTROL ),
 
     new HiKeyVal( "auto"               , Highlight_Type.VARTYPE ),
     new HiKeyVal( "int"                , Highlight_Type.VARTYPE ),
@@ -112,6 +113,8 @@ class Highlight_CPP extends Highlight_Code
     new HiKeyVal( "typename"           , Highlight_Type.VARTYPE ),
     new HiKeyVal( "virtual"            , Highlight_Type.VARTYPE ),
     new HiKeyVal( "inline"             , Highlight_Type.VARTYPE ),
+    new HiKeyVal( "explicit"           , Highlight_Type.VARTYPE ),
+
     new HiKeyVal( "true"               , Highlight_Type.CONST   ),
     new HiKeyVal( "false"              , Highlight_Type.CONST   ),
     new HiKeyVal( "NULL"               , Highlight_Type.CONST   ),

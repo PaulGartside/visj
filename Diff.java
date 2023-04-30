@@ -4304,6 +4304,48 @@ class Diff
 
     GoToCrsPos_NoWrite( ncl, ncc );
   }
+  void Do_r_v_block()
+  {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+
+    Swap_Visual_St_Fn_If_Needed();
+
+    final int old_v_st_line = v_st_line;
+    final int old_v_st_char = v_st_char;
+
+    // Add visual block area to m_vis.m_reg:
+    for( int L=v_st_line; L<=v_fn_line; L++ )
+    {
+      Line nlr = new Line();
+
+      final int LL = pfb.LineLen( L );
+
+      boolean continue_last_update = false;
+
+      for( int P = v_st_char; P<LL && P <= v_fn_char; P++ )
+      {
+        nlr.append_c( pfb.Get( L, P ) );
+                      pfb.Set( L, P, ' ', continue_last_update );
+
+        continue_last_update = true;
+      }
+      m_vis.get_reg().add( nlr );
+    }
+    m_vis.set_paste_mode( Paste_Mode.BLOCK );
+
+    // Try to put cursor at (old_v_st_line, old_v_st_char), but
+    // make sure the cursor is in bounds after the deletion:
+    final int NUM_LINES = pfb.NumLines();
+    final int ncl = NUM_LINES <= old_v_st_line ? NUM_LINES-1
+                                               : old_v_st_line;
+    final int NLL = pfb.LineLen( ncl );
+    final int ncc = NLL <= 0               ? 0
+                  : old_v_st_char <= 0     ? 0
+                  : NLL <= old_v_st_char-1 ? NLL-1
+                                           : old_v_st_char-1;
+    GoToCrsPos_NoWrite( ncl, ncc );
+  }
   void Do_y_v_st_fn()
   {
     View    pV  = m_vis.CV();
@@ -4338,12 +4380,67 @@ class Diff
     }
     m_vis.set_paste_mode( Paste_Mode.ST_FN );
   }
+  void Do_r_v_st_fn()
+  {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+
+    Swap_Visual_St_Fn_If_Needed();
+
+    final int old_v_st_line = v_st_line;
+    final int old_v_st_char = v_st_char;
+
+    // Add visual start-finish area to m_vis.m_reg:
+    for( int L=v_st_line; L<=v_fn_line; L++ )
+    {
+      Line nlr = new Line();
+
+      boolean continue_last_update = false;
+
+      final int LL = pfb.LineLen( L );
+      if( 0<LL ) {
+        final int P_st = (L==v_st_line) ? v_st_char : 0;
+        final int P_fn = (L==v_fn_line) ? Math.min(LL-1,v_fn_char) : LL-1;
+
+        for( int P = P_st; P <= P_fn; P++ )
+        {
+          nlr.append_c( pfb.Get( L, P ) );
+                        pfb.Set( L, P, ' ', continue_last_update );
+
+          continue_last_update = true;
+        }
+      }
+      m_vis.get_reg().add( nlr );
+    }
+    m_vis.set_paste_mode( Paste_Mode.ST_FN );
+
+    // Try to put cursor at (old_v_st_line, old_v_st_char-1), but
+    // make sure the cursor is in bounds after the deletion:
+    final int NUM_LINES = pfb.NumLines();
+    final int ncl = NUM_LINES <= old_v_st_line ? NUM_LINES-1
+                                               : old_v_st_line;
+    final int NLL = pfb.LineLen( ncl );
+    final int ncc = NLL <= 0               ? 0
+                  : old_v_st_char <= 0     ? 0
+                  : NLL <= old_v_st_char-1 ? NLL-1
+                                           : old_v_st_char-1;
+    GoToCrsPos_NoWrite( ncl, ncc );
+  }
   void Do_Y_v()
   {
     m_vis.get_reg().clear();
 
     if( m_inVisualBlock ) Do_y_v_block();
     else                  Do_Y_v_st_fn();
+
+    m_inVisualMode = false;
+  }
+  void Do_r_v()
+  {
+    m_vis.get_reg().clear();
+
+    if( m_inVisualBlock ) Do_r_v_block();
+    else                  Do_r_v_st_fn();
 
     m_inVisualMode = false;
   }
@@ -5208,6 +5305,80 @@ class Diff
 
   void Do_r()
   {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+
+    final int ODL = CrsLine();           // Old Diff line
+    final int OVL = ViewLine( pV, ODL ); // View line
+
+  //final int OCL = CrsLine();           // Old cursor line
+    final int OCP = CrsChar();           // Old cursor position
+    final int OLL = pfb.LineLen( OVL );  // Old line length
+
+    // Insert position. If OLL is zero, insert at 0, else insert in from of OCP
+    final int ISP = 0<OLL ? OCP+1 : 0;
+
+    final int N_REG_LINES = m_vis.get_reg().size();
+
+    for( int k=0; k<N_REG_LINES; k++ )
+    {
+      // Make sure file has a line where register line will be inserted:
+      if( pfb.NumLines()<=OVL+k ) pfb.InsertLine( OVL+k );
+
+      final int LL = pfb.LineLen( OVL+k );
+
+      // Make sure file line is as long as ISP before inserting register line:
+      if( LL < ISP )
+      {
+        // Fill in line with white space up to ISP:
+        for( int i=0; i<(ISP-LL); i++ )
+        {
+          // Insert at end of line so undo will be atomic:
+          final int NLL = pfb.LineLen( OVL+k ); // New line length
+          pfb.InsertChar( OVL+k, NLL, ' ' );
+        }
+      }
+      Do_r_replace_white_space_with_register_line( k, OVL, ISP );
+
+      Patch_Diff_Info_Changed( pV, ODL+k );
+    }
+    Update();
+  }
+  void Do_r_replace_white_space_with_register_line( final int k
+                                                  , final int OCL
+                                                  , final int ISP )
+  {
+    View    pV  = m_vis.CV();
+    FileBuf pfb = pV.m_fb;
+
+    // Replace white space with register line, insert after white space used:
+    Line reg_line = m_vis.get_reg().get(k);
+    final int RLL = reg_line.length();
+    final int OLL = pfb.LineLen( OCL+k );
+
+    boolean continue_last_update = false;
+
+    for( int i=0; i<RLL; i++ )
+    {
+      char C_new = reg_line.charAt(i);
+
+      boolean replaced_space = false;
+
+      if( ISP+i < OLL )
+      {
+        char C_old = pfb.Get( OCL+k, ISP+i );
+
+        if( C_old == ' ' )
+        {
+          // Replace ' ' with C_new:
+          pfb.Set( OCL+k, ISP+i, C_new, continue_last_update );
+          replaced_space = true;
+          continue_last_update = true;
+        }
+      }
+      // No more spaces or end of line, so insert:
+      if( !replaced_space ) pfb.InsertChar( OCL+k, ISP+i, C_new );
+    }
   }
 
   void Do_v()
@@ -5274,6 +5445,7 @@ class Diff
       else if( C == ';' ) m_vis.Handle_SemiColon();
       else if( C == 'y' ) { Do_y_v(); }
       else if( C == 'Y' ) { Do_Y_v(); }
+      else if( C == 'r' ) { Do_r_v(); }
       else if( C == 'x'
             || C == 'd' ) { Do_x_v();     m_copy_vis_buf_2_dot_buf = true; }
       else if( C == 'D' ) { Do_D_v();     m_copy_vis_buf_2_dot_buf = true; }
