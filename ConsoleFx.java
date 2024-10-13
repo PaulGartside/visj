@@ -789,7 +789,8 @@ class ConsoleFx extends Canvas
     final double dy = row*m_text_H;
 
     // Fill in background with gray:
-    m_gc.setFill( m_d_gray );
+  //m_gc.setFill( m_d_gray );
+    m_gc.setFill( Color.WHITE );
     m_gc.fillRect( dx, dy, w_col*m_text_W, w_row*m_text_H );
 
     m_gc.drawImage( I, sx, sy, sw, sh, dx, dy, dw, dh );

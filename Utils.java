@@ -661,7 +661,8 @@ class Utils
       final int num_lines_s = fb_s.NumLines();
       final int num_lines_l = fb_l.NumLines();
 
-      if( num_lines_s == num_lines_l )
+      if( num_lines_s == num_lines_l
+       && fb_s.m_LF_at_EOF == fb_l.m_LF_at_EOF )
       {
         files_are_same = true;
 

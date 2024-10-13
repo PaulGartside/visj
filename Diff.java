@@ -2919,11 +2919,23 @@ class Diff
       {
         boolean found_diff = Do_n_Search_for_Diff( dl, DI_List );
 
+        int NCL = 0, NCP = 0; //< Init to zero to turn off compiler warning
         if( found_diff )
         {
-          final int NCL = dl.val;
-          final int NCP = Do_n_Find_Crs_Pos( NCL, DI_List );
-
+          NCL = dl.val;
+          NCP = Do_n_Find_Crs_Pos( NCL, DI_List );
+        }
+        else // Could not find a difference.
+        {    // Check if one file ends in LF and the other does not:
+          if( m_fS.m_LF_at_EOF != m_fL.m_LF_at_EOF )
+          {
+            found_diff = true;
+            NCL = DI_List.size() - 1;
+            NCP = pV.m_fb.LineLen( DI_List.get( NCL ).line_num );
+          }
+        }
+        if( found_diff )
+        {
           if( write ) GoToCrsPos_Write( NCL, NCP );
           else        GoToCrsPos_NoWrite( NCL, NCP );
         }
@@ -6485,6 +6497,6 @@ class Diff_Info
   }
   Diff_Type diff_type; // Diff type of line this Diff_Info refers to
   int       line_num;  // Line number in file to which this Diff_Info applies (view line)
-  LineInfo  pLineInfo;
+  LineInfo  pLineInfo; // Only non-nullptr if diff_type is DT_CHANGED
 }
 
