@@ -5142,11 +5142,11 @@ public class VisFx extends Application
     }
     else {
       // Switch to a different buffer:
-      if     ( m_sb.toString().equals("b#") ) GoToPoundBuffer(); // :b#
-      else if( m_sb.toString().equals("bc") ) GoToCurrBuffer();  // :bc
-      else if( m_sb.toString().equals("be") ) GoToFileBuffer();  // :be
-      else if( m_sb.toString().equals("bm") ) GoToMsgBuffer();   // :bm
-      else {                                                     // :b<number>
+      if     ( m_sb.toString().equals("b#") ) GoToPoundBuffer();  // :b#
+      else if( m_sb.toString().equals("bc") ) GoToCurrBuffer();   // :bc
+      else if( m_sb.toString().equals("be") ) GoToBufferEditor(); // :be
+      else if( m_sb.toString().equals("bm") ) GoToMsgBuffer();    // :bm
+      else {                                                      // :b<number>
         Ptr_Int ptr_int = new Ptr_Int( 0 );
         if( Utils.String_2_Int( m_sb.substring(1), ptr_int ) )
         {
@@ -5700,8 +5700,80 @@ public class VisFx extends Application
     return went_back;
   }
 
-  void GoToFileBuffer()
+//void Set_BufferEditor_Cursor_on_CurrentFile()
+//{
+//  final View cv = CV();
+//  final FileBuf cv_fb = cv.m_fb;
+//  final int str_len_CV_dir  = cv_fb.m_dname.length();
+//  final int str_len_CV_path = cv_fb.m_pname.length();
+//
+//  final View be_v = m_views[m_win].get( BE_FILE );
+//  FileBuf be_fb = be_v.m_fb;
+//  final int BE_NUM_LINES = be_fb.NumLines();
+//
+//  for( int k=0; k<BE_NUM_LINES; k++ )
+//  {
+//    final Line be_l_k = be_fb.GetLine( k );
+//
+//    if( be_l_k.toString().equals( cv_fb.m_pname ) )
+//    {
+//      int topLine  = k;
+//      int leftChar = 0;
+//      int crsRow   = 0;
+//      int crsCol   = cv_fb.m_isDir ? str_len_CV_dir : str_len_CV_dir + 1;
+//
+//      if( cv.WorkingCols() < str_len_CV_path )
+//      {
+//        int diff = str_len_CV_path - cv.WorkingCols();
+//        leftChar += diff;
+//        crsCol   -= diff;
+//      }
+//      be_v.Set_Context( topLine, leftChar, crsRow, crsCol );
+//      break;
+//    }
+//  }
+//}
+
+  void Set_BufferEditor_Cursor_on_CurrentFile()
   {
+    final View cv = CV();
+    final FileBuf cv_fb = cv.m_fb;
+    final int str_len_CV_dir  = cv_fb.m_dname.length();
+    final int str_len_CV_path = cv_fb.m_pname.length();
+
+    final View be_v = m_views[m_win].get( BE_FILE );
+    FileBuf be_fb = be_v.m_fb;
+    final int BE_NUM_LINES = be_fb.NumLines();
+
+    for( int k=0; k<BE_NUM_LINES; k++ )
+    {
+      final Line be_l_k = be_fb.GetLine( k );
+
+      if( be_l_k.toString().equals( cv_fb.m_pname ) )
+      {
+        final int shift_down = Math.min( k, cv.WorkingRows()/2 );
+
+        int topLine  = k - shift_down;
+        int leftChar = 0;
+        int crsRow   = 0 + shift_down;
+        int crsCol   = cv_fb.m_isDir ? str_len_CV_dir : str_len_CV_dir + 1;
+
+        if( cv.WorkingCols() < str_len_CV_path )
+        {
+          int diff = str_len_CV_path - cv.WorkingCols();
+          leftChar += diff;
+          crsCol   -= diff;
+        }
+        be_v.Set_Context( topLine, leftChar, crsRow, crsCol );
+        break;
+      }
+    }
+  }
+
+  void GoToBufferEditor()
+  {
+    Set_BufferEditor_Cursor_on_CurrentFile();
+
     GoToBuffer( BE_FILE );
   }
 
