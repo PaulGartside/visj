@@ -25,6 +25,7 @@ import java.lang.Math;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 import javafx.scene.image.Image;
 
 class View
@@ -4005,6 +4006,33 @@ class View
 //  }
 //}
 
+//void Do_v_Handle_gp()
+//{
+//  if( v_st_line == v_fn_line )
+//  {
+//    final int m_v_st_char = v_st_char < v_fn_char ? v_st_char : v_fn_char;
+//    final int m_v_fn_char = v_st_char < v_fn_char ? v_fn_char : v_st_char;
+//
+//    StringBuilder pattern = new StringBuilder();
+//
+//    for( int P = m_v_st_char; P<=m_v_fn_char; P++ )
+//    {
+//      final char C = m_fb.Get( v_st_line, P );
+//
+//      // Escape Java regex metacharacters:
+//      if( Utils.IsJavaRegexMetaChar( C ) )
+//      {
+//        pattern.append( '\\' );
+//      }
+//      // Add char C to pattern:
+//      pattern.append( C );
+//    }
+//    m_vis.Handle_Slash_GotPattern( pattern.toString(), false );
+//
+//    m_inVisualMode = false;
+//  }
+//}
+
   void Do_v_Handle_gp()
   {
     if( v_st_line == v_fn_line )
@@ -4018,15 +4046,12 @@ class View
       {
         final char C = m_fb.Get( v_st_line, P );
 
-        // Escape Java regex metacharacters:
-        if( Utils.IsJavaRegexMetaChar( C ) )
-        {
-          pattern.append( '\\' );
-        }
         // Add char C to pattern:
         pattern.append( C );
       }
-      m_vis.Handle_Slash_GotPattern( pattern.toString(), false );
+      String escaped_pattern = Pattern.quote( pattern.toString() ); 
+
+      m_vis.Handle_Slash_GotPattern( escaped_pattern, false );
 
       m_inVisualMode = false;
     }
