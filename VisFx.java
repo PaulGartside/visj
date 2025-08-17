@@ -5429,6 +5429,146 @@ public class VisFx extends Application
     }
     return true;
   }
+//void GoToBuffer( final int buf_idx )
+//{
+//  if( m_views[ m_win ].size() <= buf_idx )
+//  {
+//    CmdLineMessage( "Buffer "+ buf_idx +" does not exist" );
+//  }
+//  else {
+//    if( buf_idx == m_file_hist[ m_win ].get( 0 ) )
+//    {
+//      // User asked for view that is currently displayed.
+//      // Dont do anything, just put cursor back in place.
+//      CV().PrintCursor();
+//    }
+//    else {
+//      NoDiff_CV();
+//
+//      m_file_hist[ m_win ].add( 0, buf_idx );
+//
+//      // Remove subsequent buf_idx's from m_file_hist[ m_win ]:
+//      for( int k=1; k<m_file_hist[ m_win ].size(); k++ )
+//      {
+//        if( buf_idx == m_file_hist[ m_win ].get( k ) )
+//        {
+//          m_file_hist[ m_win ].remove( k );
+//        }
+//      }
+//      View nv = CV(); // New View to display
+//      if( ! nv.Has_Context() )
+//      {
+//        // Look for context for the new view:
+//        boolean found_context = false;
+//        for( int w=0; !found_context && w<MAX_WINS; w++ )
+//        {
+//          View v = m_views[ w ].get( buf_idx );
+//          if( v.Has_Context() )
+//          {
+//            found_context = true;
+//
+//            nv.Set_Context( v );
+//          }
+//        }
+//      }
+//      // For DIR and BUFFER_EDITOR, invalidate regex's so that files that
+//      // no longer contain the current regex are no longer highlighted
+//      if( nv.m_fb.m_file_type == File_Type.DIR
+//       || nv.m_fb.m_file_type == File_Type.BUFFER_EDITOR )
+//      {
+//        nv.m_fb.Invalidate_Regexs();
+//      }
+//      nv.SetTilePos( PV().m_tile_pos );
+//      nv.Update();
+//    }
+//  }
+//}
+
+//void GoToBuffer( final int buf_idx )
+//{
+//  if( m_views[ m_win ].size() <= buf_idx )
+//  {
+//    CmdLineMessage( "Buffer "+ buf_idx +" does not exist" );
+//  }
+//  else {
+//    if( buf_idx == m_file_hist[ m_win ].get( 0 ) )
+//    {
+//      // User asked for view that is currently displayed.
+//      // Dont do anything, just put cursor back in place.
+//      CV().PrintCursor();
+//    }
+//    else {
+//      NoDiff_CV();
+//
+//      m_file_hist[ m_win ].add( 0, buf_idx );
+//
+//      // Remove subsequent buf_idx's from m_file_hist[ m_win ]:
+//      for( int k=1; k<m_file_hist[ m_win ].size(); k++ )
+//      {
+//        if( buf_idx == m_file_hist[ m_win ].get( k ) )
+//        {
+//          m_file_hist[ m_win ].remove( k );
+//        }
+//      }
+//      View nv = CV(); // New View to display
+//      View pv = PV(); // New View to display
+//
+//      boolean new_file_is_directory_of_prev_file
+//        = (0 == nv.m_fb.m_fname.length()) // New  file a directory
+//       && (0 <  pv.m_fb.m_fname.length()) // Prev file is NOT a directory
+//       && (nv.m_fb.m_dname.equals( pv.m_fb.m_dname )); // New and prev files have same directory
+//
+//      if( new_file_is_directory_of_prev_file )
+//      {
+//        String prev_fname = pv.m_fb.m_fname;
+//        int prev_fname_lnum_in_new_file = -1;
+//        for( int k=0; k<nv.m_fb.NumLines(); k++ )
+//        {
+//          if( prev_fname.equals( nv.m_fb.GetLine(k).toString() ) )
+//          {
+//            prev_fname_lnum_in_new_file = k;
+//            break;
+//          }
+//        }
+//        if( 0 <= prev_fname_lnum_in_new_file )
+//        {
+//          final int shift_down = Math.min( prev_fname_lnum_in_new_file, nv.WorkingRows()/2 );
+//
+//          int topLine  = prev_fname_lnum_in_new_file - shift_down;
+//          int leftChar = 0;
+//          int crsRow   = 0 + shift_down;
+//          int crsCol   = 0;
+//          nv.Set_Context( topLine, leftChar, crsRow, crsCol );
+//        }
+//      }
+//      else if( ! nv.Has_Context() )
+//      {
+//        // Look for context for the new view:
+//        boolean found_context = false;
+//        for( int w=0; !found_context && w<MAX_WINS; w++ )
+//        {
+//          View v = m_views[ w ].get( buf_idx );
+//          if( v.Has_Context() )
+//          {
+//            found_context = true;
+//
+//            nv.Set_Context( v );
+//          }
+//        }
+//      }
+//      // For DIR and BUFFER_EDITOR, invalidate regex's so that files that
+//      // no longer contain the current regex are no longer highlighted
+//      if( nv.m_fb.m_file_type == File_Type.DIR
+//       || nv.m_fb.m_file_type == File_Type.BUFFER_EDITOR )
+//      {
+//        nv.m_fb.Invalidate_Regexs();
+//      }
+//      nv.SetTilePos( pv.m_tile_pos );
+//      nv.Update();
+//    }
+//  }
+//}
+
   void GoToBuffer( final int buf_idx )
   {
     if( m_views[ m_win ].size() <= buf_idx )
@@ -5456,21 +5596,10 @@ public class VisFx extends Application
           }
         }
         View nv = CV(); // New View to display
-        if( ! nv.Has_Context() )
-        {
-          // Look for context for the new view:
-          boolean found_context = false;
-          for( int w=0; !found_context && w<MAX_WINS; w++ )
-          {
-            View v = m_views[ w ].get( buf_idx );
-            if( v.Has_Context() )
-            {
-              found_context = true;
+        View pv = PV(); // Old View displayed
 
-              nv.Set_Context( v );
-            }
-          }
-        }
+        GoToBuffer_SetContext( buf_idx, nv, pv );
+
         // For DIR and BUFFER_EDITOR, invalidate regex's so that files that
         // no longer contain the current regex are no longer highlighted
         if( nv.m_fb.m_file_type == File_Type.DIR
@@ -5478,8 +5607,107 @@ public class VisFx extends Application
         {
           nv.m_fb.Invalidate_Regexs();
         }
-        nv.SetTilePos( PV().m_tile_pos );
+        nv.SetTilePos( pv.m_tile_pos );
         nv.Update();
+      }
+    }
+  }
+
+//void GoToBuffer_SetContext( final int buf_idx, View nv, View pv )
+//{
+//  boolean set_context = false;
+//
+//  boolean new_file_is_directory_of_prev_file
+//    = (0 == nv.m_fb.m_fname.length()) // New  file a directory
+//   && (0 <  pv.m_fb.m_fname.length()) // Prev file is NOT a directory
+//   && (nv.m_fb.m_dname.equals( pv.m_fb.m_dname )); // New and prev files have same directory
+//
+//  if( new_file_is_directory_of_prev_file )
+//  {
+//    int prev_fname_lnum_in_new_file = -1;
+//    String prev_fname = pv.m_fb.m_fname;
+//
+//    for( int k=0; k<nv.m_fb.NumLines(); k++ )
+//    {
+//      if( prev_fname.equals( nv.m_fb.GetLine(k).toString() ) )
+//      {
+//        prev_fname_lnum_in_new_file = k;
+//        break;
+//      }
+//    }
+//    if( 0 <= prev_fname_lnum_in_new_file )
+//    {
+//      final int shift_down = Math.min( prev_fname_lnum_in_new_file, nv.WorkingRows()/2 );
+//
+//      int topLine  = prev_fname_lnum_in_new_file - shift_down;
+//      int leftChar = 0;
+//      int crsRow   = 0 + shift_down;
+//      int crsCol   = 0;
+//      nv.Set_Context( topLine, leftChar, crsRow, crsCol );
+//      set_context = true;
+//    }
+//  }
+//  if( !set_context && ! nv.Has_Context() )
+//  {
+//    // Look for context for the new view:
+//    boolean found_context = false;
+//    for( int w=0; !found_context && w<MAX_WINS; w++ )
+//    {
+//      View v = m_views[ w ].get( buf_idx );
+//      if( v.Has_Context() )
+//      {
+//        found_context = true;
+//
+//        nv.Set_Context( v );
+//      }
+//    }
+//  }
+//}
+
+  void GoToBuffer_SetContext( final int buf_idx, View nv, View pv )
+  {
+    boolean new_file_is_directory_of_prev_file
+      = (0 == nv.m_fb.m_fname.length()) // New  file a directory
+     && (0 <  pv.m_fb.m_fname.length()) // Prev file is NOT a directory
+     && (nv.m_fb.m_dname.equals( pv.m_fb.m_dname )); // New and prev files have same directory
+
+    if( new_file_is_directory_of_prev_file )
+    {
+      int prev_fname_lnum_in_new_file = -1;
+      String prev_fname = pv.m_fb.m_fname;
+
+      for( int k=0; k<nv.m_fb.NumLines(); k++ )
+      {
+        if( prev_fname.equals( nv.m_fb.GetLine(k).toString() ) )
+        {
+          prev_fname_lnum_in_new_file = k;
+          break;
+        }
+      }
+      if( 0 <= prev_fname_lnum_in_new_file )
+      {
+        final int shift_down = Math.min( prev_fname_lnum_in_new_file, nv.WorkingRows()/2 );
+
+        int topLine  = prev_fname_lnum_in_new_file - shift_down;
+        int leftChar = 0;
+        int crsRow   = 0 + shift_down;
+        int crsCol   = 0;
+        nv.Set_Context( topLine, leftChar, crsRow, crsCol );
+      }
+    }
+    if( ! nv.Has_Context() )
+    {
+      // Look for context for the new view:
+      boolean found_context = false;
+      for( int w=0; !found_context && w<MAX_WINS; w++ )
+      {
+        View v = m_views[ w ].get( buf_idx );
+        if( v.Has_Context() )
+        {
+          found_context = true;
+
+          nv.Set_Context( v );
+        }
       }
     }
   }

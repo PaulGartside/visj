@@ -67,7 +67,9 @@ class FileBuf
     }
     else {
       Path parent = m_path.getParent();
-      if( null != parent ) m_dname = parent.normalize().toString();
+      if( null != parent ) {
+        m_dname = Utils.Append_Dir_Delim( parent.normalize().toString() );
+      }
       else {
         // fname passed in was not full path filename, so use process path
         m_dname = Utils.GetCWD();
@@ -100,7 +102,9 @@ class FileBuf
     }
     else {
       Path parent = m_path.getParent();
-      if( null != parent ) m_dname = parent.normalize().toString();
+      if( null != parent ) {
+        m_dname = Utils.Append_Dir_Delim( parent.normalize().toString() );
+      }
       else {
         // fname passed in was not full path filename, so use process path
         m_dname = Utils.GetCWD();
